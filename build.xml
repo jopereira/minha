@@ -1,0 +1,55 @@
+<project name="minha" default="build" basedir=".">
+	<!-- set global properties for this build -->
+	<property name="src"		value="src*"/>
+	<property name="lib" 	 	value="lib"/>
+	<property name="csrc"		value="csrc"/>
+	<property name="build-root"	value="build"/>
+	<property name="build"		value="${build-root}/classes"/>
+	<property name="jars"		value="${build-root}/lib"/>
+	<property name="compile-debug"	value="on"/>
+	<property name="compile-target"	value="1.6"/>
+
+	<!-- BUILD -->
+	<target name="build" depends="compile,jar,csrc"/>
+
+	<!-- COMPILE -->
+	<target name="compile">
+		<mkdir dir="${build}"/>
+		<javac destdir="${build}" debug="${compile-debug}" target="${compile-target}" includeantruntime="false">
+			<src>
+				<dirset dir=".">
+					<include name="${src}"/>
+				</dirset>
+			</src>
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="*.jar"/>
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+
+	<!-- JAR -->
+	<target name="jar" depends="compile">
+		<jar destfile="${build-root}/minha.jar" basedir="${build}" includes="**/*.class"/>
+	</target>
+
+	<!-- BUILD C SRC -->
+	<target name="csrc" depends="compile">
+		<mkdir dir="${build-root}/${csrc}"/>
+		<copy todir="${build-root}/${csrc}">
+			<fileset dir="${csrc}">
+				<include name="*"/>
+			</fileset>
+		</copy>
+		<exec executable="make">
+			<arg value="-C"/>
+			<arg value="${build-root}/${csrc}"/>
+		</exec>
+	</target>
+
+	<!-- CLEAN UP -->
+	<target name="clean" description="clean up" >
+		<delete dir="${build-root}"/>
+	</target>
+</project>
