@@ -18,13 +18,10 @@ environment.
 2. Latest Version
 -----------------
 
-Minha is distributed only in source form. For the latest version go to:
+Minha is distributed only in source form. For the latest version and
+documentation go to:
 
-        http://gitorious.org/minha
-
-Documentation for users and developers is available at:
-
-        https://gitorious.org/minha/pages/Home
+        http://code.google.com/p/minha/
 
 More details about the project are available at the project web site:
 
