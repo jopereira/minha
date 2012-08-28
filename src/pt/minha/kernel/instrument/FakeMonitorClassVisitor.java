@@ -25,18 +25,26 @@ import org.objectweb.asm.Opcodes;
 
 public class FakeMonitorClassVisitor extends ClassVisitor {
 
-	public FakeMonitorClassVisitor(ClassVisitor arg0) {
+	private Translation trans;
+
+	public FakeMonitorClassVisitor(ClassVisitor arg0, Translation trans) {
 		super(Opcodes.ASM4, arg0);
+		this.trans = trans;
 	}
 	
 	public void visit(int version, int access, String name, String signature, String supername, String[] interfaces) {
-		if (supername.equals("java/lang/Object") && (access&Opcodes.ACC_INTERFACE)==0)
-			supername=ClassConfig.fake_prefix+supername;
+		if (trans.isSynchronized()) {
+			if (supername.equals("java/lang/Object") && (access&Opcodes.ACC_INTERFACE)==0)
+				supername=ClassConfig.fake_prefix+supername;
+		}
 		super.visit(version, access, name, signature, supername, interfaces);
 	}
 
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-		return new LocalMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions));
+		if (trans.isSynchronized())
+			return new LocalMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions));
+		else
+			return super.visitMethod(access, name, desc, signature, exceptions);
 	}
 
 	private class LocalMethodVisitor extends MethodVisitor {

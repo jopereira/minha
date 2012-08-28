@@ -31,24 +31,46 @@ public class SyncToMonitorClassVisitor extends ClassVisitor {
 	private String clz;
 	private boolean hasClinit;
 	private int access;
+	private Translation trans;
 
-	public SyncToMonitorClassVisitor(ClassVisitor visitor) {
+	public SyncToMonitorClassVisitor(ClassVisitor visitor, Translation trans) {
 		super(Opcodes.ASM4, visitor);
+		this.trans = trans;
 	}
 	
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-		clz = name;
-		this.access = access;
-		if ((access&Opcodes.ACC_INTERFACE)==0) {
-			FieldVisitor fv = visitField(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, "_fake_class", "L"+ClassConfig.fake_prefix+"java/lang/Object;", null, null);
-			fv.visitEnd();
+		if (trans.isSynchronized()) {
+			clz = name;
+			this.access = access;
+			if ((access&Opcodes.ACC_INTERFACE)==0) {
+				FieldVisitor fv = visitField(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, "_fake_class", "L"+ClassConfig.fake_prefix+"java/lang/Object;", null, null);
+				fv.visitEnd();
+			}
 		}
 		super.visit(version, access, name, signature, superName, interfaces);
 	}
 	
+	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+		if (trans.isSynchronized()) {
+			if (name.equals("<clinit>")) {
+				hasClinit = true;
+				return new ClinitVisitor(super.visitMethod(access, name, desc, signature, exceptions));
+			}
+			
+			if ((access & Opcodes.ACC_SYNCHRONIZED) != 0) {		
+				makeStub(access & ~Opcodes.ACC_SYNCHRONIZED, name, desc, signature, exceptions);
+			
+				return super.visitMethod((access & ~(Opcodes.ACC_SYNCHRONIZED | Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED) | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE), "_"+name, desc, signature, exceptions);
+			}
+		}
+		return super.visitMethod(access, name, desc, signature, exceptions);
+	}
+
 	public void visitEnd() {
-		if (!hasClinit && (access&Opcodes.ACC_INTERFACE)==0)
-			mkClinit();
+		if (trans.isSynchronized()) {
+			if (!hasClinit && (access&Opcodes.ACC_INTERFACE)==0)
+				mkClinit();
+		}
 		super.visitEnd();
 	}
 
@@ -74,20 +96,6 @@ public class SyncToMonitorClassVisitor extends ClassVisitor {
 			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, ClassConfig.fake_prefix+"java/lang/Object", "<init>", "()V");
 			mv.visitFieldInsn(Opcodes.PUTSTATIC, clz, "_fake_class", "L"+ClassConfig.fake_prefix+"java/lang/Object;");
 		}		
-	}
-
-	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-		if (name.equals("<clinit>")) {
-			hasClinit = true;
-			return new ClinitVisitor(super.visitMethod(access, name, desc, signature, exceptions));
-		}
-		
-		if ((access & Opcodes.ACC_SYNCHRONIZED) != 0) {		
-			makeStub(access & ~Opcodes.ACC_SYNCHRONIZED, name, desc, signature, exceptions);
-		
-			return super.visitMethod((access & ~(Opcodes.ACC_SYNCHRONIZED | Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED) | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE), "_"+name, desc, signature, exceptions);
-		} else
-			return super.visitMethod(access, name, desc, signature, exceptions);
 	}
 	
 	public void makeStub(int access, String name, String desc, String signature, String[] exceptions) {

@@ -29,10 +29,12 @@ import pt.minha.models.local.io.WrappedObjectOutputStream;
 
 public class SerializableClassVisitor extends ClassVisitor implements Opcodes {
 	private boolean isSerializable;
-	private String name; 
+	private String name;
+	private Translation trans; 
 	
-	public SerializableClassVisitor(ClassVisitor visitor) {
+	public SerializableClassVisitor(ClassVisitor visitor, Translation trans) {
 		super(Opcodes.ASM4, visitor);
+		this.trans = trans;
 	}
 	
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
@@ -48,7 +50,7 @@ public class SerializableClassVisitor extends ClassVisitor implements Opcodes {
 	
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 		
-		if (isSerializable) {
+		if (isSerializable && trans.isUsingMoved()) {
 			if (name.equals("writeObject") && desc.equals("(L"+ClassConfig.fake_prefix+"java/io/ObjectOutputStream;)V"))
 				makeWriteStub();
 			if (name.equals("readObject") && desc.equals("(L"+ClassConfig.fake_prefix+"java/io/ObjectInputStream;)V"))

@@ -19,46 +19,17 @@
 
 package pt.minha.kernel.instrument;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.PrintWriter;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.commons.RemappingClassAdapter;
-import org.objectweb.asm.util.CheckClassAdapter;
-import org.objectweb.asm.util.TraceClassVisitor;
 
 public class InstrumentationLoader extends ClassLoader {
 	
 	private ClassConfig cc;
-	private Remapper remapAll = new Remapper() {
-		@Override
-		public String map(String type) {
-			ClassConfig.Action act = cc.get(type);
-			
-			if (act.equals(ClassConfig.Action.fake))
-				return ClassConfig.fake_prefix+type;
-			else if (act.equals(ClassConfig.Action.moved))
-				return ClassConfig.moved_prefix+type;
-			else
-				return type;
-		}
-	}; 
-	private Remapper remapMoved = new Remapper() {
-		@Override
-		public String map(String type) {
-			ClassConfig.Action act = cc.get(type);
-			
-			if (act.equals(ClassConfig.Action.moved))
-				return ClassConfig.moved_prefix+type;
-			else
-				return type;
-		}
-	}; 
-
+	
 	public InstrumentationLoader(ClassConfig cc) {
 		this.cc = cc;
 	}
@@ -71,7 +42,7 @@ public class InstrumentationLoader extends ClassLoader {
 		if (act.equals(ClassConfig.Action.invalid))
 			throw new ClassCastException("class marked as invalid");
 
-		/**
+		/*
 		 * Moved and faked classes arrive with the prefixed name. If it
 		 * gets here without the prefix, then it should be handled as a
 		 * global as the reference comes from a fake, load or global.
@@ -85,16 +56,12 @@ public class InstrumentationLoader extends ClassLoader {
 		if (claz!=null)
 			return claz;
 		
-		/**
-		 * We recognize moved and faked classes from the prefix that has 
-		 * been placed there by the remapper.
+		/*
+		 * Set up translation configuration defaults. This depends on
+		 * the class name prefix (i.e. fake or moved), properties file,
+		 * and class file annotations.
 		 */
-		if (effname.startsWith(ClassConfig.fake_prefix))
-			act = ClassConfig.Action.fake;
-		else if (effname.startsWith(ClassConfig.moved_prefix)) {
-			act = ClassConfig.Action.moved;
-			effname = effname.substring(ClassConfig.moved_prefix.length());
-		}
+		Translation trans = new Translation(effname, act);
 		
 		try {
 			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES) {
@@ -104,39 +71,36 @@ public class InstrumentationLoader extends ClassLoader {
 					return "java/lang/Object";
 				}
 			};
+
 			ClassVisitor ca = cw;
 
 			// ------ This is the bytecode re-writting pipeline: -------
-			if (!act.equals(ClassConfig.Action.load)) {
-				if (act.equals(ClassConfig.Action.fake)) {
-					
-					// 1. Redirect references to fake.* and moved.* classes
-					ca = new RemappingClassAdapter(ca, remapMoved);
-					
-				} else { // move and translate
-					
-					// 5. Handle readObject/writeObject in Serializable classes
-					ca = new SerializableClassVisitor(ca);
+			// (order is: last in, first used)
+			
+			// Handle readObject/writeObject in Serializable classes
+			ca = new SerializableClassVisitor(ca, trans);
 
-					// 4. Rewrite some special methods
-					ca = new MethodRemapperClassVisitor(ca);
+			// Rewrite some special methods
+			ca = new MethodRemapperClassVisitor(ca, trans);
 				
-					// 3. Rewrite MONITORENTER/MONITORLEAVE to methods in fake.j.l.Object 
-					ca = new FakeMonitorClassVisitor(ca);
+			// Rewrite MONITORENTER/MONITORLEAVE to methods in fake.j.l.Object 
+			ca = new FakeMonitorClassVisitor(ca, trans);
 				
-					// 2. Rewrite synchronized methods to synchronized blocks
-					ca = new SyncToMonitorClassVisitor(ca);
+			// Rewrite synchronized methods to synchronized blocks
+			ca = new SyncToMonitorClassVisitor(ca, trans);
 
-					// 1. Redirect references to fake.* and moved.* classes
-					ca = new RemappingClassAdapter(ca, remapAll);
-
-					ca = new JSRInlinerClassVisitor(ca);
-				}				
-			}
+			// Redirect references to fake.* and moved.* classes
+			ca = new RemappingClassAdapter(ca, new ClassRemapper(cc, trans));
+					
+			// Prepare for changes done by other stages
+			ca = new JSRInlinerClassVisitor(ca);
+					
+			// Update translation config from annotations (this is the first
+			// stage in the pipeline!)
+			ca = new AnnotatedClassVisitor(ca, trans); 
 			// ---------------------------------------------------------------------------------------
 			
-			String resource = effname + ".class";
-			InputStream is = getResourceAsStream(resource);
+			InputStream is = getResourceAsStream(trans.getFileName());
 			ClassReader cr = new ClassReader(is);
 			cr.accept(ca, ClassReader.SKIP_FRAMES);
 			byte[] b2 = cw.toByteArray();
@@ -144,17 +108,23 @@ public class InstrumentationLoader extends ClassLoader {
 			// Enable this to get debugging output:
 			//checkAndDumpClass(b2);
 			
-			return defineClass(name, b2, 0, b2.length);
+			if (trans.isGlobal())
+				return super.loadClass(name);
+			else
+				return defineClass(name, b2, 0, b2.length);
+			
 		} catch (Exception e) {
 			throw new ClassNotFoundException(name, e);
 		}
 	}
 
 	public Class<?> forName(String name) throws ClassNotFoundException {
+		Translation trans = new Translation("foobar", ClassConfig.Action.translate);
+		ClassRemapper remapAll = new ClassRemapper(cc, trans);
 		return loadClass(remapAll.map(name));
 	}
 	
-	private static void checkAndDumpClass(byte[] buf) {
+	/*private static void checkAndDumpClass(byte[] buf) {
 		try {
 			ClassReader cr = new ClassReader(new ByteArrayInputStream(buf));
 			cr.accept(new CheckClassAdapter(new TraceClassVisitor(new PrintWriter(System.out))), ClassReader.EXPAND_FRAMES);
@@ -162,5 +132,5 @@ public class InstrumentationLoader extends ClassLoader {
 			e.printStackTrace();
 		}
 		
-	}
+	}*/
 }
