@@ -51,4 +51,8 @@ public class ObjectInputStream extends DataInputStream implements ObjectInput {
 	public int read() throws IOException {
 		return isi.implRead();
 	}
+	
+	public void defaultReadObject() throws IOException, ClassNotFoundException {
+		isi.implDefaultReadObject();
+	}
 }

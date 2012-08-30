@@ -44,4 +44,8 @@ public class ObjectOutputStreamImpl extends OutputStream {
 	public void write(int b) throws IOException {
 		osi.intfWrite(b);
 	}
+
+	public void implDefaultWriteObject() throws IOException {
+		oos.defaultWriteObject();
+	}
 }

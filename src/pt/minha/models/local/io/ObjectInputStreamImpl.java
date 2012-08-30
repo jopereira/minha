@@ -44,4 +44,8 @@ public class ObjectInputStreamImpl extends InputStream {
 	public int read() throws IOException {
 		return isi.intfRead();
 	}
+
+	public void implDefaultReadObject() throws IOException, ClassNotFoundException {
+		ois.defaultReadObject();
+	}
 }
