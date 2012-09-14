@@ -19,6 +19,8 @@
 
 package pt.minha.api;
 
+import java.lang.reflect.InvocationTargetException;
+
 import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.instrument.InstrumentationLoader;
 import pt.minha.kernel.simulation.Timeline;
@@ -28,12 +30,10 @@ import pt.minha.models.global.HostInterface;
  * A host running within the Minha simulated world. 
  */
 public class Host {
-	private InstrumentationLoader loader;
-	private HostInterface impl;
-	private long delay;
+	InstrumentationLoader loader;
+	HostInterface impl;
 
-	Host(ClassConfig cc, Timeline timeline, long delay, String ip) throws SimulationException {
-		this.delay=delay;
+	Host(ClassConfig cc, Timeline timeline, String ip) throws SimulationException {
 
 		loader=new InstrumentationLoader(cc);
 		
@@ -52,7 +52,27 @@ public class Host {
 	 * @param args arguments to main method
 	 * @throws SimulationException cannot find or launch desired class 
 	 */
-	public void launch(String main, String[] args) throws SimulationException {
+	public void launch(long delay, String main, String[] args) throws SimulationException {
 		impl.launch(delay, main, args);
+	}
+	
+	/** 
+	 * Create an entry point to inject arbitrary invocations within a host.
+	 * This avoids the main method and can be used for multiple invocations.
+	 * 
+	 * @param host an host instance
+	 * @param clz the interface (global) of the class to be created
+	 * @param impl the name of the class (translated) to be created within the host
+	 * @param time true if the invocation is done in real-time
+	 * @throws ClassNotFoundException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 * @throws NoSuchMethodException 
+	 * @throws InvocationTargetException 
+	 * @throws SecurityException 
+	 * @throws IllegalArgumentException 
+	 */
+	public <T> Entry<T> createEntry(Class<T> intf, String impl) throws IllegalArgumentException, SecurityException, ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		return new Entry<T>(this, intf, impl);
 	}
 }

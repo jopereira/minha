@@ -60,13 +60,22 @@ public class World {
 	/**
 	 * Create a host.
 	 * 
-	 * @param delay time before the instance is started 
 	 * @param ip address for host, null for auto-assignment
 	 * @return a host instance
 	 * @throws SimulationException
 	 */
-	public Host createHost(long delay, String ip) throws SimulationException {
-		return new Host(cc, timeline, delay, ip);
+	public Host createHost(String ip) throws SimulationException {
+		return new Host(cc, timeline, ip);
+	}
+
+	/**
+	 * Create a host.
+	 * 
+	 * @return a host instance
+	 * @throws SimulationException
+	 */
+	public Host createHost() throws SimulationException {
+		return createHost(null);
 	}
 	
 	public long run() {

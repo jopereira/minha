@@ -38,8 +38,8 @@ public class Runner {
 			
 			for (final InstanceArguments argsInstance : cla) {
 				for (int i=1; i<=argsInstance.getN(); i++) {
-					Host host = hv.createHost(argsInstance.getDelay(), argsInstance.getIP());
-					host.launch(argsInstance.getMain(), argsInstance.getArgs());
+					Host host = hv.createHost(argsInstance.getIP());
+					host.launch(argsInstance.getDelay(), argsInstance.getMain(), argsInstance.getArgs());
 				}
 			}
 			
