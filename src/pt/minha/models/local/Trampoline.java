@@ -73,6 +73,7 @@ public interface Trampoline {
 		}
 		
 		public void run() {
+			SimulationThread.stopTime(0);
 			while(true) {
 				if (queue.isEmpty()) {
 					wakeup = SimulationThread.currentSimulationThread().getWakeup();
@@ -82,7 +83,9 @@ public interface Trampoline {
 				Invocation i = queue.remove(0);
 				
 				try {
+					SimulationThread.startTime(0);
 					i.method.invoke(impl, i.args);
+					SimulationThread.stopTime(0);
 				} catch (Exception e) {
 					// FIXME: should stop simulation?
 					e.printStackTrace();
