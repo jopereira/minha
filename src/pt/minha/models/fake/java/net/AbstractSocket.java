@@ -69,7 +69,8 @@ public abstract class AbstractSocket {
 	}*/
 	
 	protected void removeSocket(Protocol protocol, InetSocketAddress isa) {
-		World.network.networkMap.removeSocket(protocol, isa);
+		HostImpl host = SimulationThread.currentSimulationThread().getHost();
+		host.getNetwork().networkMap.removeSocket(protocol, isa);
 	}
 
 	public SocketAddress getLocalSocketAddress() {

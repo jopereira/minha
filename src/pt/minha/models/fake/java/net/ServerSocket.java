@@ -46,7 +46,7 @@ public class ServerSocket extends AbstractSocket {
 		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress();
 		isa=this.checkSocket(isa);
-		this.localSocketAddress = World.network.networkMap.addTCPSocket(isa,upcalls);
+		this.localSocketAddress = host.getNetwork().networkMap.addTCPSocket(isa,upcalls);
 
 	}
 
@@ -59,7 +59,7 @@ public class ServerSocket extends AbstractSocket {
 		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress(port);
 		isa=this.checkSocket(isa);
-		this.localSocketAddress = World.network.networkMap.addTCPSocket(isa,upcalls);
+		this.localSocketAddress = host.getNetwork().networkMap.addTCPSocket(isa,upcalls);
 
     }
 	
@@ -73,10 +73,11 @@ public class ServerSocket extends AbstractSocket {
 			SimulationThread.currentSimulationThread().pause();
 		}
 
+		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		WakeAcceptEvent addresses = incomingAccept.remove(0);
 		Socket socket = new Socket(addresses.remote, addresses.local);
 		// inform client Socket that accept ended
-	    socket.connectedSocketKey = World.network.networkMap.SocketScheduleServerSocketAcceptDone(addresses.remote, addresses.local, socket.upcalls, addresses.cli);
+	    socket.connectedSocketKey = host.getNetwork().networkMap.SocketScheduleServerSocketAcceptDone(addresses.remote, addresses.local, socket.upcalls, addresses.cli);
 		socket.connected = true;
 		
 		if ( Log.network_tcp_log_enabled )
@@ -91,7 +92,8 @@ public class ServerSocket extends AbstractSocket {
     		return;
         closed = true;
         
-        World.network.networkMap.removeSocket(Protocol.TCP, this.localSocketAddress);
+		HostImpl host = SimulationThread.currentSimulationThread().getHost();
+        host.getNetwork().networkMap.removeSocket(Protocol.TCP, this.localSocketAddress);
         
         if ( Log.network_tcp_log_enabled )
         	Log.TCPdebug("ServerSocket close: "+this.localSocketAddress);

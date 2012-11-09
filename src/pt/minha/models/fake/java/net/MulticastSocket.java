@@ -24,6 +24,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import pt.minha.api.World;
+import pt.minha.models.local.HostImpl;
+import pt.minha.models.local.lang.SimulationThread;
 
 
 public class MulticastSocket extends DatagramSocket {
@@ -38,12 +40,14 @@ public class MulticastSocket extends DatagramSocket {
 	
 
     public void joinGroup(InetAddress addr) throws IOException {
+		HostImpl host = SimulationThread.currentSimulationThread().getHost();
     	InetSocketAddress mcastaddrport = new InetSocketAddress(addr, this.getLocalPort());
-    	World.network.addToGroup(mcastaddrport, upcalls);
+    	host.getNetwork().addToGroup(mcastaddrport, upcalls);
     }
 
     public void leaveGroup(InetAddress addr) throws IOException {
+		HostImpl host = SimulationThread.currentSimulationThread().getHost();
     	InetSocketAddress mcastaddrport = new InetSocketAddress(addr, this.getLocalPort());
-    	World.network.removeFromGroup(mcastaddrport, upcalls);
+    	host.getNetwork().removeFromGroup(mcastaddrport, upcalls);
     }
 }

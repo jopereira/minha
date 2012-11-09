@@ -26,7 +26,6 @@ import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.Network;
 import pt.minha.models.global.net.NetworkCalibration;
-import pt.minha.models.global.net.NetworkMap;
 
 /**
  * This is the main entry point for Minha. It provides a method to create
@@ -37,7 +36,7 @@ public class World {
 	
 	// FIXME: this should not be public nor static ------------------------
 	public static Timeline timeline;
-	public static Network network;
+	private Network network;
 	// --------------------------------------------------------------------
 	
 	public World() throws Exception {
@@ -73,7 +72,7 @@ public class World {
 	 * @throws SimulationException
 	 */
 	public Host createHost(String ip) throws SimulationException {
-		return new Host(cc, timeline, ip);
+		return new Host(cc, timeline, ip, network);
 	}
 
 	/**

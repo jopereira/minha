@@ -34,6 +34,7 @@ import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.global.net.TCPPacket;
 import pt.minha.models.global.net.TCPPacketAck;
 import pt.minha.models.global.net.TCPPacketData;
+import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class SocketInputStream extends InputStream {
@@ -115,7 +116,9 @@ public class SocketInputStream extends InputStream {
 				TCPPacketAck ack = new TCPPacketAck(this.socket.connectedSocketKey, p.getSn(), p.getSize());
 				if ( Log.network_tcp_stream_log_enabled )
 					Log.TCPdebug("SocketInputStream acknowledge: "+ack.getSn()+" to "+ack.getKey()+" "+ack.getType());
-				World.network.acknowledge(ack);
+				HostImpl host = SimulationThread.currentSimulationThread().getHost();
+
+				host.getNetwork().acknowledge(ack);
 
 				byte[] data = ((TCPPacketData)p).getData();
 				for (int i=0; i<data.length; i++) {

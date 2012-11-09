@@ -47,7 +47,7 @@ public class DatagramSocket extends AbstractSocket {
 		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress();
 		isa=this.checkSocket(isa);
-		this.localSocketAddress = World.network.networkMap.addUDPSocket(isa,upcalls);
+		this.localSocketAddress = host.getNetwork().networkMap.addUDPSocket(isa,upcalls);
 	}
 	
 	
@@ -55,7 +55,7 @@ public class DatagramSocket extends AbstractSocket {
 		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress(port);
 		isa=this.checkSocket(isa);
-		this.localSocketAddress = World.network.networkMap.addUDPSocket(isa,upcalls);
+		this.localSocketAddress = host.getNetwork().networkMap.addUDPSocket(isa,upcalls);
 	}
 
 	public DatagramSocket(int port, InetAddress address) throws SocketException {
@@ -70,15 +70,17 @@ public class DatagramSocket extends AbstractSocket {
 		try {
 			SimulationThread.stopTime(NetworkCalibration.writeCost*packet.getLength());
 			
+			HostImpl host = SimulationThread.currentSimulationThread().getHost();
+
 			if (packet.getAddress().isMulticastAddress()) {
-				World.network.MulticastSocketQueue((InetSocketAddress)this.getLocalSocketAddress(), packet);
+				host.getNetwork().MulticastSocketQueue((InetSocketAddress)this.getLocalSocketAddress(), packet);
 			}
 			else {
 				InetSocketAddress destination = new InetSocketAddress(packet.getAddress(),packet.getPort());
 				byte[] data = new byte[packet.getLength()];
 				System.arraycopy(packet.getData(), packet.getOffset(), data, 0, data.length);
 				DatagramPacket dp = new DatagramPacket(data, data.length, this.getLocalSocketAddress());
-				World.network.send(destination, dp);
+				host.getNetwork().send(destination, dp);
 			}
 
 		} finally  {

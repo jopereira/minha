@@ -25,6 +25,7 @@ import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.instrument.InstrumentationLoader;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.HostInterface;
+import pt.minha.models.global.net.Network;
 
 /**
  * A host running within the Minha simulated world. 
@@ -33,13 +34,13 @@ public class Host {
 	InstrumentationLoader loader;
 	HostInterface impl;
 
-	Host(ClassConfig cc, Timeline timeline, String ip) throws SimulationException {
+	Host(ClassConfig cc, Timeline timeline, String ip, Network network) throws SimulationException {
 
 		loader=new InstrumentationLoader(cc);
 		
 		try {
 			Class<?> clz = loader.loadClass("pt.minha.models.local.HostImpl");
-			impl = (HostInterface)clz.getDeclaredConstructor(timeline.getClass(), String.class).newInstance(timeline, ip);
+			impl = (HostInterface)clz.getDeclaredConstructor(timeline.getClass(), String.class, Network.class).newInstance(timeline, ip, network);
 		} catch(Exception e) {
 			throw new SimulationException(e);
 		}
