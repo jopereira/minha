@@ -46,7 +46,7 @@ public class ServerSocket extends AbstractSocket {
 		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress();
 		isa=this.checkSocket(isa);
-		this.localSocketAddress = World.networkMap.addTCPSocket(isa,upcalls);
+		this.localSocketAddress = World.network.networkMap.addTCPSocket(isa,upcalls);
 
 	}
 
@@ -59,7 +59,7 @@ public class ServerSocket extends AbstractSocket {
 		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress(port);
 		isa=this.checkSocket(isa);
-		this.localSocketAddress = World.networkMap.addTCPSocket(isa,upcalls);
+		this.localSocketAddress = World.network.networkMap.addTCPSocket(isa,upcalls);
 
     }
 	
@@ -76,7 +76,7 @@ public class ServerSocket extends AbstractSocket {
 		WakeAcceptEvent addresses = incomingAccept.remove(0);
 		Socket socket = new Socket(addresses.remote, addresses.local);
 		// inform client Socket that accept ended
-	    socket.connectedSocketKey = World.networkMap.SocketScheduleServerSocketAcceptDone(addresses.remote, addresses.local, socket.upcalls, addresses.cli);
+	    socket.connectedSocketKey = World.network.networkMap.SocketScheduleServerSocketAcceptDone(addresses.remote, addresses.local, socket.upcalls, addresses.cli);
 		socket.connected = true;
 		
 		if ( Log.network_tcp_log_enabled )
@@ -91,7 +91,7 @@ public class ServerSocket extends AbstractSocket {
     		return;
         closed = true;
         
-        World.networkMap.removeSocket(Protocol.TCP, this.localSocketAddress);
+        World.network.networkMap.removeSocket(Protocol.TCP, this.localSocketAddress);
         
         if ( Log.network_tcp_log_enabled )
         	Log.TCPdebug("ServerSocket close: "+this.localSocketAddress);

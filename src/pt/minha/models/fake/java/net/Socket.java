@@ -104,7 +104,7 @@ public class Socket extends AbstractSocket {
 		SimulationThread.stopTime(0);
 		
 		// connect to ServerSocket
-		this.connectedSocketKey = World.networkMap.ServerSocketConnect(this.remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), upcalls);
+		this.connectedSocketKey = World.network.networkMap.ServerSocketConnect(this.remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), upcalls);
 	    this.connected = true;
 	    
 		if (doneConnect==0) {
@@ -175,7 +175,7 @@ public class Socket extends AbstractSocket {
 	        else
 	        	localConnectedSocketKey += "-client";
 	        
-	        World.networkMap.removeConnectedSocket(localConnectedSocketKey);
+	        World.network.networkMap.removeConnectedSocket(localConnectedSocketKey);
 	        
 	        if ( Log.network_tcp_log_enabled )
 	        	Log.TCPdebug("Socket close: "+this.connectedSocketKey);

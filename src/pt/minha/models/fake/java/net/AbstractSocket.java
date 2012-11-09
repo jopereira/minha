@@ -69,7 +69,7 @@ public abstract class AbstractSocket {
 	}*/
 	
 	protected void removeSocket(Protocol protocol, InetSocketAddress isa) {
-		World.networkMap.removeSocket(protocol, isa);
+		World.network.networkMap.removeSocket(protocol, isa);
 	}
 
 	public SocketAddress getLocalSocketAddress() {

@@ -47,7 +47,7 @@ public class DatagramSocket extends AbstractSocket {
 		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress();
 		isa=this.checkSocket(isa);
-		this.localSocketAddress = World.networkMap.addUDPSocket(isa,upcalls);
+		this.localSocketAddress = World.network.networkMap.addUDPSocket(isa,upcalls);
 	}
 	
 	
@@ -55,7 +55,7 @@ public class DatagramSocket extends AbstractSocket {
 		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress(port);
 		isa=this.checkSocket(isa);
-		this.localSocketAddress = World.networkMap.addUDPSocket(isa,upcalls);
+		this.localSocketAddress = World.network.networkMap.addUDPSocket(isa,upcalls);
 	}
 
 	public DatagramSocket(int port, InetAddress address) throws SocketException {

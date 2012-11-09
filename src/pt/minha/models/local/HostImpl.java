@@ -54,13 +54,13 @@ public class HostImpl implements HostInterface {
 		
 	public HostImpl(Timeline timeline, String host) throws UnknownHostException, FileNotFoundException {
 		if ( host != null )
-			this.localAddress = World.networkMap.addHost(host);
+			this.localAddress = World.network.networkMap.addHost(host);
 		else
-			this.localAddress = World.networkMap.getAvailableInetAddress();
+			this.localAddress = World.network.networkMap.getAvailableInetAddress();
 		
 		this.cpu = new Resource(timeline, host);
 		
-		this.macAddress = World.networkMap.generateMACAddress();
+		this.macAddress = World.network.networkMap.generateMACAddress();
 		this.networkInterfaces.add(new NetworkInterface(macAddress, localAddress));
 	}
 	

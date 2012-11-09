@@ -35,6 +35,8 @@ import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.util.PropertiesLoader;
 
 public class Network {
+	public static NetworkMap networkMap;
+	
 	private final long BUFFER = 128*1024;
 	private final long BANDWIDTH = NetworkCalibration.networkBandwidth/8; // bytes
 	private final long RESOLUTION = 40000; // 40 us;
@@ -45,6 +47,18 @@ public class Network {
 	private boolean wakeEventEnabled = false;
 	
 	private final LinkedList<TCPPacket> queue = new LinkedList<TCPPacket>();
+	
+	public Network() {
+		networkMap = new NetworkMap();
+		try {
+			PropertiesLoader conf = new PropertiesLoader(Logger.LOG_CONF_FILENAME);
+			bandwidth_log_enabled = Boolean.parseBoolean(conf.getProperty("network.bandwith.log"));
+			if ( bandwidth_log_enabled )
+				bandwidthLoggerEvent = new BandwidthLoggerEvent();
+		} catch (Exception e) {
+			// log will be disabled
+		}
+	}
 	
 	/*
 	 * TCP
@@ -61,7 +75,7 @@ public class Network {
 		
 		if ( Log.network_tcp_stream_log_enabled )
 			Log.TCPdebug("Network send: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
-		World.networkMap.SocketScheduleRead(p.getKey(), p);
+		networkMap.SocketScheduleRead(p.getKey(), p);
 		current_bandwidth += p.getSize();
 		if ( bandwidth_log_enabled )
 			bandwidth_log += p.getSize();
@@ -82,7 +96,7 @@ public class Network {
 		if  ( (current_bandwidth+p.getLength()) > BUFFER )
 			return;
 		
-		World.networkMap.DatagramPacketQueue(destination, p);
+		networkMap.DatagramPacketQueue(destination, p);
 		current_bandwidth += p.getLength();
 		if ( bandwidth_log_enabled )
 			bandwidth_log += p.getLength();
@@ -99,7 +113,7 @@ public class Network {
 		if ( Log.network_tcp_stream_log_enabled )
 			Log.TCPdebug("Network acknowledge: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
 		
-		World.networkMap.SocketAcknowledge(p.getKey(), p);
+		networkMap.SocketAcknowledge(p.getKey(), p);
 	}
 	
 	
@@ -124,7 +138,7 @@ public class Network {
 					try {
 						if ( Log.network_tcp_stream_log_enabled )
 							Log.TCPdebug("Network send from queue: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
-						World.networkMap.SocketScheduleRead(p.getKey(), p);
+						networkMap.SocketScheduleRead(p.getKey(), p);
 						queue.remove(0);
 						current_bandwidth += p.getSize();
 						if ( bandwidth_log_enabled )
@@ -197,17 +211,6 @@ public class Network {
 	private BandwidthLoggerEvent bandwidthLoggerEvent;
 	private boolean bandwidth_log_enabled = false;
 	
-	
-	public Network() {
-		try {
-			PropertiesLoader conf = new PropertiesLoader(Logger.LOG_CONF_FILENAME);
-			bandwidth_log_enabled = Boolean.parseBoolean(conf.getProperty("network.bandwith.log"));
-			if ( bandwidth_log_enabled )
-				bandwidthLoggerEvent = new BandwidthLoggerEvent();
-		} catch (Exception e) {
-			// log will be disabled
-		}
-	}
 	
 	private class BandwidthLoggerEvent extends Event {
 		private Logger logger;

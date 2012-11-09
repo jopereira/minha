@@ -37,7 +37,6 @@ public class World {
 	
 	// FIXME: this should not be public nor static ------------------------
 	public static Timeline timeline;
-	public static NetworkMap networkMap;
 	public static Network network;
 	// --------------------------------------------------------------------
 	
@@ -63,7 +62,6 @@ public class World {
 		cc = new ClassConfig(props);
 		timeline = new Timeline(simulationTime);
 		
-		networkMap = new NetworkMap();
 		network = new Network();
 	}
 	
