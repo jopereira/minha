@@ -30,11 +30,11 @@ import java.util.List;
 import java.util.Set;
 
 import pt.minha.api.SimulationException;
+import pt.minha.api.World;
 import pt.minha.kernel.simulation.Resource;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.fake.java.net.NetworkInterface;
 import pt.minha.models.global.HostInterface;
-import pt.minha.models.global.net.NetworkMap;
 import pt.minha.models.local.lang.SimulationThread;
 
 
@@ -54,13 +54,13 @@ public class HostImpl implements HostInterface {
 		
 	public HostImpl(Timeline timeline, String host) throws UnknownHostException, FileNotFoundException {
 		if ( host != null )
-			this.localAddress = NetworkMap.addHost(host);
+			this.localAddress = World.networkMap.addHost(host);
 		else
-			this.localAddress = NetworkMap.getAvailableInetAddress();
+			this.localAddress = World.networkMap.getAvailableInetAddress();
 		
 		this.cpu = new Resource(timeline, host);
 		
-		this.macAddress = NetworkMap.generateMACAddress();
+		this.macAddress = World.networkMap.generateMACAddress();
 		this.networkInterfaces.add(new NetworkInterface(macAddress, localAddress));
 	}
 	

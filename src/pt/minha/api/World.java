@@ -25,6 +25,7 @@ import java.util.Properties;
 import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.NetworkCalibration;
+import pt.minha.models.global.net.NetworkMap;
 
 /**
  * This is the main entry point for Minha. It provides a method to create
@@ -32,7 +33,11 @@ import pt.minha.models.global.net.NetworkCalibration;
  */
 public class World {
 	private ClassConfig cc;
-	public static Timeline timeline; // FIXME: this should not be public nor static
+	
+	// FIXME: this should not be public nor static ------------------------
+	public static Timeline timeline;
+	public static NetworkMap networkMap = new NetworkMap();
+	// --------------------------------------------------------------------
 	
 	public World() throws Exception {
 		if (timeline!=null)

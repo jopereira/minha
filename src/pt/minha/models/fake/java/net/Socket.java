@@ -32,7 +32,6 @@ import java.util.List;
 import pt.minha.api.World;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.models.global.net.Log;
-import pt.minha.models.global.net.NetworkMap;
 import pt.minha.models.global.net.Protocol;
 import pt.minha.models.global.net.SocketInterface;
 import pt.minha.models.global.net.TCPPacket;
@@ -93,7 +92,7 @@ public class Socket extends AbstractSocket implements SocketInterface {
         if ( !this.existsSocket(Protocol.TCP, epoint) )
         	throw new IOException("connect: unable to connect to " + epoint.toString());
         
-        if (!(NetworkMap.isServerSocket(epoint)))
+        if (!(World.networkMap.isServerSocket(epoint)))
         	throw new IOException("connect: unable to connect to " + epoint.toString() + ", is not a ServerSocket");
         
         this.remoteSocketAddress = epoint;
@@ -102,7 +101,7 @@ public class Socket extends AbstractSocket implements SocketInterface {
 		SimulationThread.stopTime(0);
 		
 		// connect to ServerSocket
-		this.connectedSocketKey = NetworkMap.ServerSocketConnect(this.remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), this);
+		this.connectedSocketKey = World.networkMap.ServerSocketConnect(this.remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), this);
 	    this.connected = true;
 	    
 		if (doneConnect==0) {
@@ -186,9 +185,9 @@ public class Socket extends AbstractSocket implements SocketInterface {
 	        else
 	        	localConnectedSocketKey += "-client";
 	        
-	        NetworkMap.removeConnectedSocket(localConnectedSocketKey);
-	        if ( !NetworkMap.isServerSocket(this.localSocketAddress) )
-	        	NetworkMap.removeSocket(Protocol.TCP, this.localSocketAddress);
+	        World.networkMap.removeConnectedSocket(localConnectedSocketKey);
+	        if ( !World.networkMap.isServerSocket(this.localSocketAddress) )
+	        	World.networkMap.removeSocket(Protocol.TCP, this.localSocketAddress);
 	        
 	        if ( Log.network_tcp_log_enabled )
 	        	Log.TCPdebug("Socket close: "+this.connectedSocketKey);
@@ -244,10 +243,10 @@ public class Socket extends AbstractSocket implements SocketInterface {
 	}
 	
 	public int getRemoteSocketInputStreamSN() throws IOException {
-		return NetworkMap.getSocketInputStreamSN(this.connectedSocketKey);
+		return World.networkMap.getSocketInputStreamSN(this.connectedSocketKey);
 	}
 	
 	public int getRemoteSocketOutputStreamSN() throws IOException {
-		return NetworkMap.getSocketOutputStreamSN(this.connectedSocketKey);
+		return World.networkMap.getSocketOutputStreamSN(this.connectedSocketKey);
 	}
 }

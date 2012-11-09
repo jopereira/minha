@@ -29,7 +29,6 @@ import java.util.List;
 import pt.minha.api.World;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.models.global.net.Log;
-import pt.minha.models.global.net.NetworkMap;
 import pt.minha.models.global.net.Protocol;
 import pt.minha.models.global.net.ServerSocketInterface;
 import pt.minha.models.local.HostImpl;
@@ -71,7 +70,7 @@ public class ServerSocket extends AbstractSocket implements ServerSocketInterfac
 		InetSocketAddress[] addresses = incomingAccept.remove(0);
 		Socket socket = new Socket(addresses[1], addresses[0]);
 		// inform client Socket that accept ended
-	    socket.connectedSocketKey = NetworkMap.SocketScheduleServerSocketAcceptDone(addresses[1], addresses[0], socket);
+	    socket.connectedSocketKey = World.networkMap.SocketScheduleServerSocketAcceptDone(addresses[1], addresses[0], socket);
 		socket.connected = true;
 		
 		if ( Log.network_tcp_log_enabled )
@@ -86,7 +85,7 @@ public class ServerSocket extends AbstractSocket implements ServerSocketInterfac
     		return;
         closed = true;
         
-        NetworkMap.removeSocket(Protocol.TCP, this.localSocketAddress);
+        World.networkMap.removeSocket(Protocol.TCP, this.localSocketAddress);
         
         if ( Log.network_tcp_log_enabled )
         	Log.TCPdebug("ServerSocket close: "+this.localSocketAddress);

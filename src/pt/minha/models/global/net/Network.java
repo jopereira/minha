@@ -57,7 +57,7 @@ public class Network {
 		
 		if ( Log.network_tcp_stream_log_enabled )
 			Log.TCPdebug("Network send: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
-		NetworkMap.SocketScheduleRead(p.getKey(), p);
+		World.networkMap.SocketScheduleRead(p.getKey(), p);
 		current_bandwidth += p.getSize();
 		if ( bandwidth_log_enabled )
 			bandwidth_log += p.getSize();
@@ -78,7 +78,7 @@ public class Network {
 		if  ( (current_bandwidth+p.getLength()) > BUFFER )
 			return;
 		
-		NetworkMap.DatagramPacketQueue(destination, p);
+		World.networkMap.DatagramPacketQueue(destination, p);
 		current_bandwidth += p.getLength();
 		if ( bandwidth_log_enabled )
 			bandwidth_log += p.getLength();
@@ -95,7 +95,7 @@ public class Network {
 		if ( Log.network_tcp_stream_log_enabled )
 			Log.TCPdebug("Network acknowledge: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
 		
-		NetworkMap.SocketAcknowledge(p.getKey(), p);
+		World.networkMap.SocketAcknowledge(p.getKey(), p);
 	}
 	
 	
@@ -120,7 +120,7 @@ public class Network {
 					try {
 						if ( Log.network_tcp_stream_log_enabled )
 							Log.TCPdebug("Network send from queue: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
-						NetworkMap.SocketScheduleRead(p.getKey(), p);
+						World.networkMap.SocketScheduleRead(p.getKey(), p);
 						queue.remove(0);
 						current_bandwidth += p.getSize();
 						if ( bandwidth_log_enabled )
