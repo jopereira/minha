@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
+import pt.minha.api.World;
 import pt.minha.models.global.net.MulticastSocketInterface;
 import pt.minha.models.global.net.MulticastSocketMap;
 
@@ -40,11 +41,11 @@ public class MulticastSocket extends DatagramSocket implements MulticastSocketIn
 
     public void joinGroup(InetAddress addr) throws IOException {
     	InetSocketAddress mcastaddrport = new InetSocketAddress(addr, this.getLocalPort());
-    	MulticastSocketMap.add(mcastaddrport, this);
+    	World.mcastMap.add(mcastaddrport, this);
     }
 
     public void leaveGroup(InetAddress addr) throws IOException {
     	InetSocketAddress mcastaddrport = new InetSocketAddress(addr, this.getLocalPort());
-    	MulticastSocketMap.remove(mcastaddrport, this);
+    	World.mcastMap.remove(mcastaddrport, this);
     }
 }

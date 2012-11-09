@@ -32,10 +32,10 @@ import java.util.Map;
 
 public class MulticastSocketMap {
 	// multicast address:port -> [Multicast Sockets]
-	private static final Map<InetSocketAddress, List<MulticastSocketInterface>> multicastSockets = new HashMap<InetSocketAddress, List<MulticastSocketInterface>>();
+	private final Map<InetSocketAddress, List<MulticastSocketInterface>> multicastSockets = new HashMap<InetSocketAddress, List<MulticastSocketInterface>>();
 
 	
-	public static void add(InetSocketAddress mcastaddr, MulticastSocketInterface ms) throws IOException {
+	public void add(InetSocketAddress mcastaddr, MulticastSocketInterface ms) throws IOException {
 		if ( !multicastSockets.containsKey(mcastaddr) )
 			multicastSockets.put(mcastaddr, new LinkedList<MulticastSocketInterface>());
 		
@@ -45,7 +45,7 @@ public class MulticastSocketMap {
 	}
 	
 	
-	public static void remove(InetSocketAddress mcastaddr, MulticastSocketInterface ms) throws IOException {
+	public void remove(InetSocketAddress mcastaddr, MulticastSocketInterface ms) throws IOException {
     	if (multicastSockets.containsKey(mcastaddr)) {
     		if ( !multicastSockets.get(mcastaddr).remove(ms) )
     			throw new IOException("MulticastSocket '"+ms+"' is not in group '"+mcastaddr+"'");
@@ -55,13 +55,13 @@ public class MulticastSocketMap {
 	}
 	
 	
-	public static boolean contains(InetSocketAddress mcastaddr) {
+	public boolean contains(InetSocketAddress mcastaddr) {
 		return multicastSockets.containsKey(mcastaddr);
 	}
 	
 	
 	// Stub method to send messages between sockets
-	public static void MulticastSocketQueue(InetSocketAddress source, DatagramPacket packet) throws SocketException {
+	public void MulticastSocketQueue(InetSocketAddress source, DatagramPacket packet) throws SocketException {
 		List<MulticastSocketInterface> targets = multicastSockets.get(packet.getSocketAddress());
 		if ( null == targets )
 			return;

@@ -24,6 +24,7 @@ import java.util.Properties;
 
 import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.simulation.Timeline;
+import pt.minha.models.global.net.MulticastSocketMap;
 import pt.minha.models.global.net.Network;
 import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.global.net.NetworkMap;
@@ -38,6 +39,7 @@ public class World {
 	// FIXME: this should not be public nor static ------------------------
 	public static Timeline timeline;
 	public static NetworkMap networkMap;
+	public static MulticastSocketMap mcastMap;
 	public static Network network;
 	// --------------------------------------------------------------------
 	
@@ -64,6 +66,7 @@ public class World {
 		timeline = new Timeline(simulationTime);
 		
 		networkMap = new NetworkMap();
+		mcastMap = new MulticastSocketMap();
 		network = new Network();
 	}
 	
