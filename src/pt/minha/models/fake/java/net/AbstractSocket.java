@@ -33,7 +33,7 @@ import pt.minha.models.local.lang.SimulationThread;
 public abstract class AbstractSocket {
 	protected InetSocketAddress localSocketAddress;
 	
-	protected void addSocket(Protocol protocol, InetSocketAddress isa, AbstractSocket ab) throws SocketException {
+	protected InetSocketAddress checkSocket(InetSocketAddress isa) throws SocketException {
 		if ( null == isa )
 			throw new IllegalArgumentException("bind: null address");
 		if ( isa.getPort() < 0 || isa.getPort()> 0xFFFF )
@@ -56,18 +56,17 @@ public abstract class AbstractSocket {
 				throw new IllegalArgumentException(e);
 			}
 		}
-		
-		this.localSocketAddress = World.networkMap.addSocket(protocol, isa, ab);
+		return isa;
 	}
 	
-	protected boolean existsSocket(Protocol protocol, InetSocketAddress isa) {
+	/*protected boolean existsSocket(Protocol protocol, InetSocketAddress isa) {
 		if ( isa.getAddress().isLoopbackAddress() ) {
 			HostImpl host = SimulationThread.currentSimulationThread().getHost();
 			isa = new InetSocketAddress(host.getLocalAddress(), isa.getPort());
 		}
 		
 		return World.networkMap.existsSocket(protocol, isa);
-	}
+	}*/
 	
 	protected void removeSocket(Protocol protocol, InetSocketAddress isa) {
 		World.networkMap.removeSocket(protocol, isa);

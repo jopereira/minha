@@ -31,19 +31,23 @@ import pt.minha.kernel.simulation.Event;
 import pt.minha.models.global.net.Log;
 import pt.minha.models.global.net.Protocol;
 import pt.minha.models.global.net.ServerSocketUpcalls;
+import pt.minha.models.global.net.SocketUpcalls;
 import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
-public class ServerSocket extends AbstractSocket implements ServerSocketUpcalls {
+public class ServerSocket extends AbstractSocket {
 	
-	private final List<InetSocketAddress[]> incomingAccept = new LinkedList<InetSocketAddress[]>();
+	private final List<WakeAcceptEvent> incomingAccept = new LinkedList<WakeAcceptEvent>();
 	private final List<Event> blockedAccept = new LinkedList<Event>();
 	private boolean closed = false;
+	private ServerSocketUpcalls upcalls = new Upcalls();
 	
 	public ServerSocket() throws IOException {
 		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress();
-		this.addSocket(Protocol.TCP, isa, this);
+		isa=this.checkSocket(isa);
+		this.localSocketAddress = World.networkMap.addTCPSocket(isa,upcalls);
+
 	}
 
 	public ServerSocket(int port, int backlog, InetAddress address) throws IOException {
@@ -54,7 +58,9 @@ public class ServerSocket extends AbstractSocket implements ServerSocketUpcalls 
 	public ServerSocket(int port) throws IOException {
 		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress(port);
-		this.addSocket(Protocol.TCP, isa, this);
+		isa=this.checkSocket(isa);
+		this.localSocketAddress = World.networkMap.addTCPSocket(isa,upcalls);
+
     }
 	
     public Socket accept() throws IOException {
@@ -67,10 +73,10 @@ public class ServerSocket extends AbstractSocket implements ServerSocketUpcalls 
 			SimulationThread.currentSimulationThread().pause();
 		}
 
-		InetSocketAddress[] addresses = incomingAccept.remove(0);
-		Socket socket = new Socket(addresses[1], addresses[0]);
+		WakeAcceptEvent addresses = incomingAccept.remove(0);
+		Socket socket = new Socket(addresses.remote, addresses.local);
 		// inform client Socket that accept ended
-	    socket.connectedSocketKey = World.networkMap.SocketScheduleServerSocketAcceptDone(addresses[1], addresses[0], socket);
+	    socket.connectedSocketKey = World.networkMap.SocketScheduleServerSocketAcceptDone(addresses.remote, addresses.local, socket.upcalls, addresses.cli);
 		socket.connected = true;
 		
 		if ( Log.network_tcp_log_enabled )
@@ -92,33 +98,34 @@ public class ServerSocket extends AbstractSocket implements ServerSocketUpcalls 
 	}
     
 	private class WakeAcceptEvent extends Event {
-		private InetSocketAddress local;
-		private InetSocketAddress remote;
+		public InetSocketAddress local;
+		public InetSocketAddress remote;
+		public SocketUpcalls cli;
 
-		public WakeAcceptEvent(InetSocketAddress local, InetSocketAddress remote) {
+		public WakeAcceptEvent(InetSocketAddress local, InetSocketAddress remote, SocketUpcalls cli) {
 			super(World.timeline);
 			this.local = local;
 			this.remote = remote;
+			this.cli = cli;
 		}
 
 		public void run() {
-			wakeAccept(this.local, this.remote);
+			incomingAccept.add(this);
+			if (!blockedAccept.isEmpty())
+				blockedAccept.remove(0).schedule(0);
 		}
 	}
 
-	private void wakeAccept(InetSocketAddress local, InetSocketAddress remote) {
-		InetSocketAddress[] addresses = new InetSocketAddress[]{local, remote};
-		incomingAccept.add(addresses);
-		if (!blockedAccept.isEmpty())
-			blockedAccept.remove(0).schedule(0);
-	}
-		
-	public void queueConnect(InetSocketAddress local, InetSocketAddress remote) {
-		new WakeAcceptEvent(local, remote).schedule(100000);
-	}
-    
     public String toString() {
         return "ServerSocket[addr=" + this.getLocalAddress() +
                 ",localport=" + this.getLocalPort()  + "]";
     }
+
+    private class Upcalls implements ServerSocketUpcalls {
+		public void queueConnect(InetSocketAddress local, InetSocketAddress remote, SocketUpcalls cli) {
+			new WakeAcceptEvent(local, remote, cli).schedule(100000);
+		}
+    }
+    
+
 }

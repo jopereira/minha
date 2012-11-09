@@ -23,5 +23,5 @@ import java.net.InetSocketAddress;
 
 
 public interface ServerSocketUpcalls {
-	public void queueConnect(InetSocketAddress local, InetSocketAddress remote);
+	public void queueConnect(InetSocketAddress local, InetSocketAddress remote, SocketUpcalls client);
 }

@@ -32,19 +32,19 @@ import java.util.List;
 import pt.minha.api.World;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.models.global.net.Log;
-import pt.minha.models.global.net.Protocol;
 import pt.minha.models.global.net.SocketUpcalls;
 import pt.minha.models.global.net.TCPPacket;
 import pt.minha.models.global.net.TCPPacketAck;
 import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
-public class Socket extends AbstractSocket implements SocketUpcalls {
+public class Socket extends AbstractSocket {
 	private int doneConnect = 0;
 	private List<Event> blockedConnect = new LinkedList<Event>();
 	private SocketInputStream in;
 	private SocketOutputStream out;	
 	private InetSocketAddress remoteSocketAddress;
+	final SocketUpcalls upcalls = new Upcalls();
 	
 	protected boolean connected = false;
 	protected String connectedSocketKey;
@@ -56,7 +56,9 @@ public class Socket extends AbstractSocket implements SocketUpcalls {
 		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress();
 
-		this.addSocket(Protocol.TCP, isa, this);		
+		isa=this.checkSocket(isa);
+		this.localSocketAddress = isa;
+
 		this.in = new SocketInputStream(this);
 		this.out = new SocketOutputStream(this);
 
@@ -89,19 +91,20 @@ public class Socket extends AbstractSocket implements SocketUpcalls {
 			throw new SocketException("connect on closed socket");
         
         InetSocketAddress epoint = (InetSocketAddress) endpoint;
+        /* FIXME: These validations cannot be deleted, but should use local info
         if ( !this.existsSocket(Protocol.TCP, epoint) )
         	throw new IOException("connect: unable to connect to " + epoint.toString());
         
         if (!(World.networkMap.isServerSocket(epoint)))
         	throw new IOException("connect: unable to connect to " + epoint.toString() + ", is not a ServerSocket");
-        
+        */
         this.remoteSocketAddress = epoint;
         
 		// wait to ServerSocket.accept() end
 		SimulationThread.stopTime(0);
 		
 		// connect to ServerSocket
-		this.connectedSocketKey = World.networkMap.ServerSocketConnect(this.remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), this);
+		this.connectedSocketKey = World.networkMap.ServerSocketConnect(this.remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), upcalls);
 	    this.connected = true;
 	    
 		if (doneConnect==0) {
@@ -173,8 +176,6 @@ public class Socket extends AbstractSocket implements SocketUpcalls {
 	        	localConnectedSocketKey += "-client";
 	        
 	        World.networkMap.removeConnectedSocket(localConnectedSocketKey);
-	        if ( !World.networkMap.isServerSocket(this.localSocketAddress) )
-	        	World.networkMap.removeSocket(Protocol.TCP, this.localSocketAddress);
 	        
 	        if ( Log.network_tcp_log_enabled )
 	        	Log.TCPdebug("Socket close: "+this.connectedSocketKey);
@@ -198,11 +199,7 @@ public class Socket extends AbstractSocket implements SocketUpcalls {
 		if (!blockedConnect.isEmpty())
 			blockedConnect.remove(0).schedule(0);
 	}
-	
-	public void accepted() {
-		new WakeConnectEvent().schedule(0);
-	}
-        
+	        
 	private class WakeConnectEvent extends Event {
 		public WakeConnectEvent() {
 			super(World.timeline);
@@ -212,12 +209,18 @@ public class Socket extends AbstractSocket implements SocketUpcalls {
 			wakeConnect();
 		}
 	}
+
+	private class Upcalls implements SocketUpcalls {
+		public void accepted() {
+			new WakeConnectEvent().schedule(0);
+		}
 	
-	public void scheduleRead(TCPPacket p) {
-		this.in.scheduleRead(p);
-	}
-	
-	public void acknowledge(TCPPacketAck p) {
-		this.out.acknowledge(p);
+		public void scheduleRead(TCPPacket p) {
+			in.scheduleRead(p);
+		}
+		
+		public void acknowledge(TCPPacketAck p) {
+			out.acknowledge(p);
+		}
 	}
 }

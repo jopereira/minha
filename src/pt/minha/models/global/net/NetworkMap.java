@@ -35,9 +35,9 @@ import java.util.Random;
 public class NetworkMap {
 	private final Random random = new Random();
 	private final List<InetAddress> hosts = new LinkedList<InetAddress>();
-	private final Map<InetSocketAddress, Object> socketsUDP = new HashMap<InetSocketAddress, Object>();
-	private final Map<InetSocketAddress, Object> socketsTCP = new HashMap<InetSocketAddress, Object>();
-	private final Map<String, Object> connectedSocketsTCP = new HashMap<String, Object>();
+	private final Map<InetSocketAddress, DatagramSocketUpcalls> socketsUDP = new HashMap<InetSocketAddress, DatagramSocketUpcalls>();
+	private final Map<InetSocketAddress, ServerSocketUpcalls> socketsTCP = new HashMap<InetSocketAddress, ServerSocketUpcalls>();
+	private final Map<String, SocketUpcalls> connectedSocketsTCP = new HashMap<String, SocketUpcalls>();
 
 	// IP generation
 	private int ip1 = 10;
@@ -117,27 +117,24 @@ public class NetworkMap {
 	}
 
 	
-	public InetSocketAddress addSocket(Protocol protocol, InetSocketAddress isa, Object ab) throws SocketException {
-		switch (protocol) {
-		case UDP:
-			if ( socketsUDP.containsKey(isa) )
-				throw new BindException(isa.toString() + " Cannot assign requested address on "+protocol);
+	public InetSocketAddress addTCPSocket(InetSocketAddress isa, ServerSocketUpcalls ab) throws SocketException {
+		if ( socketsTCP.containsKey(isa) )
+			throw new BindException(isa.toString() + " Cannot assign requested address on TCP");
 
-			socketsUDP.put(isa, ab);
-			return isa;
-		case TCP:
-			if ( socketsTCP.containsKey(isa) )
-				throw new BindException(isa.toString() + " Cannot assign requested address on "+protocol);
+		socketsTCP.put(isa, ab);
+		return isa;
+	}
 
-			socketsTCP.put(isa, ab);
-			return isa;
-		default:
-			throw new BindException(isa.toString() + " Cannot assign requested address on "+protocol);
-		}
+	public InetSocketAddress addUDPSocket(InetSocketAddress isa, DatagramSocketUpcalls ab) throws SocketException {
+		if ( socketsUDP.containsKey(isa) )
+			throw new BindException(isa.toString() + " Cannot assign requested address on UDP");
+
+		socketsUDP.put(isa, ab);
+		return isa;
 	}
 
 	
-	public boolean existsSocket(Protocol protocol, InetSocketAddress isa) {
+	/*public boolean existsSocket(Protocol protocol, InetSocketAddress isa) {
 		switch (protocol) {
 		case UDP:
 			return socketsUDP.containsKey(isa);
@@ -146,7 +143,7 @@ public class NetworkMap {
 		default:
 			return false;
 		}
-	}
+	}*/
 
 
 	public void removeSocket(Protocol protocol, InetSocketAddress isa) {
@@ -163,15 +160,14 @@ public class NetworkMap {
 	
 	
 	protected void DatagramPacketQueue(InetSocketAddress destination, DatagramPacket packet) {
-		Object o = socketsUDP.get(destination);
-		if ( null!=o && containsInterface(o, DatagramSocketUpcalls.class) ) {
-			DatagramSocketUpcalls sgds = (DatagramSocketUpcalls) o;
+		DatagramSocketUpcalls sgds = socketsUDP.get(destination);
+		if ( null!=sgds ) {
 			sgds.queue(packet);
 		}
 	}
 	
 	
-	public boolean isServerSocket(InetSocketAddress destination) {
+	/*public boolean isServerSocket(InetSocketAddress destination) {
 		Object o = socketsTCP.get(destination);
 		if ( null != o ) {
 			if ( containsInterface(o, ServerSocketUpcalls.class) )
@@ -179,14 +175,12 @@ public class NetworkMap {
 		}
 
 		return false;
-	}
+	}*/
 	
-	
-	public String ServerSocketConnect(InetSocketAddress destination, InetSocketAddress source, Object clientSocket) throws IOException {
-		Object o = socketsTCP.get(destination);
-		if ( null!=o && containsInterface(o, ServerSocketUpcalls.class) ) {
-			ServerSocketUpcalls ssi = (ServerSocketUpcalls) o;
-			ssi.queueConnect(destination, source);
+	public String ServerSocketConnect(InetSocketAddress destination, InetSocketAddress source, SocketUpcalls clientSocket) throws IOException {
+		ServerSocketUpcalls ssi = socketsTCP.get(destination);
+		if ( null!=ssi ) {
+			ssi.queueConnect(destination, source, clientSocket);
 			
 			// register socket between client socket and server socket
 			String connectedSocketKeyPrefix = "["+destination.getAddress().getHostAddress()+":"+destination.getPort()+"<-"+source.getAddress().getHostAddress()+":"+source.getPort()+"]";
@@ -198,26 +192,19 @@ public class NetworkMap {
 	}
 
 	
-	public String SocketScheduleServerSocketAcceptDone(InetSocketAddress destination, InetSocketAddress source, Object serverClientSocket) throws IOException {
-		Object o = socketsTCP.get(destination);
-		if ( null!=o && containsInterface(o, SocketUpcalls.class) ) {
-			SocketUpcalls si = (SocketUpcalls) o;
-			si.accepted();
+	public String SocketScheduleServerSocketAcceptDone(InetSocketAddress destination, InetSocketAddress source, SocketUpcalls serverClientSocket, SocketUpcalls si) throws IOException {
+		si.accepted();
 			
-			// register socket between server socket and client socket
-			String connectedSocketKeyPrefix = "["+source.getAddress().getHostAddress()+":"+source.getPort()+"<-"+destination.getAddress().getHostAddress()+":"+destination.getPort()+"]";
-			addConnectedSocket(connectedSocketKeyPrefix+"-server", serverClientSocket);
-			return connectedSocketKeyPrefix+"-client";
-		}
-
-		throw new IOException("connect: unable to schedule ServerSocket.accept() done on " + destination.toString());
+		// register socket between server socket and client socket
+		String connectedSocketKeyPrefix = "["+source.getAddress().getHostAddress()+":"+source.getPort()+"<-"+destination.getAddress().getHostAddress()+":"+destination.getPort()+"]";
+		addConnectedSocket(connectedSocketKeyPrefix+"-server", serverClientSocket);
+		return connectedSocketKeyPrefix+"-client";
 	}
 
 	
 	protected void SocketScheduleRead(String key, TCPPacket p) throws IOException {
-		Object o = connectedSocketsTCP.get(key);
-		if ( null!=o && containsInterface(o, SocketUpcalls.class) ) {
-			SocketUpcalls si = (SocketUpcalls) o;
+		SocketUpcalls si = connectedSocketsTCP.get(key);
+		if ( null!=si ) {
 			si.scheduleRead(p);
 			return;
 		}
@@ -236,9 +223,8 @@ public class NetworkMap {
 			System.exit(1);
 		}
 		
-		Object o = connectedSocketsTCP.get(key);
-		if ( null!=o && containsInterface(o, SocketUpcalls.class) ) {
-			SocketUpcalls si = (SocketUpcalls) o;
+		SocketUpcalls si = connectedSocketsTCP.get(key);
+		if ( null!=si ) {
 			si.acknowledge(p);
 			return;
 		}
@@ -248,7 +234,7 @@ public class NetworkMap {
 	}
 
 	
-	private void addConnectedSocket(String key, Object o) {
+	private void addConnectedSocket(String key, SocketUpcalls o) {
 		if ( null == key ) {
 			pt.minha.models.global.Debug.println("Unable to addConnectedSocket: null key " + o);
 			System.exit(1);
@@ -266,15 +252,4 @@ public class NetworkMap {
 		
 		connectedSocketsTCP.remove(key);
 	}
-
-	
-	@SuppressWarnings("rawtypes")
-	private boolean containsInterface(Object o, Class interfac) {
-		for (Class intf : o.getClass().getInterfaces()) {
-			if ( intf.equals(interfac) )
-				return true;
-		}
-		
-		return false;
-	}	
 }

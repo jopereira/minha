@@ -35,24 +35,27 @@ import pt.minha.models.global.net.Protocol;
 import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
-public class DatagramSocket extends AbstractSocket implements DatagramSocketUpcalls {
+public class DatagramSocket extends AbstractSocket {
 	
 	private List<DatagramPacket> incoming = new LinkedList<DatagramPacket>();
 	private List<Event> blocked = new LinkedList<Event>();
     private long lastRead = 0;
     private boolean closed = false;
+    protected DatagramSocketUpcalls upcalls = new Upcalls();
 	
 	public DatagramSocket() throws SocketException{
 		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress();
-		this.addSocket(Protocol.UDP, isa, this);
+		isa=this.checkSocket(isa);
+		this.localSocketAddress = World.networkMap.addUDPSocket(isa,upcalls);
 	}
 	
 	
 	public DatagramSocket(int port) throws SocketException {
 		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress(port);
-		this.addSocket(Protocol.UDP, isa, this);
+		isa=this.checkSocket(isa);
+		this.localSocketAddress = World.networkMap.addUDPSocket(isa,upcalls);
 	}
 
 	public DatagramSocket(int port, InetAddress address) throws SocketException {
@@ -109,11 +112,12 @@ public class DatagramSocket extends AbstractSocket implements DatagramSocketUpca
 		packet.setPort(p.getPort());
 		SimulationThread.startTime(NetworkCalibration.readCost*p.getLength());
 	}
-	
-	@Override
-	public void queue(DatagramPacket packet) {
-		incoming.add(packet);
-		new WakeUpEvent().schedule(0);
+
+	private class Upcalls implements DatagramSocketUpcalls {
+		public void queue(DatagramPacket packet) {
+			incoming.add(packet);
+			new WakeUpEvent().schedule(0);
+		}
 	}
 	
     public void close(){
