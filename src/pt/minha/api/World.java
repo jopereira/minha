@@ -24,6 +24,7 @@ import java.util.Properties;
 
 import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.simulation.Timeline;
+import pt.minha.models.global.net.Network;
 import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.global.net.NetworkMap;
 
@@ -36,7 +37,8 @@ public class World {
 	
 	// FIXME: this should not be public nor static ------------------------
 	public static Timeline timeline;
-	public static NetworkMap networkMap = new NetworkMap();
+	public static NetworkMap networkMap;
+	public static Network network;
 	// --------------------------------------------------------------------
 	
 	public World() throws Exception {
@@ -60,6 +62,9 @@ public class World {
 			props.load(is);
 		cc = new ClassConfig(props);
 		timeline = new Timeline(simulationTime);
+		
+		networkMap = new NetworkMap();
+		network = new Network();
 	}
 	
 	/**

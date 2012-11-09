@@ -31,21 +31,21 @@ import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.util.PropertiesLoader;
 
 public class Network {
-	private static final long BUFFER = 128*1024;
-	private static final long BANDWIDTH = NetworkCalibration.networkBandwidth/8; // bytes
-	private static final long RESOLUTION = 40000; // 40 us;
-	private static final long DELTA = BANDWIDTH/(1000000000/RESOLUTION);
-	private static long current_bandwidth = 0;
+	private final long BUFFER = 128*1024;
+	private final long BANDWIDTH = NetworkCalibration.networkBandwidth/8; // bytes
+	private final long RESOLUTION = 40000; // 40 us;
+	private final long DELTA = BANDWIDTH/(1000000000/RESOLUTION);
+	private long current_bandwidth = 0;
 	
-	private static final WakeEvent wakeEvent = new WakeEvent();
-	private static boolean wakeEventEnabled = false;
+	private final WakeEvent wakeEvent = new WakeEvent();
+	private boolean wakeEventEnabled = false;
 	
-	private static final LinkedList<TCPPacket> queue = new LinkedList<TCPPacket>();
+	private final LinkedList<TCPPacket> queue = new LinkedList<TCPPacket>();
 	
 	/*
 	 * TCP
 	 */
-	public static void send(TCPPacket p) throws IOException {
+	public void send(TCPPacket p) throws IOException {
 		// delay send
 		if  ( (current_bandwidth+p.getSize())>BUFFER || !queue.isEmpty()) {
 			if ( Log.network_tcp_stream_log_enabled )
@@ -70,7 +70,7 @@ public class Network {
 		}
 	}
 
-	public static void send(InetSocketAddress destination, DatagramPacket p) {
+	public void send(InetSocketAddress destination, DatagramPacket p) {
 		if ( NetworkCalibration.isLostPacket() )
 			return;
 		
@@ -91,7 +91,7 @@ public class Network {
 		}
 	}
 	
-	public static void acknowledge(TCPPacketAck p) {
+	public void acknowledge(TCPPacketAck p) {
 		if ( Log.network_tcp_stream_log_enabled )
 			Log.TCPdebug("Network acknowledge: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
 		
@@ -99,7 +99,7 @@ public class Network {
 	}
 	
 	
-	private static class WakeEvent extends Event {
+	private class WakeEvent extends Event {
 		public WakeEvent() {
 			super(World.timeline);
 		}
@@ -144,11 +144,13 @@ public class Network {
 	/*
 	 * network logger
 	 */
-	private static long bandwidth_log = 0;
-	private static final long BandwidthLoggerEventDELTA = 1000000000;
-	private static BandwidthLoggerEvent bandwidthLoggerEvent;
-	private static boolean bandwidth_log_enabled = false;
-	static {
+	private long bandwidth_log = 0;
+	private final long BandwidthLoggerEventDELTA = 1000000000;
+	private BandwidthLoggerEvent bandwidthLoggerEvent;
+	private boolean bandwidth_log_enabled = false;
+	
+	
+	public Network() {
 		try {
 			PropertiesLoader conf = new PropertiesLoader(Logger.LOG_CONF_FILENAME);
 			bandwidth_log_enabled = Boolean.parseBoolean(conf.getProperty("network.bandwith.log"));
@@ -159,7 +161,7 @@ public class Network {
 		}
 	}
 	
-	private static class BandwidthLoggerEvent extends Event {
+	private class BandwidthLoggerEvent extends Event {
 		private Logger logger;
 
 		public BandwidthLoggerEvent() {

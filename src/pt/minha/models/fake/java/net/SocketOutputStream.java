@@ -148,7 +148,7 @@ public class SocketOutputStream extends OutputStream implements SocketOutputStre
 			SimulationThread.currentSimulationThread().idle(NetworkCalibration.getNetworkDelay(p.getSize())*2);
 		}
 		
-		Network.send(p);
+		World.network.send(p);
 	}
 	
 	private List<Event> networkOutgoingBlocked = new LinkedList<Event>();

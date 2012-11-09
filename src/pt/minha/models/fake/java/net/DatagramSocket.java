@@ -77,7 +77,7 @@ public class DatagramSocket extends AbstractSocket implements DatagramSocketInte
 				byte[] data = new byte[packet.getLength()];
 				System.arraycopy(packet.getData(), packet.getOffset(), data, 0, data.length);
 				DatagramPacket dp = new DatagramPacket(data, data.length, this.getLocalSocketAddress());
-				Network.send(destination, dp);
+				World.network.send(destination, dp);
 			}
 
 		} finally  {

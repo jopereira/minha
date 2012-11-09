@@ -116,7 +116,7 @@ public class SocketInputStream extends InputStream {
 				TCPPacketAck ack = new TCPPacketAck(this.socket.connectedSocketKey, p.getSn(), p.getSize());
 				if ( Log.network_tcp_stream_log_enabled )
 					Log.TCPdebug("SocketInputStream acknowledge: "+ack.getSn()+" to "+ack.getKey()+" "+ack.getType());
-				Network.acknowledge(ack);
+				World.network.acknowledge(ack);
 
 				byte[] data = ((TCPPacketData)p).getData();
 				for (int i=0; i<data.length; i++) {
