@@ -19,7 +19,6 @@
 
 package pt.minha.models.global.net;
 
-import java.io.IOException;
 
 public interface SocketInterface {
 	public void scheduleServerSocketAcceptDone();

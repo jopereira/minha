@@ -28,14 +28,13 @@ import pt.minha.api.World;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.models.global.net.Log;
 import pt.minha.models.global.net.NetworkCalibration;
-import pt.minha.models.global.net.SocketOutputStreamInterface;
 import pt.minha.models.global.net.TCPPacket;
 import pt.minha.models.global.net.TCPPacketAck;
 import pt.minha.models.global.net.TCPPacketClose;
 import pt.minha.models.global.net.TCPPacketData;
 import pt.minha.models.local.lang.SimulationThread;
 
-public class SocketOutputStream extends OutputStream implements SocketOutputStreamInterface {
+public class SocketOutputStream extends OutputStream {
 	private final Socket socket;
 	
 	private List<Integer> outgoing = new LinkedList<Integer>();
@@ -148,23 +147,6 @@ public class SocketOutputStream extends OutputStream implements SocketOutputStre
 		}
 		
 		World.network.send(p);
-	}
-	
-	private List<Event> networkOutgoingBlocked = new LinkedList<Event>();
-	
-	private class WakeSendToNetworkEvent extends Event {
-		public WakeSendToNetworkEvent() {
-			super(World.timeline);
-		}
-
-		public void run() {
-			if (!networkOutgoingBlocked.isEmpty())
-				networkOutgoingBlocked.remove(0).schedule(0);
-		}
-	}
-	
-	public void wakeSendToNetwork() {
-		new WakeSendToNetworkEvent().schedule(0);
 	}
 	
 	public void close() throws IOException {
