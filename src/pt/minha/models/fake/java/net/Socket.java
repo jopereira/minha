@@ -161,20 +161,7 @@ public class Socket extends AbstractSocket implements SocketInterface {
         	this.shutOut = true;
        		this.out.closeImpl();
         }
-        
-        if ( Log.network_tcp_log_enabled ) {
-        	try {
-        		int snIN = this.in.getSN();
-        		int snOUT = this.getRemoteSocketOutputStreamSN();
-        		/* snIN+1: if close() method was invoked by me I will not read any Close packet */ 
-        		if ( (snIN!=snOUT) && (snIN+1!=snOUT) )
-        			Log.TCPdebug("SocketInputStream UnreadPackets: "+this.connectedSocketKey+"; read: "+snIN+"; wrote: "+snOUT);
-        	}
-        	catch (IOException e) {
-        		// ignore
-        	}
-        }
-        
+                
         if (this.connected) {
 	        // We need to remove local key and not remote endpoint key
 	        int keySeparator = this.connectedSocketKey.lastIndexOf('-');
@@ -232,21 +219,5 @@ public class Socket extends AbstractSocket implements SocketInterface {
 	
 	public void acknowledge(TCPPacketAck p) {
 		this.out.acknowledge(p);
-	}
-
-	public int getSocketInputStreamSN() {
-		return this.in.getSN();
-	}
-	
-	public int getSocketOutputStreamSN() {
-		return this.out.getSN();
-	}
-	
-	public int getRemoteSocketInputStreamSN() throws IOException {
-		return World.networkMap.getSocketInputStreamSN(this.connectedSocketKey);
-	}
-	
-	public int getRemoteSocketOutputStreamSN() throws IOException {
-		return World.networkMap.getSocketOutputStreamSN(this.connectedSocketKey);
 	}
 }

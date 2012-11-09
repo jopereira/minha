@@ -27,12 +27,4 @@ public interface SocketInterface {
 	public void scheduleRead(TCPPacket p);
 	
 	public void acknowledge(TCPPacketAck p);
-	
-	public int getSocketInputStreamSN();
-	
-	public int getSocketOutputStreamSN();
-	
-	public int getRemoteSocketInputStreamSN() throws IOException;
-	
-	public int getRemoteSocketOutputStreamSN() throws IOException;
 }

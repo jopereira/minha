@@ -276,51 +276,5 @@ public class NetworkMap {
 		}
 		
 		return false;
-	}
-	
-	
-	/* debug methods */
-	public int getSocketInputStreamSN(String key) throws IOException {
-		Object o = connectedSocketsTCP.get(key);
-		if ( null!=o && containsInterface(o, SocketInterface.class) ) {
-			SocketInterface si = (SocketInterface) o;
-			
-			return si.getSocketInputStreamSN();
-		}
-		
-		throw new IOException("Unable to get SocketInputStream sn on " + key);
-	}
-	
-	
-	public int getSocketOutputStreamSN(String key) throws IOException {
-		Object o = connectedSocketsTCP.get(key);
-		if ( null!=o && containsInterface(o, SocketInterface.class) ) {
-			SocketInterface si = (SocketInterface) o;
-			
-			return si.getSocketOutputStreamSN();
-		}
-		
-		throw new IOException("Unable to get SocketOutputStream sn on " + key);
-	}
-
-	public void checkForgottenSockets() {
-		pt.minha.models.global.Debug.println("checkForgottenSockets: "+this.connectedSocketsTCP);
-		for (Map.Entry<String,Object> e : this.connectedSocketsTCP.entrySet()) {
-			if ( null!=e.getValue() && containsInterface(e.getValue(), SocketInterface.class) ) {
-				SocketInterface si = (SocketInterface) e.getValue();
-				
-				try {
-					int snIN = si.getSocketInputStreamSN();
-					int snOUT = si.getRemoteSocketOutputStreamSN();
-					/* snIN+1: if close() method was invoked by me I will not read any Close packet */
-					if ( (snIN!=snOUT) && (snIN+1!=snOUT) )
-						pt.minha.models.global.Debug.println("Forgotten Socket: "+e.getKey()+"; read: "+snIN+"; wrote: "+snOUT);
-				}
-				catch (IOException t) {
-					t.printStackTrace();
-				}
-				
-			}
-		}
-	}
+	}	
 }
