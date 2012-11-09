@@ -24,11 +24,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import pt.minha.api.World;
-import pt.minha.models.global.net.MulticastSocketInterface;
-import pt.minha.models.global.net.MulticastSocketMap;
 
 
-public class MulticastSocket extends DatagramSocket implements MulticastSocketInterface {
+public class MulticastSocket extends DatagramSocket {
 	
     public MulticastSocket() throws IOException {
         super();

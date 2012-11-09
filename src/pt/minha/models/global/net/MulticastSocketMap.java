@@ -32,20 +32,20 @@ import java.util.Map;
 
 public class MulticastSocketMap {
 	// multicast address:port -> [Multicast Sockets]
-	private final Map<InetSocketAddress, List<MulticastSocketInterface>> multicastSockets = new HashMap<InetSocketAddress, List<MulticastSocketInterface>>();
+	private final Map<InetSocketAddress, List<DatagramSocketInterface>> multicastSockets = new HashMap<InetSocketAddress, List<DatagramSocketInterface>>();
 
 	
-	public void add(InetSocketAddress mcastaddr, MulticastSocketInterface ms) throws IOException {
+	public void add(InetSocketAddress mcastaddr, DatagramSocketInterface ms) throws IOException {
 		if ( !multicastSockets.containsKey(mcastaddr) )
-			multicastSockets.put(mcastaddr, new LinkedList<MulticastSocketInterface>());
+			multicastSockets.put(mcastaddr, new LinkedList<DatagramSocketInterface>());
 		
-		List<MulticastSocketInterface> sockets = multicastSockets.get(mcastaddr);
+		List<DatagramSocketInterface> sockets = multicastSockets.get(mcastaddr);
     	if ( !sockets.contains(ms) )
     		sockets.add(ms);
 	}
 	
 	
-	public void remove(InetSocketAddress mcastaddr, MulticastSocketInterface ms) throws IOException {
+	public void remove(InetSocketAddress mcastaddr, DatagramSocketInterface ms) throws IOException {
     	if (multicastSockets.containsKey(mcastaddr)) {
     		if ( !multicastSockets.get(mcastaddr).remove(ms) )
     			throw new IOException("MulticastSocket '"+ms+"' is not in group '"+mcastaddr+"'");
@@ -62,7 +62,7 @@ public class MulticastSocketMap {
 	
 	// Stub method to send messages between sockets
 	public void MulticastSocketQueue(InetSocketAddress source, DatagramPacket packet) throws SocketException {
-		List<MulticastSocketInterface> targets = multicastSockets.get(packet.getSocketAddress());
+		List<DatagramSocketInterface> targets = multicastSockets.get(packet.getSocketAddress());
 		if ( null == targets )
 			return;
 		
@@ -70,7 +70,7 @@ public class MulticastSocketMap {
 		if ( NetworkCalibration.isLostPacket() )
 			return;
 				
-		for (MulticastSocketInterface target : targets) {
+		for (DatagramSocketInterface target : targets) {
 			// Lost in receiver
 			if ( NetworkCalibration.isLostPacket() )
 				continue;

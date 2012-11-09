@@ -27,7 +27,6 @@ import java.util.List;
 import pt.minha.api.World;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.models.global.net.Log;
-import pt.minha.models.global.net.Network;
 import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.global.net.SocketOutputStreamInterface;
 import pt.minha.models.global.net.TCPPacket;
