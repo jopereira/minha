@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-import pt.minha.api.World;
 import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 

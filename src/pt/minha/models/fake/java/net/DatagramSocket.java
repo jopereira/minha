@@ -27,8 +27,8 @@ import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.List;
 
-import pt.minha.api.World;
 import pt.minha.kernel.simulation.Event;
+import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.DatagramSocketUpcalls;
 import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.global.net.Protocol;
@@ -42,9 +42,10 @@ public class DatagramSocket extends AbstractSocket {
     private long lastRead = 0;
     private boolean closed = false;
     protected DatagramSocketUpcalls upcalls = new Upcalls();
+	private HostImpl host;
 	
 	public DatagramSocket() throws SocketException{
-		HostImpl host = SimulationThread.currentSimulationThread().getHost();
+		host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress();
 		isa=this.checkSocket(isa);
 		this.localSocketAddress = host.getNetwork().networkMap.addUDPSocket(isa,upcalls);
@@ -52,7 +53,7 @@ public class DatagramSocket extends AbstractSocket {
 	
 	
 	public DatagramSocket(int port) throws SocketException {
-		HostImpl host = SimulationThread.currentSimulationThread().getHost();
+		host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress(port);
 		isa=this.checkSocket(isa);
 		this.localSocketAddress = host.getNetwork().networkMap.addUDPSocket(isa,upcalls);
@@ -70,8 +71,6 @@ public class DatagramSocket extends AbstractSocket {
 		try {
 			SimulationThread.stopTime(NetworkCalibration.writeCost*packet.getLength());
 			
-			HostImpl host = SimulationThread.currentSimulationThread().getHost();
-
 			if (packet.getAddress().isMulticastAddress()) {
 				host.getNetwork().MulticastSocketQueue((InetSocketAddress)this.getLocalSocketAddress(), packet);
 			}
@@ -118,19 +117,19 @@ public class DatagramSocket extends AbstractSocket {
 	private class Upcalls implements DatagramSocketUpcalls {
 		public void queue(DatagramPacket packet) {
 			incoming.add(packet);
-			new WakeUpEvent().schedule(0);
+			new WakeUpEvent(host.getTimeline()).schedule(0);
 		}
 	}
 	
-    public void close(){
+    public void close() {
     	// FIXME: wake up receivers? synchronization?
     	closed = true;
     	this.removeSocket(Protocol.UDP, (InetSocketAddress)this.getLocalSocketAddress());
     }
     
 	private class WakeUpEvent extends Event {
-		public WakeUpEvent() {
-			super(World.timeline);
+		public WakeUpEvent(Timeline timeline) {
+			super(timeline);
 		}
 
 		public void run() {

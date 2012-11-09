@@ -33,11 +33,8 @@ import pt.minha.models.global.net.NetworkCalibration;
  */
 public class World {
 	private ClassConfig cc;
-	
-	// FIXME: this should not be public nor static ------------------------
-	public static Timeline timeline;
+	private Timeline timeline;
 	private Network network;
-	// --------------------------------------------------------------------
 	
 	public World() throws Exception {
 		if (timeline!=null)
@@ -61,7 +58,7 @@ public class World {
 		cc = new ClassConfig(props);
 		timeline = new Timeline(simulationTime);
 		
-		network = new Network();
+		network = new Network(timeline);
 	}
 	
 	/**

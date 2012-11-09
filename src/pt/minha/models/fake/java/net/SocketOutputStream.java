@@ -24,7 +24,6 @@ import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 
-import pt.minha.api.World;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.models.global.net.Log;
 import pt.minha.models.global.net.NetworkCalibration;
@@ -32,7 +31,6 @@ import pt.minha.models.global.net.TCPPacket;
 import pt.minha.models.global.net.TCPPacketAck;
 import pt.minha.models.global.net.TCPPacketClose;
 import pt.minha.models.global.net.TCPPacketData;
-import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class SocketOutputStream extends OutputStream {
@@ -59,7 +57,7 @@ public class SocketOutputStream extends OutputStream {
 		private int sn;
 		
 		public WakeWriteEvent(int sn) {
-			super(World.timeline);
+			super(socket.host.getTimeline());
 			this.sn = sn;
 		}
 
@@ -146,9 +144,8 @@ public class SocketOutputStream extends OutputStream {
 		if ( NetworkCalibration.isLostPacket() ) {
 			SimulationThread.currentSimulationThread().idle(NetworkCalibration.getNetworkDelay(p.getSize())*2);
 		}
-		HostImpl host = SimulationThread.currentSimulationThread().getHost();
-
-		host.getNetwork().send(p);
+		
+		socket.host.getNetwork().send(p);
 	}
 	
 	public void close() throws IOException {

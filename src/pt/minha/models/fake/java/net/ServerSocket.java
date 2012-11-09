@@ -26,8 +26,8 @@ import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.List;
 
-import pt.minha.api.World;
 import pt.minha.kernel.simulation.Event;
+import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.Log;
 import pt.minha.models.global.net.Protocol;
 import pt.minha.models.global.net.ServerSocketUpcalls;
@@ -41,9 +41,10 @@ public class ServerSocket extends AbstractSocket {
 	private final List<Event> blockedAccept = new LinkedList<Event>();
 	private boolean closed = false;
 	private ServerSocketUpcalls upcalls = new Upcalls();
+	private HostImpl host;
 	
 	public ServerSocket() throws IOException {
-		HostImpl host = SimulationThread.currentSimulationThread().getHost();
+		host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress();
 		isa=this.checkSocket(isa);
 		this.localSocketAddress = host.getNetwork().networkMap.addTCPSocket(isa,upcalls);
@@ -56,7 +57,7 @@ public class ServerSocket extends AbstractSocket {
     }
 	
 	public ServerSocket(int port) throws IOException {
-		HostImpl host = SimulationThread.currentSimulationThread().getHost();
+		host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress(port);
 		isa=this.checkSocket(isa);
 		this.localSocketAddress = host.getNetwork().networkMap.addTCPSocket(isa,upcalls);
@@ -73,7 +74,6 @@ public class ServerSocket extends AbstractSocket {
 			SimulationThread.currentSimulationThread().pause();
 		}
 
-		HostImpl host = SimulationThread.currentSimulationThread().getHost();
 		WakeAcceptEvent addresses = incomingAccept.remove(0);
 		Socket socket = new Socket(addresses.remote, addresses.local);
 		// inform client Socket that accept ended
@@ -92,7 +92,6 @@ public class ServerSocket extends AbstractSocket {
     		return;
         closed = true;
         
-		HostImpl host = SimulationThread.currentSimulationThread().getHost();
         host.getNetwork().networkMap.removeSocket(Protocol.TCP, this.localSocketAddress);
         
         if ( Log.network_tcp_log_enabled )
@@ -104,8 +103,8 @@ public class ServerSocket extends AbstractSocket {
 		public InetSocketAddress remote;
 		public SocketUpcalls cli;
 
-		public WakeAcceptEvent(InetSocketAddress local, InetSocketAddress remote, SocketUpcalls cli) {
-			super(World.timeline);
+		public WakeAcceptEvent(Timeline timeline, InetSocketAddress local, InetSocketAddress remote, SocketUpcalls cli) {
+			super(timeline);
 			this.local = local;
 			this.remote = remote;
 			this.cli = cli;
@@ -125,7 +124,7 @@ public class ServerSocket extends AbstractSocket {
 
     private class Upcalls implements ServerSocketUpcalls {
 		public void queueConnect(InetSocketAddress local, InetSocketAddress remote, SocketUpcalls cli) {
-			new WakeAcceptEvent(local, remote, cli).schedule(100000);
+			new WakeAcceptEvent(host.getTimeline(), local, remote, cli).schedule(100000);
 		}
     }
     

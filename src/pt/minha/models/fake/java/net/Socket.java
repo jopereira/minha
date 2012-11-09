@@ -29,8 +29,8 @@ import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.List;
 
-import pt.minha.api.World;
 import pt.minha.kernel.simulation.Event;
+import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.Log;
 import pt.minha.models.global.net.SocketUpcalls;
 import pt.minha.models.global.net.TCPPacket;
@@ -51,9 +51,10 @@ public class Socket extends AbstractSocket {
 	private boolean closed = false;
 	private boolean shutOut = false;
 	private boolean shutIn = false;
-
+	HostImpl host;
+	
 	public Socket() throws IOException {
-		HostImpl host = SimulationThread.currentSimulationThread().getHost();
+		host = SimulationThread.currentSimulationThread().getHost();
 		InetSocketAddress isa = host.getHostAvailableInetSocketAddress();
 
 		isa=this.checkSocket(isa);
@@ -84,6 +85,7 @@ public class Socket extends AbstractSocket {
 		
 		this.in = new SocketInputStream(this);
 		this.out = new SocketOutputStream(this);
+		host = SimulationThread.currentSimulationThread().getHost();
 	}
 
     public void connect(SocketAddress endpoint) throws IOException {
@@ -104,8 +106,6 @@ public class Socket extends AbstractSocket {
 		SimulationThread.stopTime(0);
 		
 		// connect to ServerSocket
-		HostImpl host = SimulationThread.currentSimulationThread().getHost();
-
 		this.connectedSocketKey = host.getNetwork().networkMap.ServerSocketConnect(this.remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), upcalls);
 	    this.connected = true;
 	    
@@ -177,7 +177,6 @@ public class Socket extends AbstractSocket {
 	        else
 	        	localConnectedSocketKey += "-client";
 	        
-			HostImpl host = SimulationThread.currentSimulationThread().getHost();
 	        host.getNetwork().networkMap.removeConnectedSocket(localConnectedSocketKey);
 	        
 	        if ( Log.network_tcp_log_enabled )
@@ -204,8 +203,8 @@ public class Socket extends AbstractSocket {
 	}
 	        
 	private class WakeConnectEvent extends Event {
-		public WakeConnectEvent() {
-			super(World.timeline);
+		public WakeConnectEvent(Timeline timeline) {
+			super(timeline);
 		}
 
 		public void run() {
@@ -215,7 +214,7 @@ public class Socket extends AbstractSocket {
 
 	private class Upcalls implements SocketUpcalls {
 		public void accepted() {
-			new WakeConnectEvent().schedule(0);
+			new WakeConnectEvent(host.getTimeline()).schedule(0);
 		}
 	
 		public void scheduleRead(TCPPacket p) {

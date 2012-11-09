@@ -25,7 +25,6 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
-import pt.minha.api.World;
 import pt.minha.models.global.net.Protocol;
 import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;

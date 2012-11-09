@@ -28,10 +28,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import pt.minha.api.World;
 import pt.minha.kernel.log.Logger;
 import pt.minha.kernel.log.SimpleLoggerLog4j;
 import pt.minha.kernel.simulation.Event;
+import pt.minha.kernel.simulation.Timeline;
 import pt.minha.kernel.util.PropertiesLoader;
 
 public class Network {
@@ -43,12 +43,16 @@ public class Network {
 	private final long DELTA = BANDWIDTH/(1000000000/RESOLUTION);
 	private long current_bandwidth = 0;
 	
-	private final WakeEvent wakeEvent = new WakeEvent();
+	private final WakeEvent wakeEvent;
 	private boolean wakeEventEnabled = false;
+	
+	private Timeline timeline;
 	
 	private final LinkedList<TCPPacket> queue = new LinkedList<TCPPacket>();
 	
-	public Network() {
+	public Network(Timeline timeline) {
+		this.timeline = timeline;
+		this.wakeEvent = new WakeEvent();
 		networkMap = new NetworkMap();
 		try {
 			PropertiesLoader conf = new PropertiesLoader(Logger.LOG_CONF_FILENAME);
@@ -119,7 +123,7 @@ public class Network {
 	
 	private class WakeEvent extends Event {
 		public WakeEvent() {
-			super(World.timeline);
+			super(timeline);
 		}
 
 		public void run() {
@@ -216,7 +220,7 @@ public class Network {
 		private Logger logger;
 
 		public BandwidthLoggerEvent() {
-			super(World.timeline);
+			super(timeline);
 			this.logger = new SimpleLoggerLog4j("log/network.log");
 		}
 
