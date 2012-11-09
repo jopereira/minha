@@ -71,7 +71,7 @@ public class DatagramSocket extends AbstractSocket {
 			SimulationThread.stopTime(NetworkCalibration.writeCost*packet.getLength());
 			
 			if (packet.getAddress().isMulticastAddress()) {
-				World.mcastMap.MulticastSocketQueue((InetSocketAddress)this.getLocalSocketAddress(), packet);
+				World.network.MulticastSocketQueue((InetSocketAddress)this.getLocalSocketAddress(), packet);
 			}
 			else {
 				InetSocketAddress destination = new InetSocketAddress(packet.getAddress(),packet.getPort());

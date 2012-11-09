@@ -22,7 +22,11 @@ package pt.minha.models.global.net;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import pt.minha.api.World;
 import pt.minha.kernel.log.Logger;
@@ -140,6 +144,50 @@ public class Network {
 		}
 	}
 
+	// multicast address:port -> [Multicast Sockets]
+	private final Map<InetSocketAddress, List<DatagramSocketUpcalls>> multicastSockets = new HashMap<InetSocketAddress, List<DatagramSocketUpcalls>>();
+
+	public void addToGroup(InetSocketAddress mcastaddr, DatagramSocketUpcalls ms) throws IOException {
+		if ( !multicastSockets.containsKey(mcastaddr) )
+			multicastSockets.put(mcastaddr, new LinkedList<DatagramSocketUpcalls>());
+		
+		List<DatagramSocketUpcalls> sockets = multicastSockets.get(mcastaddr);
+    	if ( !sockets.contains(ms) )
+    		sockets.add(ms);
+	}
+	
+	
+	public void removeFromGroup(InetSocketAddress mcastaddr, DatagramSocketUpcalls ms) throws IOException {
+    	if (multicastSockets.containsKey(mcastaddr)) {
+    		if ( !multicastSockets.get(mcastaddr).remove(ms) )
+    			throw new IOException("MulticastSocket '"+ms+"' is not in group '"+mcastaddr+"'");
+    	}
+    	else
+    		throw new IOException("Multicast group '"+mcastaddr+"' do not exists");
+	}
+	
+		
+	// Stub method to send messages between sockets
+	public void MulticastSocketQueue(InetSocketAddress source, DatagramPacket packet) throws SocketException {
+		List<DatagramSocketUpcalls> targets = multicastSockets.get(packet.getSocketAddress());
+		if ( null == targets )
+			return;
+		
+		// Lost in sender
+		if ( NetworkCalibration.isLostPacket() )
+			return;
+				
+		for (DatagramSocketUpcalls target : targets) {
+			// Lost in receiver
+			if ( NetworkCalibration.isLostPacket() )
+				continue;
+			
+			byte[] data = new byte[packet.getLength()];
+			System.arraycopy(packet.getData(), packet.getOffset(), data, 0, data.length);
+			DatagramPacket dp = new DatagramPacket(data, data.length, source);
+			target.queue(dp);			
+		}
+	}
 	
 	/*
 	 * network logger

@@ -39,11 +39,11 @@ public class MulticastSocket extends DatagramSocket {
 
     public void joinGroup(InetAddress addr) throws IOException {
     	InetSocketAddress mcastaddrport = new InetSocketAddress(addr, this.getLocalPort());
-    	World.mcastMap.add(mcastaddrport, upcalls);
+    	World.network.addToGroup(mcastaddrport, upcalls);
     }
 
     public void leaveGroup(InetAddress addr) throws IOException {
     	InetSocketAddress mcastaddrport = new InetSocketAddress(addr, this.getLocalPort());
-    	World.mcastMap.remove(mcastaddrport, upcalls);
+    	World.network.removeFromGroup(mcastaddrport, upcalls);
     }
 }
