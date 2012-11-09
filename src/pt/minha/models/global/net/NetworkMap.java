@@ -164,8 +164,8 @@ public class NetworkMap {
 	
 	protected void DatagramPacketQueue(InetSocketAddress destination, DatagramPacket packet) {
 		Object o = socketsUDP.get(destination);
-		if ( null!=o && containsInterface(o, DatagramSocketInterface.class) ) {
-			DatagramSocketInterface sgds = (DatagramSocketInterface) o;
+		if ( null!=o && containsInterface(o, DatagramSocketUpcalls.class) ) {
+			DatagramSocketUpcalls sgds = (DatagramSocketUpcalls) o;
 			sgds.queue(packet);
 		}
 	}
@@ -174,7 +174,7 @@ public class NetworkMap {
 	public boolean isServerSocket(InetSocketAddress destination) {
 		Object o = socketsTCP.get(destination);
 		if ( null != o ) {
-			if ( containsInterface(o, ServerSocketInterface.class) )
+			if ( containsInterface(o, ServerSocketUpcalls.class) )
 				return true;
 		}
 
@@ -184,8 +184,8 @@ public class NetworkMap {
 	
 	public String ServerSocketConnect(InetSocketAddress destination, InetSocketAddress source, Object clientSocket) throws IOException {
 		Object o = socketsTCP.get(destination);
-		if ( null!=o && containsInterface(o, ServerSocketInterface.class) ) {
-			ServerSocketInterface ssi = (ServerSocketInterface) o;
+		if ( null!=o && containsInterface(o, ServerSocketUpcalls.class) ) {
+			ServerSocketUpcalls ssi = (ServerSocketUpcalls) o;
 			ssi.queueConnect(destination, source);
 			
 			// register socket between client socket and server socket
@@ -200,9 +200,9 @@ public class NetworkMap {
 	
 	public String SocketScheduleServerSocketAcceptDone(InetSocketAddress destination, InetSocketAddress source, Object serverClientSocket) throws IOException {
 		Object o = socketsTCP.get(destination);
-		if ( null!=o && containsInterface(o, SocketInterface.class) ) {
-			SocketInterface si = (SocketInterface) o;
-			si.scheduleServerSocketAcceptDone();
+		if ( null!=o && containsInterface(o, SocketUpcalls.class) ) {
+			SocketUpcalls si = (SocketUpcalls) o;
+			si.accepted();
 			
 			// register socket between server socket and client socket
 			String connectedSocketKeyPrefix = "["+source.getAddress().getHostAddress()+":"+source.getPort()+"<-"+destination.getAddress().getHostAddress()+":"+destination.getPort()+"]";
@@ -216,8 +216,8 @@ public class NetworkMap {
 	
 	protected void SocketScheduleRead(String key, TCPPacket p) throws IOException {
 		Object o = connectedSocketsTCP.get(key);
-		if ( null!=o && containsInterface(o, SocketInterface.class) ) {
-			SocketInterface si = (SocketInterface) o;
+		if ( null!=o && containsInterface(o, SocketUpcalls.class) ) {
+			SocketUpcalls si = (SocketUpcalls) o;
 			si.scheduleRead(p);
 			return;
 		}
@@ -237,8 +237,8 @@ public class NetworkMap {
 		}
 		
 		Object o = connectedSocketsTCP.get(key);
-		if ( null!=o && containsInterface(o, SocketInterface.class) ) {
-			SocketInterface si = (SocketInterface) o;
+		if ( null!=o && containsInterface(o, SocketUpcalls.class) ) {
+			SocketUpcalls si = (SocketUpcalls) o;
 			si.acknowledge(p);
 			return;
 		}

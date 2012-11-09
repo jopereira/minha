@@ -30,11 +30,11 @@ import pt.minha.api.World;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.models.global.net.Log;
 import pt.minha.models.global.net.Protocol;
-import pt.minha.models.global.net.ServerSocketInterface;
+import pt.minha.models.global.net.ServerSocketUpcalls;
 import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
-public class ServerSocket extends AbstractSocket implements ServerSocketInterface {
+public class ServerSocket extends AbstractSocket implements ServerSocketUpcalls {
 	
 	private final List<InetSocketAddress[]> incomingAccept = new LinkedList<InetSocketAddress[]>();
 	private final List<Event> blockedAccept = new LinkedList<Event>();

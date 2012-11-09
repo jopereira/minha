@@ -33,13 +33,13 @@ import pt.minha.api.World;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.models.global.net.Log;
 import pt.minha.models.global.net.Protocol;
-import pt.minha.models.global.net.SocketInterface;
+import pt.minha.models.global.net.SocketUpcalls;
 import pt.minha.models.global.net.TCPPacket;
 import pt.minha.models.global.net.TCPPacketAck;
 import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
-public class Socket extends AbstractSocket implements SocketInterface {
+public class Socket extends AbstractSocket implements SocketUpcalls {
 	private int doneConnect = 0;
 	private List<Event> blockedConnect = new LinkedList<Event>();
 	private SocketInputStream in;
@@ -199,7 +199,7 @@ public class Socket extends AbstractSocket implements SocketInterface {
 			blockedConnect.remove(0).schedule(0);
 	}
 	
-	public void scheduleServerSocketAcceptDone() {
+	public void accepted() {
 		new WakeConnectEvent().schedule(0);
 	}
         

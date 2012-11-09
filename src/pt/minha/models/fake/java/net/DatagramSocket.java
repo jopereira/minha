@@ -29,13 +29,13 @@ import java.util.List;
 
 import pt.minha.api.World;
 import pt.minha.kernel.simulation.Event;
-import pt.minha.models.global.net.DatagramSocketInterface;
+import pt.minha.models.global.net.DatagramSocketUpcalls;
 import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.global.net.Protocol;
 import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
-public class DatagramSocket extends AbstractSocket implements DatagramSocketInterface {
+public class DatagramSocket extends AbstractSocket implements DatagramSocketUpcalls {
 	
 	private List<DatagramPacket> incoming = new LinkedList<DatagramPacket>();
 	private List<Event> blocked = new LinkedList<Event>();

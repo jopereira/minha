@@ -21,6 +21,6 @@ package pt.minha.models.global.net;
 
 import java.net.DatagramPacket;
 
-public interface DatagramSocketInterface {
+public interface DatagramSocketUpcalls {
 	public void queue(DatagramPacket packet);
 }

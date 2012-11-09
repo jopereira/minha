@@ -19,11 +19,9 @@
 
 package pt.minha.models.global.net;
 
+import java.net.InetSocketAddress;
 
-public interface SocketInterface {
-	public void scheduleServerSocketAcceptDone();
-	
-	public void scheduleRead(TCPPacket p);
-	
-	public void acknowledge(TCPPacketAck p);
+
+public interface ServerSocketUpcalls {
+	public void queueConnect(InetSocketAddress local, InetSocketAddress remote);
 }
