@@ -57,7 +57,7 @@ public class SocketOutputStream extends OutputStream {
 		private int sn;
 		
 		public WakeWriteEvent(int sn) {
-			super(socket.host.getTimeline());
+			super(socket.stack.getTimeline());
 			this.sn = sn;
 		}
 
@@ -145,7 +145,7 @@ public class SocketOutputStream extends OutputStream {
 			SimulationThread.currentSimulationThread().idle(NetworkCalibration.getNetworkDelay(p.getSize())*2);
 		}
 		
-		socket.host.getNetwork().send(p);
+		socket.stack.getNetwork().send(p);
 	}
 	
 	public void close() throws IOException {

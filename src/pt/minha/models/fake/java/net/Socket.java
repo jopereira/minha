@@ -33,20 +33,21 @@ import java.util.List;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.Log;
+import pt.minha.models.global.net.NetworkStack;
 import pt.minha.models.global.net.ServerSocketUpcalls;
 import pt.minha.models.global.net.SocketUpcalls;
 import pt.minha.models.global.net.TCPPacket;
 import pt.minha.models.global.net.TCPPacketAck;
-import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
-public class Socket extends AbstractSocket {
+public class Socket {
 	private int doneConnect = 0;
 	private List<Event> blockedConnect = new LinkedList<Event>();
 	private SocketInputStream in;
 	private SocketOutputStream out;	
 	private InetSocketAddress remoteSocketAddress;
 	final SocketUpcalls upcalls = new Upcalls();
+	private InetSocketAddress localSocketAddress;
 	
 	protected boolean connected = false;
 	//protected String connectedSocketKey;
@@ -54,13 +55,13 @@ public class Socket extends AbstractSocket {
 	private boolean shutOut = false;
 	private boolean shutIn = false;
 	SocketUpcalls target;
-	HostImpl host;
+	NetworkStack stack;
 	
 	public Socket() throws IOException {
-		host = SimulationThread.currentSimulationThread().getHost();
-		InetSocketAddress isa = host.getHostAvailableInetSocketAddress();
+		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
+		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress();
 
-		isa=this.checkSocket(isa);
+		isa=stack.checkSocket(isa);
 		this.localSocketAddress = isa;
 
 		this.in = new SocketInputStream(this);
@@ -88,7 +89,7 @@ public class Socket extends AbstractSocket {
 		
 		this.in = new SocketInputStream(this);
 		this.out = new SocketOutputStream(this);
-		host = SimulationThread.currentSimulationThread().getHost();
+		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
 	}
 
     public void connect(SocketAddress endpoint) throws IOException {
@@ -109,7 +110,7 @@ public class Socket extends AbstractSocket {
 		SimulationThread.stopTime(0);
 		
 		// connect to ServerSocket
-		ServerSocketUpcalls ssi = host.getNetwork().networkMap.lookupServerSocket(this.remoteSocketAddress);
+		ServerSocketUpcalls ssi = stack.getNetwork().lookupServerSocket(this.remoteSocketAddress);
 		if (ssi==null) {
 			SimulationThread.startTime(0);
 			throw new ConnectException();
@@ -226,7 +227,7 @@ public class Socket extends AbstractSocket {
 
 	private class Upcalls implements SocketUpcalls {
 		public void accepted(SocketUpcalls serverClientSocket) {
-			new WakeConnectEvent(host.getTimeline(), serverClientSocket).schedule(0);
+			new WakeConnectEvent(stack.getTimeline(), serverClientSocket).schedule(0);
 		}
 	
 		public void scheduleRead(TCPPacket p) {
@@ -237,4 +238,17 @@ public class Socket extends AbstractSocket {
 			out.acknowledge(p);
 		}
 	}
+	
+	public SocketAddress getLocalSocketAddress() {
+		return this.localSocketAddress;
+	}
+	
+	public InetAddress getLocalAddress() {
+		return this.localSocketAddress.getAddress();
+	}
+
+	public int getLocalPort() {
+		return this.localSocketAddress.getPort();
+	}
+
 }

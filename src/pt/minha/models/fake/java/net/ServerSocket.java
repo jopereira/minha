@@ -22,6 +22,7 @@ package pt.minha.models.fake.java.net;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,24 +30,25 @@ import java.util.List;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.Log;
+import pt.minha.models.global.net.NetworkStack;
 import pt.minha.models.global.net.ServerSocketUpcalls;
 import pt.minha.models.global.net.SocketUpcalls;
-import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
-public class ServerSocket extends AbstractSocket {
+public class ServerSocket {
 	
 	private final List<WakeAcceptEvent> incomingAccept = new LinkedList<WakeAcceptEvent>();
 	private final List<Event> blockedAccept = new LinkedList<Event>();
 	private boolean closed = false;
 	private ServerSocketUpcalls upcalls = new Upcalls();
-	private HostImpl host;
+	private NetworkStack stack;
+	private InetSocketAddress localSocketAddress;
 	
 	public ServerSocket() throws IOException {
-		host = SimulationThread.currentSimulationThread().getHost();
-		InetSocketAddress isa = host.getHostAvailableInetSocketAddress();
-		isa=this.checkSocket(isa);
-		this.localSocketAddress = host.getNetwork().networkMap.addTCPSocket(isa,upcalls);
+		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
+		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress();
+		isa=stack.checkSocket(isa);
+		this.localSocketAddress = stack.getNetwork().addTCPSocket(isa,upcalls);
 
 	}
 
@@ -56,10 +58,10 @@ public class ServerSocket extends AbstractSocket {
     }
 	
 	public ServerSocket(int port) throws IOException {
-		host = SimulationThread.currentSimulationThread().getHost();
-		InetSocketAddress isa = host.getHostAvailableInetSocketAddress(port);
-		isa=this.checkSocket(isa);
-		this.localSocketAddress = host.getNetwork().networkMap.addTCPSocket(isa,upcalls);
+		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
+		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress(port);
+		isa=stack.checkSocket(isa);
+		this.localSocketAddress = stack.getNetwork().addTCPSocket(isa,upcalls);
 
     }
 	
@@ -94,7 +96,7 @@ public class ServerSocket extends AbstractSocket {
     		return;
         closed = true;
         
-        host.getNetwork().networkMap.removeTCPSocket(this.localSocketAddress);
+        stack.getNetwork().removeTCPSocket(this.localSocketAddress);
         
         if ( Log.network_tcp_log_enabled )
         	Log.TCPdebug("ServerSocket close: "+this.localSocketAddress);
@@ -126,9 +128,19 @@ public class ServerSocket extends AbstractSocket {
 
     private class Upcalls implements ServerSocketUpcalls {
 		public void queueConnect(InetSocketAddress local, InetSocketAddress remote, SocketUpcalls cli) {
-			new WakeAcceptEvent(host.getTimeline(), local, remote, cli).schedule(100000);
+			new WakeAcceptEvent(stack.getTimeline(), local, remote, cli).schedule(100000);
 		}
     }
     
+	public SocketAddress getLocalSocketAddress() {
+		return this.localSocketAddress;
+	}
+	
+	public InetAddress getLocalAddress() {
+		return this.localSocketAddress.getAddress();
+	}
 
+	public int getLocalPort() {
+		return this.localSocketAddress.getPort();
+	}
 }

@@ -21,98 +21,30 @@ package pt.minha.models.local;
 
 import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import pt.minha.api.SimulationException;
-import pt.minha.api.World;
 import pt.minha.kernel.simulation.Resource;
 import pt.minha.kernel.simulation.Timeline;
-import pt.minha.models.fake.java.net.NetworkInterface;
 import pt.minha.models.global.HostInterface;
 import pt.minha.models.global.net.Network;
+import pt.minha.models.global.net.NetworkStack;
 import pt.minha.models.local.lang.SimulationThread;
 
 
 public class HostImpl implements HostInterface {
-	// TODO: This will be broken up in several components.
-	
 	// CPU
 	private Resource cpu;
 	private Set<SimulationThread> threads = new HashSet<SimulationThread>();
 	
 	// Networking
-	private InetAddress localAddress;
-	private final List<Integer> usedPorts = new LinkedList<Integer>();
-	private int INITIAL_PORT = 10000;
-	private final String macAddress;
-	private final List<NetworkInterface> networkInterfaces = new LinkedList<NetworkInterface>();
-	private final Network network;
+	private NetworkStack network;
 		
 	public HostImpl(Timeline timeline, String host, Network network) throws UnknownHostException, FileNotFoundException {
-		this.network = network;
-		if ( host != null )
-			this.localAddress = network.networkMap.addHost(host);
-		else
-			this.localAddress = network.networkMap.getAvailableInetAddress();
-		
 		this.cpu = new Resource(timeline, host);
-		
-		this.macAddress = network.networkMap.generateMACAddress();
-		this.networkInterfaces.add(new NetworkInterface(macAddress, localAddress));
-	}
-	
-	public InetAddress getLocalAddress() {
-		return this.localAddress;
-	}
-	
-	
-	private int getAvailablePort() {
-		int port;
-
-		do {
-			port = this.INITIAL_PORT++;
-		}
-		while ( this.usedPorts.contains(port) );
-		
-		if ( port<=0 || port>Integer.MAX_VALUE )
-			throw new IllegalArgumentException("port out of range: " + port);
-
-		return port;
-	}
-
-	
-	private int addPort(int port) {
-		if ( 0 == port )
-			port = this.getAvailablePort();
-		
-		if ( this.usedPorts.contains(port) )
-			throw new IllegalArgumentException("Port already used: " + port);
-		
-		this.usedPorts.add(port);
-		return port;
-	}
-	
-	
-	public InetSocketAddress getHostAvailableInetSocketAddress() {
-		return this.getHostAvailableInetSocketAddress(0);
-	}
-
-	public InetSocketAddress getHostAvailableInetSocketAddress(int port) {
-		return new InetSocketAddress(this.localAddress, this.addPort(port));		
-	}
-
-	public String getMACAddress() {
-		return this.macAddress;
-	}
-	
-	public List<NetworkInterface> getNetworkInterfaces() {
-		return this.networkInterfaces;
+		this.network = new NetworkStack(timeline, host, network);
 	}
 	
 	public Resource getCPU() {
@@ -121,6 +53,10 @@ public class HostImpl implements HostInterface {
 	
 	public Timeline getTimeline() {
 		return cpu.getTimeline();
+	}
+	
+	public NetworkStack getNetwork() {
+		return network;
 	}
 	
 	/* The following methods are supposed to be called outside simulation events,
@@ -169,9 +105,5 @@ public class HostImpl implements HostInterface {
 			}
 		}).simulationStart(delay*1000000000);
 		
-	}
-	
-	public Network getNetwork() {
-		return network;
-	}
+	}	
 }

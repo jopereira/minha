@@ -43,7 +43,7 @@ public class NetworkInterface {
 	
 	public static Enumeration<NetworkInterface> getNetworkInterfaces() {
 		Vector<NetworkInterface> aux = new Vector<NetworkInterface>();
-		aux.addAll(SimulationThread.currentSimulationThread().getHost().getNetworkInterfaces());
+		aux.addAll(SimulationThread.currentSimulationThread().getHost().getNetwork().getNetworkInterfaces());
 		return aux.elements();
 	}
 	

@@ -244,7 +244,7 @@ public class SimulationThread extends Thread {
 	}
 	
 	public String toString() {
-		return "Simulation"+super.toString()+"@"+host.getLocalAddress();
+		return "Simulation"+super.toString()+"@"+host.getNetwork().getLocalAddress();
 	}
 
 	public boolean fake_isAlive() {

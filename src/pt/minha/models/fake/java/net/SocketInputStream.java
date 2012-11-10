@@ -75,7 +75,7 @@ public class SocketInputStream extends InputStream {
 			Log.TCPdebug("SocketInputStream scheduleRead: "+p.getSn()+" "+p.getType());
 		
 		incoming.add(p);
-		new WakeReadEvent(socket.host.getTimeline()).schedule(0);
+		new WakeReadEvent(socket.stack.getTimeline()).schedule(0);
 	}
 	
 	private void wakeRead() {
@@ -116,7 +116,7 @@ public class SocketInputStream extends InputStream {
 				if ( Log.network_tcp_stream_log_enabled )
 					Log.TCPdebug("SocketInputStream acknowledge: "+ack.getSn()+" "+ack.getType());
 
-				socket.host.getNetwork().acknowledge(ack);
+				socket.stack.getNetwork().acknowledge(ack);
 
 				byte[] data = ((TCPPacketData)p).getData();
 				for (int i=0; i<data.length; i++) {

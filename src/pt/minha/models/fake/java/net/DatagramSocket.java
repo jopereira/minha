@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,31 +32,32 @@ import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.DatagramSocketUpcalls;
 import pt.minha.models.global.net.NetworkCalibration;
-import pt.minha.models.local.HostImpl;
+import pt.minha.models.global.net.NetworkStack;
 import pt.minha.models.local.lang.SimulationThread;
 
-public class DatagramSocket extends AbstractSocket {
+public class DatagramSocket {
 	
 	private List<DatagramPacket> incoming = new LinkedList<DatagramPacket>();
 	private List<Event> blocked = new LinkedList<Event>();
     private long lastRead = 0;
     private boolean closed = false;
     protected DatagramSocketUpcalls upcalls = new Upcalls();
-	private HostImpl host;
-	
+	protected NetworkStack stack;
+	protected InetSocketAddress localSocketAddress;
+		
 	public DatagramSocket() throws SocketException{
-		host = SimulationThread.currentSimulationThread().getHost();
-		InetSocketAddress isa = host.getHostAvailableInetSocketAddress();
-		isa=this.checkSocket(isa);
-		this.localSocketAddress = host.getNetwork().networkMap.addUDPSocket(isa,upcalls);
+		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
+		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress();
+		isa=stack.checkSocket(isa);
+		this.localSocketAddress = stack.getNetwork().addUDPSocket(isa,upcalls);
 	}
 	
 	
 	public DatagramSocket(int port) throws SocketException {
-		host = SimulationThread.currentSimulationThread().getHost();
-		InetSocketAddress isa = host.getHostAvailableInetSocketAddress(port);
-		isa=this.checkSocket(isa);
-		this.localSocketAddress = host.getNetwork().networkMap.addUDPSocket(isa,upcalls);
+		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
+		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress(port);
+		isa=stack.checkSocket(isa);
+		this.localSocketAddress = stack.getNetwork().addUDPSocket(isa,upcalls);
 	}
 
 	public DatagramSocket(int port, InetAddress address) throws SocketException {
@@ -71,14 +73,14 @@ public class DatagramSocket extends AbstractSocket {
 			SimulationThread.stopTime(NetworkCalibration.writeCost*packet.getLength());
 			
 			if (packet.getAddress().isMulticastAddress()) {
-				host.getNetwork().MulticastSocketQueue((InetSocketAddress)this.getLocalSocketAddress(), packet);
+				stack.getNetwork().MulticastSocketQueue((InetSocketAddress)this.getLocalSocketAddress(), packet);
 			}
 			else {
 				InetSocketAddress destination = new InetSocketAddress(packet.getAddress(),packet.getPort());
 				byte[] data = new byte[packet.getLength()];
 				System.arraycopy(packet.getData(), packet.getOffset(), data, 0, data.length);
 				DatagramPacket dp = new DatagramPacket(data, data.length, this.getLocalSocketAddress());
-				host.getNetwork().send(destination, dp);
+				stack.getNetwork().send(destination, dp);
 			}
 
 		} finally  {
@@ -116,14 +118,14 @@ public class DatagramSocket extends AbstractSocket {
 	private class Upcalls implements DatagramSocketUpcalls {
 		public void queue(DatagramPacket packet) {
 			incoming.add(packet);
-			new WakeUpEvent(host.getTimeline()).schedule(0);
+			new WakeUpEvent(stack.getTimeline()).schedule(0);
 		}
 	}
 	
     public void close() {
     	// FIXME: wake up receivers? synchronization?
     	closed = true;
-    	host.getNetwork().networkMap.removeUDPSocket((InetSocketAddress)this.getLocalSocketAddress());
+    	stack.getNetwork().removeUDPSocket((InetSocketAddress)this.getLocalSocketAddress());
     }
     
 	private class WakeUpEvent extends Event {
@@ -139,5 +141,17 @@ public class DatagramSocket extends AbstractSocket {
     private void wakeup() {
 		if (!blocked.isEmpty())
 			blocked.remove(0).schedule(0);
+	}
+    
+	public SocketAddress getLocalSocketAddress() {
+		return this.localSocketAddress;
+	}
+	
+	public InetAddress getLocalAddress() {
+		return this.localSocketAddress.getAddress();
+	}
+
+	public int getLocalPort() {
+		return this.localSocketAddress.getPort();
 	}
 }

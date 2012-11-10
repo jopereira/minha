@@ -23,10 +23,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-import pt.minha.models.local.HostImpl;
-import pt.minha.models.local.lang.SimulationThread;
-
-
 public class MulticastSocket extends DatagramSocket {
 	
     public MulticastSocket() throws IOException {
@@ -36,17 +32,14 @@ public class MulticastSocket extends DatagramSocket {
     public MulticastSocket(int port) throws IOException {
         super(port);
     }
-	
 
     public void joinGroup(InetAddress addr) throws IOException {
-		HostImpl host = SimulationThread.currentSimulationThread().getHost();
     	InetSocketAddress mcastaddrport = new InetSocketAddress(addr, this.getLocalPort());
-    	host.getNetwork().addToGroup(mcastaddrport, upcalls);
+    	stack.getNetwork().addToGroup(mcastaddrport, upcalls);
     }
 
     public void leaveGroup(InetAddress addr) throws IOException {
-		HostImpl host = SimulationThread.currentSimulationThread().getHost();
     	InetSocketAddress mcastaddrport = new InetSocketAddress(addr, this.getLocalPort());
-    	host.getNetwork().removeFromGroup(mcastaddrport, upcalls);
+    	stack.getNetwork().removeFromGroup(mcastaddrport, upcalls);
     }
 }
