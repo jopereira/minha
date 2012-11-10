@@ -20,7 +20,6 @@
 package pt.minha.models.global.net;
 
 import java.io.IOException;
-import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -289,33 +288,23 @@ public class Network {
 		return ip1+"."+ip2+"."+ip3+"."+ip4;
 	}
 	
-	
 	public InetAddress addHost(String host, NetworkStack stack) throws UnknownHostException {
-		if ( host.startsWith("127.") )
-			throw new UnknownHostException("Invalid address: " + host);
-		
-		InetAddress ia = InetAddress.getByName(host);
-		if ( hosts.containsKey(ia) )
-			throw new UnknownHostException("Address already used: " + ia.toString());
-		
+		InetAddress ia;
+		if (host==null)
+			do {
+				ia = InetAddress.getByName(getAvailableIP());
+			}
+			while ( hosts.containsKey(ia) );
+		else {
+			if ( host.startsWith("127.") )
+				throw new UnknownHostException("Invalid address: " + host);
+			
+			ia = InetAddress.getByName(host);
+			
+			if ( hosts.containsKey(ia) )
+				throw new UnknownHostException("Address already used: " + ia.toString());
+		}
 		hosts.put(ia, stack);
 		return ia;		
-	}
-	
-		
-	public InetAddress getAvailableInetAddress(NetworkStack stack) throws UnknownHostException {
-		InetAddress ia;
-		do {
-			ia = InetAddress.getByName(getAvailableIP());
-		}
-		while ( hosts.containsKey(ia) );
-		
-		hosts.put(ia, stack);
-		return ia;
-	}
-	
-	
-	public boolean existsHost(InetAddress ia) {
-		return hosts.containsKey(ia);
-	}
+	}		
 }
