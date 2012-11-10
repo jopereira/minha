@@ -102,7 +102,7 @@ public class Network {
 		
 		NetworkStack stack = hosts.get(destination.getAddress());
 		if (stack!=null)
-			stack.DatagramPacketQueue(destination, p);
+			stack.handleDatagram(destination, p);
 		
 		current_bandwidth += p.getLength();
 		if ( bandwidth_log_enabled )

@@ -45,11 +45,7 @@ public class ServerSocket {
 	private InetSocketAddress localSocketAddress;
 	
 	public ServerSocket() throws IOException {
-		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
-		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress();
-		isa=stack.checkSocket(isa);
-		this.localSocketAddress = stack.addTCPSocket(isa,upcalls);
-
+		this(0);
 	}
 
 	public ServerSocket(int port, int backlog, InetAddress address) throws IOException {
@@ -59,10 +55,8 @@ public class ServerSocket {
 	
 	public ServerSocket(int port) throws IOException {
 		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
-		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress(port);
-		isa=stack.checkSocket(isa);
+		InetSocketAddress isa = stack.getBindAddress(port);
 		this.localSocketAddress = stack.addTCPSocket(isa,upcalls);
-
     }
 	
     public Socket accept() throws IOException {

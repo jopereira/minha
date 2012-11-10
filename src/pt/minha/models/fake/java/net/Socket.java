@@ -34,7 +34,6 @@ import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.Log;
 import pt.minha.models.global.net.NetworkStack;
-import pt.minha.models.global.net.ServerSocketUpcalls;
 import pt.minha.models.global.net.SocketUpcalls;
 import pt.minha.models.global.net.TCPPacket;
 import pt.minha.models.global.net.TCPPacketAck;
@@ -59,10 +58,8 @@ public class Socket {
 	
 	public Socket() throws IOException {
 		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
-		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress();
-
-		isa=stack.checkSocket(isa);
-		this.localSocketAddress = isa;
+		
+		this.localSocketAddress = stack.getBindAddress(0);
 
 		this.in = new SocketInputStream(this);
 		this.out = new SocketOutputStream(this);

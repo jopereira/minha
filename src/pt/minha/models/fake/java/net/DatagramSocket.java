@@ -46,17 +46,12 @@ public class DatagramSocket {
 	protected InetSocketAddress localSocketAddress;
 		
 	public DatagramSocket() throws SocketException{
-		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
-		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress();
-		isa=stack.checkSocket(isa);
-		this.localSocketAddress = stack.addUDPSocket(isa,upcalls);
+		this(0);
 	}
-	
 	
 	public DatagramSocket(int port) throws SocketException {
 		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
-		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress(port);
-		isa=stack.checkSocket(isa);
+		InetSocketAddress isa = stack.getBindAddress(port);
 		this.localSocketAddress = stack.addUDPSocket(isa,upcalls);
 	}
 

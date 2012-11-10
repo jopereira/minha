@@ -56,6 +56,14 @@ public class NetworkStack {
 	public InetAddress getLocalAddress() {
 		return this.localAddress;
 	}
+
+	public String getMACAddress() {
+		return this.macAddress;
+	}
+	
+	public List<NetworkInterface> getNetworkInterfaces() {
+		return this.networkInterfaces;
+	}
 		
 	private int getAvailablePort() {
 		int port;
@@ -70,9 +78,11 @@ public class NetworkStack {
 
 		return port;
 	}
-
 	
-	private int addPort(int port) {
+	public InetSocketAddress getBindAddress(int port) {
+		if ( port < 0 || port> 0xFFFF )
+			throw new IllegalArgumentException("bind: " + port);
+
 		if ( 0 == port )
 			port = this.getAvailablePort();
 		
@@ -80,48 +90,8 @@ public class NetworkStack {
 			throw new IllegalArgumentException("Port already used: " + port);
 		
 		this.usedPorts.add(port);
-		return port;
-	}
-	
-	
-	public InetSocketAddress getHostAvailableInetSocketAddress() {
-		return this.getHostAvailableInetSocketAddress(0);
-	}
-
-	public InetSocketAddress getHostAvailableInetSocketAddress(int port) {
-		return new InetSocketAddress(this.localAddress, this.addPort(port));		
-	}
-
-	public String getMACAddress() {
-		return this.macAddress;
-	}
-	
-	public List<NetworkInterface> getNetworkInterfaces() {
-		return this.networkInterfaces;
-	}
-	
-	public InetSocketAddress checkSocket(InetSocketAddress isa) throws SocketException {
-		if ( null == isa )
-			throw new IllegalArgumentException("bind: null address");
-		if ( isa.getPort() < 0 || isa.getPort()> 0xFFFF )
-			throw new IllegalArgumentException("bind: " + isa.getPort());
-		if ( null == isa.getAddress() )
-    		throw new IllegalArgumentException("bind: null address");
 		
-		if (isa.getAddress().equals(new InetSocketAddress(0).getAddress())) {
-			isa = getHostAvailableInetSocketAddress(isa.getPort());
-		}
-		else {
-			try {
-				InetAddress ia = InetAddress.getByName("0.0.0.0");
-				if( isa.getAddress().equals(ia) ) {
-					isa = getHostAvailableInetSocketAddress(isa.getPort());
-				}
-			} catch (UnknownHostException e) {
-				throw new IllegalArgumentException(e);
-			}
-		}
-		return isa;
+		return new InetSocketAddress(this.localAddress, port);		
 	}
 
 	public Network getNetwork() {
@@ -131,9 +101,7 @@ public class NetworkStack {
 	public Timeline getTimeline() {
 		return timeline;
 	}
-	
-	// FIXME: the following should move to networkstack
-	
+		
 	private final Map<InetSocketAddress, DatagramSocketUpcalls> socketsUDP = new HashMap<InetSocketAddress, DatagramSocketUpcalls>();
 	private final Map<InetSocketAddress, ServerSocketUpcalls> socketsTCP = new HashMap<InetSocketAddress, ServerSocketUpcalls>();
 	
@@ -163,11 +131,10 @@ public class NetworkStack {
 			socketsUDP.remove(isa);
 	}
 	
-	public void DatagramPacketQueue(InetSocketAddress destination, DatagramPacket packet) {
+	public void handleDatagram(InetSocketAddress destination, DatagramPacket packet) {
 		DatagramSocketUpcalls sgds = socketsUDP.get(destination);
-		if ( null!=sgds ) {
+		if (sgds!=null)
 			sgds.queue(packet);
-		}
 	}
 	
 	public void handleConnect(InetSocketAddress destination, InetSocketAddress source, SocketUpcalls upcalls) {
