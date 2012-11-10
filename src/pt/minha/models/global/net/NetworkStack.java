@@ -45,9 +45,9 @@ public class NetworkStack {
 		this.network = network;
 		
 		if ( host != null )
-			this.localAddress = network.addHost(host);
+			this.localAddress = network.addHost(host, this);
 		else
-			this.localAddress = network.getAvailableInetAddress();
+			this.localAddress = network.getAvailableInetAddress(this);
 		
 		this.macAddress = network.generateMACAddress();
 		this.networkInterfaces.add(new NetworkInterface(macAddress, localAddress));

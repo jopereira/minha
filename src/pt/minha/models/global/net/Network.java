@@ -230,10 +230,8 @@ public class Network {
 	}
 	
 	private final Random random = new Random();
-	private final List<InetAddress> hosts = new LinkedList<InetAddress>();
-	private final Map<InetSocketAddress, DatagramSocketUpcalls> socketsUDP = new HashMap<InetSocketAddress, DatagramSocketUpcalls>();
-	private final Map<InetSocketAddress, ServerSocketUpcalls> socketsTCP = new HashMap<InetSocketAddress, ServerSocketUpcalls>();
-
+	private final Map<InetAddress,NetworkStack> hosts = new HashMap<InetAddress, NetworkStack>();
+	
 	// IP generation
 	private int ip1 = 10;
 	private int ip2 = 0;
@@ -282,35 +280,40 @@ public class Network {
 	}
 	
 	
-	public InetAddress addHost(String host) throws UnknownHostException {
+	public InetAddress addHost(String host, NetworkStack stack) throws UnknownHostException {
 		if ( host.startsWith("127.") )
 			throw new UnknownHostException("Invalid address: " + host);
 		
 		InetAddress ia = InetAddress.getByName(host);
-		if ( hosts.contains(ia) )
+		if ( hosts.containsKey(ia) )
 			throw new UnknownHostException("Address already used: " + ia.toString());
 		
-		hosts.add(ia);
+		hosts.put(ia, stack);
 		return ia;		
 	}
 	
 		
-	public InetAddress getAvailableInetAddress() throws UnknownHostException {
+	public InetAddress getAvailableInetAddress(NetworkStack stack) throws UnknownHostException {
 		InetAddress ia;
 		do {
 			ia = InetAddress.getByName(getAvailableIP());
 		}
-		while ( hosts.contains(ia) );
+		while ( hosts.containsKey(ia) );
 		
-		hosts.add(ia);
+		hosts.put(ia, stack);
 		return ia;
 	}
 	
 	
 	public boolean existsHost(InetAddress ia) {
-		return hosts.contains(ia);
+		return hosts.containsKey(ia);
 	}
 
+	// FIXME: the following should move to networkstack
+	
+	private final Map<InetSocketAddress, DatagramSocketUpcalls> socketsUDP = new HashMap<InetSocketAddress, DatagramSocketUpcalls>();
+	private final Map<InetSocketAddress, ServerSocketUpcalls> socketsTCP = new HashMap<InetSocketAddress, ServerSocketUpcalls>();
+	
 	public InetSocketAddress addTCPSocket(InetSocketAddress isa, ServerSocketUpcalls ab) throws SocketException {
 		if ( socketsTCP.containsKey(isa) )
 			throw new BindException(isa.toString() + " Cannot assign requested address on TCP");
