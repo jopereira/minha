@@ -132,16 +132,14 @@ public class NetworkMap {
 		return isa;
 	}
 
-	public void removeSocket(Protocol protocol, InetSocketAddress isa) {
-		switch (protocol) {
-		case UDP:
-			if ( socketsUDP.containsKey(isa) )
-				socketsUDP.remove(isa);
-			break;
-		case TCP:
-			if ( socketsTCP.containsKey(isa) )
-				socketsTCP.remove(isa);
-		}
+	public void removeTCPSocket(InetSocketAddress isa) {
+		if ( socketsTCP.containsKey(isa) )
+			socketsTCP.remove(isa);
+	}
+	
+	public void removeUDPSocket(InetSocketAddress isa) {
+		if ( socketsUDP.containsKey(isa) )
+			socketsUDP.remove(isa);
 	}
 	
 	protected void DatagramPacketQueue(InetSocketAddress destination, DatagramPacket packet) {

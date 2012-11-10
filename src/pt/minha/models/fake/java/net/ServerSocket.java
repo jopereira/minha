@@ -29,7 +29,6 @@ import java.util.List;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.Log;
-import pt.minha.models.global.net.Protocol;
 import pt.minha.models.global.net.ServerSocketUpcalls;
 import pt.minha.models.global.net.SocketUpcalls;
 import pt.minha.models.local.HostImpl;
@@ -95,7 +94,7 @@ public class ServerSocket extends AbstractSocket {
     		return;
         closed = true;
         
-        host.getNetwork().networkMap.removeSocket(Protocol.TCP, this.localSocketAddress);
+        host.getNetwork().networkMap.removeTCPSocket(this.localSocketAddress);
         
         if ( Log.network_tcp_log_enabled )
         	Log.TCPdebug("ServerSocket close: "+this.localSocketAddress);

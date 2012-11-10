@@ -35,7 +35,7 @@ import pt.minha.kernel.simulation.Timeline;
 import pt.minha.kernel.util.PropertiesLoader;
 
 public class Network {
-	public static NetworkMap networkMap;
+	public NetworkMap networkMap;
 	
 	private final long BUFFER = 128*1024;
 	private final long BANDWIDTH = NetworkCalibration.networkBandwidth/8; // bytes

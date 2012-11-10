@@ -19,14 +19,12 @@
 
 package pt.minha.kernel.log;
 
-import pt.minha.api.World;
-
 public class LoggerLog4j extends SimpleLoggerLog4j {
 	public LoggerLog4j(String filename) {
 		super(filename);
 	}
 	
 	public void debug(String message) {
-			super.debug(World.timeline.getTime()+" "+Thread.currentThread()+" | "+message);
+			super.debug(Thread.currentThread()+" | "+message);
 	}
 }

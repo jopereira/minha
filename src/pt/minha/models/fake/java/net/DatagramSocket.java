@@ -31,7 +31,6 @@ import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.DatagramSocketUpcalls;
 import pt.minha.models.global.net.NetworkCalibration;
-import pt.minha.models.global.net.Protocol;
 import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
@@ -124,7 +123,7 @@ public class DatagramSocket extends AbstractSocket {
     public void close() {
     	// FIXME: wake up receivers? synchronization?
     	closed = true;
-    	this.removeSocket(Protocol.UDP, (InetSocketAddress)this.getLocalSocketAddress());
+    	host.getNetwork().networkMap.removeUDPSocket((InetSocketAddress)this.getLocalSocketAddress());
     }
     
 	private class WakeUpEvent extends Event {

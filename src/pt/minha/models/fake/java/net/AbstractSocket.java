@@ -25,7 +25,6 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
-import pt.minha.models.global.net.Protocol;
 import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
@@ -67,11 +66,6 @@ public abstract class AbstractSocket {
 		return World.networkMap.existsSocket(protocol, isa);
 	}*/
 	
-	protected void removeSocket(Protocol protocol, InetSocketAddress isa) {
-		HostImpl host = SimulationThread.currentSimulationThread().getHost();
-		host.getNetwork().networkMap.removeSocket(protocol, isa);
-	}
-
 	public SocketAddress getLocalSocketAddress() {
 		return this.localSocketAddress;
 	}
