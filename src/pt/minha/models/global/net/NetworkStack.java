@@ -19,12 +19,16 @@
 
 package pt.minha.models.global.net;
 
+import java.net.BindException;
+import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.fake.java.net.NetworkInterface;
@@ -131,5 +135,50 @@ public class NetworkStack {
 	
 	public Timeline getTimeline() {
 		return timeline;
+	}
+	
+	// FIXME: the following should move to networkstack
+	
+	private final Map<InetSocketAddress, DatagramSocketUpcalls> socketsUDP = new HashMap<InetSocketAddress, DatagramSocketUpcalls>();
+	private final Map<InetSocketAddress, ServerSocketUpcalls> socketsTCP = new HashMap<InetSocketAddress, ServerSocketUpcalls>();
+	
+	public InetSocketAddress addTCPSocket(InetSocketAddress isa, ServerSocketUpcalls ab) throws SocketException {
+		if ( socketsTCP.containsKey(isa) )
+			throw new BindException(isa.toString() + " Cannot assign requested address on TCP");
+
+		socketsTCP.put(isa, ab);
+		return isa;
+	}
+
+	public InetSocketAddress addUDPSocket(InetSocketAddress isa, DatagramSocketUpcalls ab) throws SocketException {
+		if ( socketsUDP.containsKey(isa) )
+			throw new BindException(isa.toString() + " Cannot assign requested address on UDP");
+
+		socketsUDP.put(isa, ab);
+		return isa;
+	}
+
+	public void removeTCPSocket(InetSocketAddress isa) {
+		if ( socketsTCP.containsKey(isa) )
+			socketsTCP.remove(isa);
+	}
+	
+	public void removeUDPSocket(InetSocketAddress isa) {
+		if ( socketsUDP.containsKey(isa) )
+			socketsUDP.remove(isa);
+	}
+	
+	public void DatagramPacketQueue(InetSocketAddress destination, DatagramPacket packet) {
+		DatagramSocketUpcalls sgds = socketsUDP.get(destination);
+		if ( null!=sgds ) {
+			sgds.queue(packet);
+		}
+	}
+	
+	public void handleConnect(InetSocketAddress destination, InetSocketAddress source, SocketUpcalls upcalls) {
+		ServerSocketUpcalls ssi = socketsTCP.get(destination);
+		if (ssi==null)
+			upcalls.accepted(null);
+		ssi.queueConnect(destination, source, upcalls);
 	}
 }

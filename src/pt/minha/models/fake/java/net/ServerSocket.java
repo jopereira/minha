@@ -48,7 +48,7 @@ public class ServerSocket {
 		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
 		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress();
 		isa=stack.checkSocket(isa);
-		this.localSocketAddress = stack.getNetwork().addTCPSocket(isa,upcalls);
+		this.localSocketAddress = stack.addTCPSocket(isa,upcalls);
 
 	}
 
@@ -61,7 +61,7 @@ public class ServerSocket {
 		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
 		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress(port);
 		isa=stack.checkSocket(isa);
-		this.localSocketAddress = stack.getNetwork().addTCPSocket(isa,upcalls);
+		this.localSocketAddress = stack.addTCPSocket(isa,upcalls);
 
     }
 	
@@ -96,7 +96,7 @@ public class ServerSocket {
     		return;
         closed = true;
         
-        stack.getNetwork().removeTCPSocket(this.localSocketAddress);
+        stack.removeTCPSocket(this.localSocketAddress);
         
         if ( Log.network_tcp_log_enabled )
         	Log.TCPdebug("ServerSocket close: "+this.localSocketAddress);

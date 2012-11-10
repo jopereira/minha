@@ -97,33 +97,26 @@ public class Socket {
 			throw new SocketException("connect on closed socket");
         
         InetSocketAddress epoint = (InetSocketAddress) endpoint;
-        /* FIXME: These validations cannot be deleted, but should use local info
-        if ( !this.existsSocket(Protocol.TCP, epoint) )
-        	throw new IOException("connect: unable to connect to " + epoint.toString());
-        
-        if (!(World.networkMap.isServerSocket(epoint)))
-        	throw new IOException("connect: unable to connect to " + epoint.toString() + ", is not a ServerSocket");
-        */
         this.remoteSocketAddress = epoint;
         
 		// wait to ServerSocket.accept() end
 		SimulationThread.stopTime(0);
 		
-		// connect to ServerSocket
-		ServerSocketUpcalls ssi = stack.getNetwork().lookupServerSocket(this.remoteSocketAddress);
-		if (ssi==null) {
-			SimulationThread.startTime(0);
-			throw new ConnectException();
-		}
-		ssi.queueConnect(remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), upcalls);
-	    this.connected = true;
-	    
+		// connect to ServerSocket		
+		stack.getNetwork().routeConnect(remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), upcalls);
+		
 		if (doneConnect==0) {
 			blockedConnect.add(SimulationThread.currentSimulationThread().getWakeup());
 			SimulationThread.currentSimulationThread().pause();
 		}
-
 		doneConnect--;
+		
+		if (target==null) {
+			SimulationThread.startTime(0);
+			throw new ConnectException();
+		}
+		
+	    this.connected = true;
 		
 		if ( Log.network_tcp_log_enabled )
 			Log.TCPdebug("Socket connected: "+this.remoteSocketAddress);

@@ -49,7 +49,7 @@ public class DatagramSocket {
 		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
 		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress();
 		isa=stack.checkSocket(isa);
-		this.localSocketAddress = stack.getNetwork().addUDPSocket(isa,upcalls);
+		this.localSocketAddress = stack.addUDPSocket(isa,upcalls);
 	}
 	
 	
@@ -57,7 +57,7 @@ public class DatagramSocket {
 		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
 		InetSocketAddress isa = stack.getHostAvailableInetSocketAddress(port);
 		isa=stack.checkSocket(isa);
-		this.localSocketAddress = stack.getNetwork().addUDPSocket(isa,upcalls);
+		this.localSocketAddress = stack.addUDPSocket(isa,upcalls);
 	}
 
 	public DatagramSocket(int port, InetAddress address) throws SocketException {
@@ -125,7 +125,7 @@ public class DatagramSocket {
     public void close() {
     	// FIXME: wake up receivers? synchronization?
     	closed = true;
-    	stack.getNetwork().removeUDPSocket((InetSocketAddress)this.getLocalSocketAddress());
+    	stack.removeUDPSocket((InetSocketAddress)this.getLocalSocketAddress());
     }
     
 	private class WakeUpEvent extends Event {

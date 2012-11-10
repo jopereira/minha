@@ -101,7 +101,10 @@ public class Network {
 		if  ( (current_bandwidth+p.getLength()) > BUFFER )
 			return;
 		
-		DatagramPacketQueue(destination, p);
+		NetworkStack stack = hosts.get(destination.getAddress());
+		if (stack!=null)
+			stack.DatagramPacketQueue(destination, p);
+		
 		current_bandwidth += p.getLength();
 		if ( bandwidth_log_enabled )
 			bandwidth_log += p.getLength();
@@ -200,6 +203,13 @@ public class Network {
 			DatagramPacket dp = new DatagramPacket(data, data.length, source);
 			target.queue(dp);			
 		}
+	}
+
+	public void routeConnect(InetSocketAddress destination, InetSocketAddress source, SocketUpcalls upcalls) {
+		NetworkStack target = hosts.get(destination.getAddress());
+		if (target==null)
+			upcalls.accepted(null);
+		target.handleConnect(destination, source, upcalls);
 	}
 	
 	/*
@@ -308,46 +318,4 @@ public class Network {
 	public boolean existsHost(InetAddress ia) {
 		return hosts.containsKey(ia);
 	}
-
-	// FIXME: the following should move to networkstack
-	
-	private final Map<InetSocketAddress, DatagramSocketUpcalls> socketsUDP = new HashMap<InetSocketAddress, DatagramSocketUpcalls>();
-	private final Map<InetSocketAddress, ServerSocketUpcalls> socketsTCP = new HashMap<InetSocketAddress, ServerSocketUpcalls>();
-	
-	public InetSocketAddress addTCPSocket(InetSocketAddress isa, ServerSocketUpcalls ab) throws SocketException {
-		if ( socketsTCP.containsKey(isa) )
-			throw new BindException(isa.toString() + " Cannot assign requested address on TCP");
-
-		socketsTCP.put(isa, ab);
-		return isa;
-	}
-
-	public InetSocketAddress addUDPSocket(InetSocketAddress isa, DatagramSocketUpcalls ab) throws SocketException {
-		if ( socketsUDP.containsKey(isa) )
-			throw new BindException(isa.toString() + " Cannot assign requested address on UDP");
-
-		socketsUDP.put(isa, ab);
-		return isa;
-	}
-
-	public void removeTCPSocket(InetSocketAddress isa) {
-		if ( socketsTCP.containsKey(isa) )
-			socketsTCP.remove(isa);
-	}
-	
-	public void removeUDPSocket(InetSocketAddress isa) {
-		if ( socketsUDP.containsKey(isa) )
-			socketsUDP.remove(isa);
-	}
-	
-	protected void DatagramPacketQueue(InetSocketAddress destination, DatagramPacket packet) {
-		DatagramSocketUpcalls sgds = socketsUDP.get(destination);
-		if ( null!=sgds ) {
-			sgds.queue(packet);
-		}
-	}
-		
-	public ServerSocketUpcalls lookupServerSocket(InetSocketAddress destination) throws IOException {
-		return socketsTCP.get(destination);
-	}	
 }
