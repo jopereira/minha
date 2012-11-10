@@ -34,7 +34,6 @@ import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.global.net.TCPPacket;
 import pt.minha.models.global.net.TCPPacketAck;
 import pt.minha.models.global.net.TCPPacketData;
-import pt.minha.models.local.HostImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class SocketInputStream extends InputStream {
@@ -73,7 +72,7 @@ public class SocketInputStream extends InputStream {
 			return;
 		
 		if ( Log.network_tcp_stream_log_enabled )
-			Log.TCPdebug("SocketInputStream scheduleRead: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
+			Log.TCPdebug("SocketInputStream scheduleRead: "+p.getSn()+" "+p.getType());
 		
 		incoming.add(p);
 		new WakeReadEvent(socket.host.getTimeline()).schedule(0);
@@ -96,7 +95,7 @@ public class SocketInputStream extends InputStream {
 		TCPPacket p = incoming.remove(0);
 		
 		if ( Log.network_tcp_stream_log_enabled )
-			Log.TCPdebug("SocketInputStream read: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
+			Log.TCPdebug("SocketInputStream read: "+p.getSn()+" "+p.getType());
 		
 		if ( p.getSn() != this.sn )
 			throw new IOException("Wrong SN on "+this.socket.getLocalSocketAddress().toString()+": got: "+p.getSn()+" should be: "+this.sn);
@@ -113,12 +112,11 @@ public class SocketInputStream extends InputStream {
 		switch ( p.getType() ) {
 			case Data:
 				// send acknowledge
-				TCPPacketAck ack = new TCPPacketAck(this.socket.connectedSocketKey, p.getSn(), p.getSize());
+				TCPPacketAck ack = new TCPPacketAck(this.socket.upcalls, p.getSn(), p.getSize());
 				if ( Log.network_tcp_stream_log_enabled )
-					Log.TCPdebug("SocketInputStream acknowledge: "+ack.getSn()+" to "+ack.getKey()+" "+ack.getType());
-				HostImpl host = SimulationThread.currentSimulationThread().getHost();
+					Log.TCPdebug("SocketInputStream acknowledge: "+ack.getSn()+" "+ack.getType());
 
-				host.getNetwork().acknowledge(ack);
+				socket.host.getNetwork().acknowledge(ack);
 
 				byte[] data = ((TCPPacketData)p).getData();
 				for (int i=0; i<data.length; i++) {
@@ -228,7 +226,7 @@ public class SocketInputStream extends InputStream {
 		}
 		
 		if ( Log.network_tcp_stream_log_enabled )
-			Log.TCPdebug("SocketInputStream close: "+this.socket.connectedSocketKey);
+			Log.TCPdebug("SocketInputStream close ");
 	}
 
 	protected int getSN() {

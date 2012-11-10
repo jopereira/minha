@@ -22,13 +22,13 @@ package pt.minha.models.global.net;
 
 public abstract class TCPPacket {
 	private final PacketType type;
-	private final String key;	// destination 
+	private final SocketUpcalls destination;
 	private final int sn;		// sequence number
 	private final int size;
 	
-	public TCPPacket(PacketType type, String key, int sn, int size) {
+	public TCPPacket(PacketType type, SocketUpcalls dest, int sn, int size) {
 		this.type = type;
-		this.key = key;
+		this.destination = dest;
 		this.sn = sn;
 		this.size = size;
 	}
@@ -37,8 +37,8 @@ public abstract class TCPPacket {
 		return this.type;
 	}
 	
-	public String getKey() {
-		return this.key;
+	public SocketUpcalls getDestination() {
+		return this.destination;
 	}
 
 	public int getSn() {
@@ -50,7 +50,7 @@ public abstract class TCPPacket {
 	}
 	
 	public String toString() {
-		return "\n{PACKET: " + this.key 
+		return "\n{PACKET: "  
 				+ "; SN: " + this.sn
 				+ "; TYPE: " + this.type
 				+ "; SIZE: " + this.size

@@ -94,7 +94,7 @@ public class SocketOutputStream extends OutputStream {
 
 			byte[] copy = new byte[1];
 			copy[0] = new Integer(b).byteValue();
-			TCPPacket p = new TCPPacketData(this.socket.connectedSocketKey, this.sn++, copy);
+			TCPPacket p = new TCPPacketData(this.socket.upcalls, this.sn++, copy);
 			this.writeImpl(p);
 		
 		} finally {
@@ -118,7 +118,7 @@ public class SocketOutputStream extends OutputStream {
 
 			byte[] copy = new byte[len];
 			System.arraycopy(b, off, copy, 0, len);
-			TCPPacket p = new TCPPacketData(this.socket.connectedSocketKey, this.sn++, copy);
+			TCPPacket p = new TCPPacketData(this.socket.upcalls, this.sn++, copy);
 			this.writeImpl(p);
 		
 		} finally {
@@ -138,7 +138,7 @@ public class SocketOutputStream extends OutputStream {
 		this.transit += p.getSize();
 		
 		if ( Log.network_tcp_stream_log_enabled )
-			Log.TCPdebug("SocketOutputStream write: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
+			Log.TCPdebug("SocketOutputStream write: "+p.getSn()+" "+p.getType());
 		
 		// Injected packet loss: wait an additional round-trip
 		if ( NetworkCalibration.isLostPacket() ) {
@@ -157,7 +157,7 @@ public class SocketOutputStream extends OutputStream {
 			return;
 		
 		closed = true;
-		TCPPacket close = new TCPPacketClose(this.socket.connectedSocketKey, this.sn++);
+		TCPPacket close = new TCPPacketClose(this.socket.upcalls, this.sn++);
 		try {
 			SimulationThread.stopTime(0);			
 			this.writeImpl(close);
@@ -169,7 +169,7 @@ public class SocketOutputStream extends OutputStream {
 		}
 		
 		if ( Log.network_tcp_stream_log_enabled )
-			Log.TCPdebug("SocketOutputStream close: "+this.socket.connectedSocketKey);
+			Log.TCPdebug("SocketOutputStream close: "+this.socket.upcalls);
 	}
 	
 	protected int available () {

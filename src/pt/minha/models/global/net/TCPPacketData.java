@@ -23,7 +23,7 @@ package pt.minha.models.global.net;
 public class TCPPacketData extends TCPPacket {
 	private final byte[] data;
 
-	public TCPPacketData(String key, int sn, byte[] data) {
+	public TCPPacketData(SocketUpcalls key, int sn, byte[] data) {
 		super(PacketType.Data, key, sn, data.length);
 		this.data = data;
 	}

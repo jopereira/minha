@@ -21,7 +21,7 @@ package pt.minha.models.global.net;
 
 
 public interface SocketUpcalls {
-	public void accepted();
+	public void accepted(SocketUpcalls serverClientSocket);
 	
 	public void scheduleRead(TCPPacket p);
 	

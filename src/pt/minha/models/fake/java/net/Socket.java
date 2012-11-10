@@ -22,6 +22,7 @@ package pt.minha.models.fake.java.net;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -32,6 +33,7 @@ import java.util.List;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.Log;
+import pt.minha.models.global.net.ServerSocketUpcalls;
 import pt.minha.models.global.net.SocketUpcalls;
 import pt.minha.models.global.net.TCPPacket;
 import pt.minha.models.global.net.TCPPacketAck;
@@ -47,10 +49,11 @@ public class Socket extends AbstractSocket {
 	final SocketUpcalls upcalls = new Upcalls();
 	
 	protected boolean connected = false;
-	protected String connectedSocketKey;
+	//protected String connectedSocketKey;
 	private boolean closed = false;
 	private boolean shutOut = false;
 	private boolean shutIn = false;
+	SocketUpcalls target;
 	HostImpl host;
 	
 	public Socket() throws IOException {
@@ -106,7 +109,12 @@ public class Socket extends AbstractSocket {
 		SimulationThread.stopTime(0);
 		
 		// connect to ServerSocket
-		this.connectedSocketKey = host.getNetwork().networkMap.ServerSocketConnect(this.remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), upcalls);
+		ServerSocketUpcalls ssi = host.getNetwork().networkMap.lookupServerSocket(this.remoteSocketAddress);
+		if (ssi==null) {
+			SimulationThread.startTime(0);
+			throw new ConnectException();
+		}
+		ssi.queueConnect(remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), upcalls);
 	    this.connected = true;
 	    
 		if (doneConnect==0) {
@@ -169,7 +177,7 @@ public class Socket extends AbstractSocket {
                 
         if (this.connected) {
 	        // We need to remove local key and not remote endpoint key
-	        int keySeparator = this.connectedSocketKey.lastIndexOf('-');
+	        /*int keySeparator = this.connectedSocketKey.lastIndexOf('-');
 	        String localConnectedSocketKey = this.connectedSocketKey.substring(0, keySeparator);
 	        String connectedSocketKeySuffix = this.connectedSocketKey.substring(keySeparator);
 	        if ( connectedSocketKeySuffix.equals("-client") )
@@ -182,7 +190,7 @@ public class Socket extends AbstractSocket {
 	        if ( Log.network_tcp_log_enabled )
 	        	Log.TCPdebug("Socket close: "+this.connectedSocketKey);
 	        
-	        this.connectedSocketKey = null;    	
+	        this.connectedSocketKey = null;*/    	
 	        this.connected = false;
         }
     }
@@ -196,25 +204,29 @@ public class Socket extends AbstractSocket {
     			",localaddr=" + this.getLocalSocketAddress()+"]";
     }
     
-	private void wakeConnect() {
+	private void wakeConnect(SocketUpcalls scs) {
 		doneConnect++;
+		this.target = scs;
 		if (!blockedConnect.isEmpty())
 			blockedConnect.remove(0).schedule(0);
 	}
 	        
 	private class WakeConnectEvent extends Event {
-		public WakeConnectEvent(Timeline timeline) {
+		public SocketUpcalls scs;
+		
+		public WakeConnectEvent(Timeline timeline, SocketUpcalls scs) {
 			super(timeline);
+			this.scs = scs;
 		}
 
 		public void run() {
-			wakeConnect();
+			wakeConnect(scs);
 		}
 	}
 
 	private class Upcalls implements SocketUpcalls {
-		public void accepted() {
-			new WakeConnectEvent(host.getTimeline()).schedule(0);
+		public void accepted(SocketUpcalls serverClientSocket) {
+			new WakeConnectEvent(host.getTimeline(), serverClientSocket).schedule(0);
 		}
 	
 		public void scheduleRead(TCPPacket p) {

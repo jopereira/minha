@@ -37,7 +37,6 @@ public class NetworkMap {
 	private final List<InetAddress> hosts = new LinkedList<InetAddress>();
 	private final Map<InetSocketAddress, DatagramSocketUpcalls> socketsUDP = new HashMap<InetSocketAddress, DatagramSocketUpcalls>();
 	private final Map<InetSocketAddress, ServerSocketUpcalls> socketsTCP = new HashMap<InetSocketAddress, ServerSocketUpcalls>();
-	private final Map<String, SocketUpcalls> connectedSocketsTCP = new HashMap<String, SocketUpcalls>();
 
 	// IP generation
 	private int ip1 = 10;
@@ -133,19 +132,6 @@ public class NetworkMap {
 		return isa;
 	}
 
-	
-	/*public boolean existsSocket(Protocol protocol, InetSocketAddress isa) {
-		switch (protocol) {
-		case UDP:
-			return socketsUDP.containsKey(isa);
-		case TCP:
-			return socketsTCP.containsKey(isa);
-		default:
-			return false;
-		}
-	}*/
-
-
 	public void removeSocket(Protocol protocol, InetSocketAddress isa) {
 		switch (protocol) {
 		case UDP:
@@ -158,98 +144,14 @@ public class NetworkMap {
 		}
 	}
 	
-	
 	protected void DatagramPacketQueue(InetSocketAddress destination, DatagramPacket packet) {
 		DatagramSocketUpcalls sgds = socketsUDP.get(destination);
 		if ( null!=sgds ) {
 			sgds.queue(packet);
 		}
 	}
-	
-	
-	/*public boolean isServerSocket(InetSocketAddress destination) {
-		Object o = socketsTCP.get(destination);
-		if ( null != o ) {
-			if ( containsInterface(o, ServerSocketUpcalls.class) )
-				return true;
-		}
-
-		return false;
-	}*/
-	
-	public String ServerSocketConnect(InetSocketAddress destination, InetSocketAddress source, SocketUpcalls clientSocket) throws IOException {
-		ServerSocketUpcalls ssi = socketsTCP.get(destination);
-		if ( null!=ssi ) {
-			ssi.queueConnect(destination, source, clientSocket);
-			
-			// register socket between client socket and server socket
-			String connectedSocketKeyPrefix = "["+destination.getAddress().getHostAddress()+":"+destination.getPort()+"<-"+source.getAddress().getHostAddress()+":"+source.getPort()+"]";
-		    addConnectedSocket(connectedSocketKeyPrefix+"-client", clientSocket);
-		    return connectedSocketKeyPrefix+"-server";
-		}
 		
-		throw new IOException("connect: unable to connect to " + destination.toString());
-	}
-
-	
-	public String SocketScheduleServerSocketAcceptDone(InetSocketAddress destination, InetSocketAddress source, SocketUpcalls serverClientSocket, SocketUpcalls si) throws IOException {
-		si.accepted();
-			
-		// register socket between server socket and client socket
-		String connectedSocketKeyPrefix = "["+source.getAddress().getHostAddress()+":"+source.getPort()+"<-"+destination.getAddress().getHostAddress()+":"+destination.getPort()+"]";
-		addConnectedSocket(connectedSocketKeyPrefix+"-server", serverClientSocket);
-		return connectedSocketKeyPrefix+"-client";
-	}
-
-	
-	protected void SocketScheduleRead(String key, TCPPacket p) throws IOException {
-		SocketUpcalls si = connectedSocketsTCP.get(key);
-		if ( null!=si ) {
-			si.scheduleRead(p);
-			return;
-		}
-		
-		/* This should fail silently, as some racing is expected when
-		 * both endpoints simultaneously close the socket after exchanging
-		 * an agreed amound of data (e.g. chunked encoding). */
-	}
-	
-
-	protected void SocketAcknowledge(String key, TCPPacketAck p) {
-		if ( null == key ) {
-			if ( Log.network_tcp_stream_log_enabled )
-				Log.TCPdebug("Unable to acknowledge: null key");
-			pt.minha.models.global.Debug.println("Unable to acknowledge: null key");
-			System.exit(1);
-		}
-		
-		SocketUpcalls si = connectedSocketsTCP.get(key);
-		if ( null!=si ) {
-			si.acknowledge(p);
-			return;
-		}
-		
-		if ( Log.network_tcp_stream_log_enabled )
-			Log.TCPdebug("Unable to acknowledge on " + key);
-	}
-
-	
-	private void addConnectedSocket(String key, SocketUpcalls o) {
-		if ( null == key ) {
-			pt.minha.models.global.Debug.println("Unable to addConnectedSocket: null key " + o);
-			System.exit(1);
-		}
-		
-		connectedSocketsTCP.put(key, o);
-	}
-
-
-	public void removeConnectedSocket(String key) {
-		if ( null == key ) {
-			pt.minha.models.global.Debug.println("Unable to removeConnectedSocket: null key");
-			System.exit(1);
-		}
-		
-		connectedSocketsTCP.remove(key);
-	}
+	public ServerSocketUpcalls lookupServerSocket(InetSocketAddress destination) throws IOException {
+		return socketsTCP.get(destination);
+	}	
 }

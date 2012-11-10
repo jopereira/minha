@@ -77,11 +77,14 @@ public class ServerSocket extends AbstractSocket {
 		WakeAcceptEvent addresses = incomingAccept.remove(0);
 		Socket socket = new Socket(addresses.remote, addresses.local);
 		// inform client Socket that accept ended
-	    socket.connectedSocketKey = host.getNetwork().networkMap.SocketScheduleServerSocketAcceptDone(addresses.remote, addresses.local, socket.upcalls, addresses.cli);
-		socket.connected = true;
 		
-		if ( Log.network_tcp_log_enabled )
-			Log.TCPdebug("ServerSocket accept: "+socket.connectedSocketKey);
+		addresses.cli.accepted(socket.upcalls);
+	    //socket.connectedSocketKey = host.getNetwork().networkMap.SocketScheduleServerSocketAcceptDone(addresses.remote, addresses.local, socket.upcalls, addresses.cli);
+		socket.connected = true;
+		socket.target = addresses.cli;
+		
+		/*if ( Log.network_tcp_log_enabled )
+			Log.TCPdebug("ServerSocket accept: "+socket.connectedSocketKey);*/
 		
 		SimulationThread.startTime(0);		
     	return socket;

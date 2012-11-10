@@ -22,7 +22,7 @@ package pt.minha.models.global.net;
 public class TCPPacketAck extends TCPPacket {
 	private final int acksize;
 	
-	public TCPPacketAck(String key, int sn, int acksize) {
+	public TCPPacketAck(SocketUpcalls key, int sn, int acksize) {
 		super(PacketType.Ack, key, sn, 1);
 		this.acksize = acksize;
 	}

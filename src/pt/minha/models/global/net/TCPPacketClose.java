@@ -21,7 +21,7 @@ package pt.minha.models.global.net;
 
 
 public class TCPPacketClose extends TCPPacket {
-	public TCPPacketClose(String key, int sn) {
+	public TCPPacketClose(SocketUpcalls key, int sn) {
 		super(PacketType.Close, key, sn, 0);
 	}
 }

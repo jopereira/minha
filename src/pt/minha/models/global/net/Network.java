@@ -71,15 +71,15 @@ public class Network {
 		// delay send
 		if  ( (current_bandwidth+p.getSize())>BUFFER || !queue.isEmpty()) {
 			if ( Log.network_tcp_stream_log_enabled )
-				Log.TCPdebug("Network queue: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
+				Log.TCPdebug("Network queue: "+p.getSn()+" "+p.getType());
 			
 			queue.add(p);
 			return;
 		}
 		
 		if ( Log.network_tcp_stream_log_enabled )
-			Log.TCPdebug("Network send: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
-		networkMap.SocketScheduleRead(p.getKey(), p);
+			Log.TCPdebug("Network send: "+p.getSn()+" "+p.getType());
+		p.getDestination().scheduleRead(p);
 		current_bandwidth += p.getSize();
 		if ( bandwidth_log_enabled )
 			bandwidth_log += p.getSize();
@@ -115,9 +115,9 @@ public class Network {
 	
 	public void acknowledge(TCPPacketAck p) {
 		if ( Log.network_tcp_stream_log_enabled )
-			Log.TCPdebug("Network acknowledge: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
+			Log.TCPdebug("Network acknowledge: "+p.getSn()+" "+p.getType());
 		
-		networkMap.SocketAcknowledge(p.getKey(), p);
+		p.getDestination().acknowledge(p);
 	}
 	
 	
@@ -139,20 +139,14 @@ public class Network {
 				if ( (current_bandwidth+p.getSize()) > BUFFER )
 					break;
 				else {
-					try {
-						if ( Log.network_tcp_stream_log_enabled )
-							Log.TCPdebug("Network send from queue: "+p.getSn()+" to "+p.getKey()+" "+p.getType());
-						networkMap.SocketScheduleRead(p.getKey(), p);
-						queue.remove(0);
-						current_bandwidth += p.getSize();
-						if ( bandwidth_log_enabled )
-							bandwidth_log += p.getSize();
-					}
-					catch (IOException e) {
-						pt.minha.models.global.Debug.println("Exception sending packets from network queue: "+p.toString());
-						e.printStackTrace();
-						System.exit(1);
-					}
+					if ( Log.network_tcp_stream_log_enabled )
+						Log.TCPdebug("Network send from queue: "+p.getSn()+" "+p.getType());
+					//networkMap.SocketScheduleRead(p.getKey(), p);
+					p.getDestination().scheduleRead(p);
+					queue.remove(0);
+					current_bandwidth += p.getSize();
+					if ( bandwidth_log_enabled )
+						bandwidth_log += p.getSize();
 				}
 			}
 			
