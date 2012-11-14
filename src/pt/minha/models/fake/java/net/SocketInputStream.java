@@ -116,7 +116,7 @@ public class SocketInputStream extends InputStream {
 				if ( Log.network_tcp_stream_log_enabled )
 					Log.TCPdebug("SocketInputStream acknowledge: "+ack.getSn()+" "+ack.getType());
 
-				socket.stack.getNetwork().acknowledge(ack);
+				socket.stack.getNetwork().relayTCPAck(ack);
 
 				byte[] data = ((TCPPacketData)p).getData();
 				for (int i=0; i<data.length; i++) {

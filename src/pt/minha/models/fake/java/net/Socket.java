@@ -100,7 +100,7 @@ public class Socket {
 		SimulationThread.stopTime(0);
 		
 		// connect to ServerSocket		
-		stack.getNetwork().routeConnect(remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), upcalls);
+		stack.getNetwork().relayTCPConnect(remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), upcalls);
 		
 		if (doneConnect==0) {
 			blockedConnect.add(SimulationThread.currentSimulationThread().getWakeup());

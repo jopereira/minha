@@ -30,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.fake.java.net.NetworkInterface;
 
@@ -131,10 +132,14 @@ public class NetworkStack {
 			socketsUDP.remove(isa);
 	}
 	
-	public void handleDatagram(InetSocketAddress destination, DatagramPacket packet) {
-		DatagramSocketUpcalls sgds = socketsUDP.get(destination);
-		if (sgds!=null)
-			sgds.queue(packet);
+	public void handleDatagram(final InetSocketAddress destination, final DatagramPacket packet) {
+		new Event(timeline) {
+			public void run() {
+				DatagramSocketUpcalls sgds = socketsUDP.get(destination);
+				if (sgds!=null)
+					sgds.queue(packet);
+			}			
+		}.schedule(0);
 	}
 	
 	public void handleConnect(InetSocketAddress destination, InetSocketAddress source, SocketUpcalls upcalls) {

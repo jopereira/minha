@@ -34,12 +34,12 @@ public class MulticastSocket extends DatagramSocket {
     }
 
     public void joinGroup(InetAddress addr) throws IOException {
-    	InetSocketAddress mcastaddrport = new InetSocketAddress(addr, this.getLocalPort());
-    	stack.getNetwork().addToGroup(mcastaddrport, upcalls);
+    	stack.getNetwork().addToGroup(addr, stack);
+    	stack.addUDPSocket(new InetSocketAddress(addr, this.getLocalPort()), upcalls);
     }
 
     public void leaveGroup(InetAddress addr) throws IOException {
-    	InetSocketAddress mcastaddrport = new InetSocketAddress(addr, this.getLocalPort());
-    	stack.getNetwork().removeFromGroup(mcastaddrport, upcalls);
+    	stack.getNetwork().removeFromGroup(addr, stack);
+    	stack.removeUDPSocket(new InetSocketAddress(addr, this.getLocalPort()));
     }
 }

@@ -38,19 +38,27 @@ import pt.minha.kernel.simulation.Timeline;
 import pt.minha.kernel.util.PropertiesLoader;
 
 public class Network {
+	private Timeline timeline;
+	
+	// address generation and registry
+	private final Random random = new Random();
+	private int ip1 = 10;
+	private int ip2 = 0;
+	private int ip3 = 0;
+	private int ip4 = 0;
+	private final Map<InetAddress, NetworkStack> hosts = new HashMap<InetAddress, NetworkStack>();
+	private final Map<InetAddress, List<NetworkStack>> multicastSockets = new HashMap<InetAddress, List<NetworkStack>>();
+	
+	// bandwidth control
 	private final long BUFFER = 128*1024;
 	private final long BANDWIDTH = NetworkCalibration.networkBandwidth/8; // bytes
 	private final long RESOLUTION = 40000; // 40 us;
 	private final long DELTA = BANDWIDTH/(1000000000/RESOLUTION);
 	private long current_bandwidth = 0;
-	
 	private final WakeEvent wakeEvent;
 	private boolean wakeEventEnabled = false;
-	
-	private Timeline timeline;
-	
 	private final LinkedList<TCPPacket> queue = new LinkedList<TCPPacket>();
-	
+		
 	public Network(Timeline timeline) {
 		this.timeline = timeline;
 		this.wakeEvent = new WakeEvent();
@@ -64,190 +72,6 @@ public class Network {
 		}
 	}
 	
-	/*
-	 * TCP
-	 */
-	public void send(TCPPacket p) throws IOException {
-		// delay send
-		if  ( (current_bandwidth+p.getSize())>BUFFER || !queue.isEmpty()) {
-			if ( Log.network_tcp_stream_log_enabled )
-				Log.TCPdebug("Network queue: "+p.getSn()+" "+p.getType());
-			
-			queue.add(p);
-			return;
-		}
-		
-		if ( Log.network_tcp_stream_log_enabled )
-			Log.TCPdebug("Network send: "+p.getSn()+" "+p.getType());
-		p.getDestination().scheduleRead(p);
-		current_bandwidth += p.getSize();
-		if ( bandwidth_log_enabled )
-			bandwidth_log += p.getSize();
-		
-		if ( !wakeEventEnabled ) {
-			wakeEventEnabled = true;
-			wakeEvent.schedule(RESOLUTION);
-			if ( bandwidth_log_enabled )
-				bandwidthLoggerEvent.schedule(BandwidthLoggerEventDELTA);
-		}
-	}
-
-	public void send(InetSocketAddress destination, DatagramPacket p) {
-		if ( NetworkCalibration.isLostPacket() )
-			return;
-		
-		// drop packet
-		if  ( (current_bandwidth+p.getLength()) > BUFFER )
-			return;
-		
-		NetworkStack stack = hosts.get(destination.getAddress());
-		if (stack!=null)
-			stack.handleDatagram(destination, p);
-		
-		current_bandwidth += p.getLength();
-		if ( bandwidth_log_enabled )
-			bandwidth_log += p.getLength();
-		
-		if ( !wakeEventEnabled ) {
-			wakeEventEnabled = true;
-			wakeEvent.schedule(RESOLUTION);
-			if ( bandwidth_log_enabled )
-				bandwidthLoggerEvent.schedule(BandwidthLoggerEventDELTA);
-		}
-	}
-	
-	public void acknowledge(TCPPacketAck p) {
-		if ( Log.network_tcp_stream_log_enabled )
-			Log.TCPdebug("Network acknowledge: "+p.getSn()+" "+p.getType());
-		
-		p.getDestination().acknowledge(p);
-	}
-	
-	
-	private class WakeEvent extends Event {
-		public WakeEvent() {
-			super(timeline);
-		}
-
-		public void run() {
-			if ( 0==current_bandwidth && 0==queue.size())
-				wakeEventEnabled = false;
-			else if ( current_bandwidth >= DELTA )
-				current_bandwidth -= DELTA;
-			else if ( current_bandwidth > 0 )
-				current_bandwidth = 0;
-			
-			while ( queue.size()>0 ) {
-				TCPPacket p = queue.get(0);
-				if ( (current_bandwidth+p.getSize()) > BUFFER )
-					break;
-				else {
-					if ( Log.network_tcp_stream_log_enabled )
-						Log.TCPdebug("Network send from queue: "+p.getSn()+" "+p.getType());
-					//networkMap.SocketScheduleRead(p.getKey(), p);
-					p.getDestination().scheduleRead(p);
-					queue.remove(0);
-					current_bandwidth += p.getSize();
-					if ( bandwidth_log_enabled )
-						bandwidth_log += p.getSize();
-				}
-			}
-			
-			// schedule next run
-			if ( wakeEventEnabled )
-				this.schedule(RESOLUTION);
-		}
-	}
-
-	// multicast address:port -> [Multicast Sockets]
-	private final Map<InetSocketAddress, List<DatagramSocketUpcalls>> multicastSockets = new HashMap<InetSocketAddress, List<DatagramSocketUpcalls>>();
-
-	public void addToGroup(InetSocketAddress mcastaddr, DatagramSocketUpcalls ms) throws IOException {
-		if ( !multicastSockets.containsKey(mcastaddr) )
-			multicastSockets.put(mcastaddr, new LinkedList<DatagramSocketUpcalls>());
-		
-		List<DatagramSocketUpcalls> sockets = multicastSockets.get(mcastaddr);
-    	if ( !sockets.contains(ms) )
-    		sockets.add(ms);
-	}
-	
-	
-	public void removeFromGroup(InetSocketAddress mcastaddr, DatagramSocketUpcalls ms) throws IOException {
-    	if (multicastSockets.containsKey(mcastaddr)) {
-    		if ( !multicastSockets.get(mcastaddr).remove(ms) )
-    			throw new IOException("MulticastSocket '"+ms+"' is not in group '"+mcastaddr+"'");
-    	}
-    	else
-    		throw new IOException("Multicast group '"+mcastaddr+"' do not exists");
-	}
-	
-		
-	// Stub method to send messages between sockets
-	public void MulticastSocketQueue(InetSocketAddress source, DatagramPacket packet) throws SocketException {
-		List<DatagramSocketUpcalls> targets = multicastSockets.get(packet.getSocketAddress());
-		if ( null == targets )
-			return;
-		
-		// Lost in sender
-		if ( NetworkCalibration.isLostPacket() )
-			return;
-				
-		for (DatagramSocketUpcalls target : targets) {
-			// Lost in receiver
-			if ( NetworkCalibration.isLostPacket() )
-				continue;
-			
-			byte[] data = new byte[packet.getLength()];
-			System.arraycopy(packet.getData(), packet.getOffset(), data, 0, data.length);
-			DatagramPacket dp = new DatagramPacket(data, data.length, source);
-			target.queue(dp);			
-		}
-	}
-
-	public void routeConnect(InetSocketAddress destination, InetSocketAddress source, SocketUpcalls upcalls) {
-		NetworkStack target = hosts.get(destination.getAddress());
-		if (target==null)
-			upcalls.accepted(null);
-		target.handleConnect(destination, source, upcalls);
-	}
-	
-	/*
-	 * network logger
-	 */
-	private long bandwidth_log = 0;
-	private final long BandwidthLoggerEventDELTA = 1000000000;
-	private BandwidthLoggerEvent bandwidthLoggerEvent;
-	private boolean bandwidth_log_enabled = false;
-	
-	
-	private class BandwidthLoggerEvent extends Event {
-		private Logger logger;
-
-		public BandwidthLoggerEvent() {
-			super(timeline);
-			this.logger = new SimpleLoggerLog4j("log/network.log");
-		}
-
-		public void run() {
-			logger.debug(this.getTimeline().getTime()+" "+bandwidth_log);
-			bandwidth_log = 0;
-			
-			// schedule next run
-			if ( wakeEventEnabled )
-				this.schedule(BandwidthLoggerEventDELTA);
-		}
-	}
-	
-	private final Random random = new Random();
-	private final Map<InetAddress,NetworkStack> hosts = new HashMap<InetAddress, NetworkStack>();
-	
-	// IP generation
-	private int ip1 = 10;
-	private int ip2 = 0;
-	private int ip3 = 0;
-	private int ip4 = 0;
-
-
 	public String generateMACAddress() {
 		String mac[] = new String[6];
 		
@@ -266,7 +90,6 @@ public class Network {
 		
 		return mac[0]+":"+mac[1]+":"+mac[2]+":"+mac[3]+":"+mac[4]+":"+mac[5];
 	}
-	
 	
 	private String getAvailableIP() throws UnknownHostException {
 		if ( ip4 < 254 ) {
@@ -307,4 +130,182 @@ public class Network {
 		hosts.put(ia, stack);
 		return ia;		
 	}		
+
+	public void addToGroup(InetAddress mcastaddr, NetworkStack ms) throws IOException {
+		if ( !multicastSockets.containsKey(mcastaddr) )
+			multicastSockets.put(mcastaddr, new LinkedList<NetworkStack>());
+		
+		List<NetworkStack> sockets = multicastSockets.get(mcastaddr);
+    	if ( !sockets.contains(ms) )
+    		sockets.add(ms);
+	}
+		
+	public void removeFromGroup(InetAddress mcastaddr, NetworkStack ms) throws IOException {
+    	if (multicastSockets.containsKey(mcastaddr)) {
+    		if ( !multicastSockets.get(mcastaddr).remove(ms) )
+    			throw new IOException("MulticastSocket '"+ms+"' is not in group '"+mcastaddr+"'");
+    	}
+    	else
+    		throw new IOException("Multicast group '"+mcastaddr+"' do not exists");
+	}
+	
+	/*
+	 * TCP
+	 */
+	public void relayTCPConnect(InetSocketAddress destination, InetSocketAddress source, SocketUpcalls upcalls) {
+		NetworkStack target = hosts.get(destination.getAddress());
+		if (target==null)
+			upcalls.accepted(null);
+		target.handleConnect(destination, source, upcalls);
+	}
+	
+	public void relayTCPAck(TCPPacketAck p) {
+		if ( Log.network_tcp_stream_log_enabled )
+			Log.TCPdebug("Network acknowledge: "+p.getSn()+" "+p.getType());
+		
+		p.getDestination().acknowledge(p);
+	}
+	
+	public void relayTCPData(TCPPacket p) throws IOException {
+		// delay send
+		if  ( (current_bandwidth+p.getSize())>BUFFER || !queue.isEmpty()) {
+			if ( Log.network_tcp_stream_log_enabled )
+				Log.TCPdebug("Network queue: "+p.getSn()+" "+p.getType());
+			
+			queue.add(p);
+			return;
+		}
+		
+		if ( Log.network_tcp_stream_log_enabled )
+			Log.TCPdebug("Network send: "+p.getSn()+" "+p.getType());
+		p.getDestination().scheduleRead(p);
+		current_bandwidth += p.getSize();
+		if ( bandwidth_log_enabled )
+			bandwidth_log += p.getSize();
+		
+		if ( !wakeEventEnabled ) {
+			wakeEventEnabled = true;
+			wakeEvent.schedule(RESOLUTION);
+			if ( bandwidth_log_enabled )
+				bandwidthLoggerEvent.schedule(BandwidthLoggerEventDELTA);
+		}
+	}
+
+	public void relayUDP(final InetSocketAddress destination, final DatagramPacket p) {
+		new Event(timeline) {
+			public void run() {
+				if ( NetworkCalibration.isLostPacket() )
+					return;
+				
+				// drop packet
+				if  ( (current_bandwidth+p.getLength()) > BUFFER )
+					return;
+				
+				NetworkStack stack = hosts.get(destination.getAddress());
+				if (stack!=null)
+					stack.handleDatagram(destination, p);
+				
+				current_bandwidth += p.getLength();
+				if ( bandwidth_log_enabled )
+					bandwidth_log += p.getLength();
+				
+				if ( !wakeEventEnabled ) {
+					wakeEventEnabled = true;
+					wakeEvent.schedule(RESOLUTION);
+					if ( bandwidth_log_enabled )
+						bandwidthLoggerEvent.schedule(BandwidthLoggerEventDELTA);
+				}
+			}			
+		}.schedule(0);
+	}
+
+	public void relayMulticast(final InetSocketAddress source, final DatagramPacket packet) throws SocketException {
+		new Event(timeline) {
+			public void run() {
+				List<NetworkStack> targets = multicastSockets.get(packet.getSocketAddress());
+				if ( null == targets )
+					return;
+				
+				// Lost in sender
+				if ( NetworkCalibration.isLostPacket() )
+					return;
+						
+				for (NetworkStack target : targets) {
+					// Lost in receiver
+					if ( NetworkCalibration.isLostPacket() )
+						continue;
+					
+					byte[] data = new byte[packet.getLength()];
+					System.arraycopy(packet.getData(), packet.getOffset(), data, 0, data.length);
+					try {
+						DatagramPacket dp = new DatagramPacket(data, data.length, source);
+						target.handleDatagram((InetSocketAddress)dp.getSocketAddress(), dp);
+					} catch (SocketException e) {
+						// drop packet
+					}
+				}
+			}			
+		}.schedule(0);
+	}
+
+	private class WakeEvent extends Event {
+		public WakeEvent() {
+			super(timeline);
+		}
+
+		public void run() {
+			if ( 0==current_bandwidth && 0==queue.size())
+				wakeEventEnabled = false;
+			else if ( current_bandwidth >= DELTA )
+				current_bandwidth -= DELTA;
+			else if ( current_bandwidth > 0 )
+				current_bandwidth = 0;
+			
+			while ( queue.size()>0 ) {
+				TCPPacket p = queue.get(0);
+				if ( (current_bandwidth+p.getSize()) > BUFFER )
+					break;
+				else {
+					if ( Log.network_tcp_stream_log_enabled )
+						Log.TCPdebug("Network send from queue: "+p.getSn()+" "+p.getType());
+					//networkMap.SocketScheduleRead(p.getKey(), p);
+					p.getDestination().scheduleRead(p);
+					queue.remove(0);
+					current_bandwidth += p.getSize();
+					if ( bandwidth_log_enabled )
+						bandwidth_log += p.getSize();
+				}
+			}
+			
+			// schedule next run
+			if ( wakeEventEnabled )
+				this.schedule(RESOLUTION);
+		}
+	}
+
+	/*
+	 * network logger
+	 */
+	private long bandwidth_log = 0;
+	private final long BandwidthLoggerEventDELTA = 1000000000;
+	private BandwidthLoggerEvent bandwidthLoggerEvent;
+	private boolean bandwidth_log_enabled = false;
+		
+	private class BandwidthLoggerEvent extends Event {
+		private Logger logger;
+
+		public BandwidthLoggerEvent() {
+			super(timeline);
+			this.logger = new SimpleLoggerLog4j("log/network.log");
+		}
+
+		public void run() {
+			logger.debug(this.getTimeline().getTime()+" "+bandwidth_log);
+			bandwidth_log = 0;
+			
+			// schedule next run
+			if ( wakeEventEnabled )
+				this.schedule(BandwidthLoggerEventDELTA);
+		}
+	}	
 }

@@ -145,7 +145,7 @@ public class SocketOutputStream extends OutputStream {
 			SimulationThread.currentSimulationThread().idle(NetworkCalibration.getNetworkDelay(p.getSize())*2);
 		}
 		
-		socket.stack.getNetwork().send(p);
+		socket.stack.getNetwork().relayTCPData(p);
 	}
 	
 	public void close() throws IOException {

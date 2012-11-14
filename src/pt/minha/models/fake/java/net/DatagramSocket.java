@@ -29,7 +29,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import pt.minha.kernel.simulation.Event;
-import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.DatagramSocketUpcalls;
 import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.global.net.NetworkStack;
@@ -68,14 +67,14 @@ public class DatagramSocket {
 			SimulationThread.stopTime(NetworkCalibration.writeCost*packet.getLength());
 			
 			if (packet.getAddress().isMulticastAddress()) {
-				stack.getNetwork().MulticastSocketQueue((InetSocketAddress)this.getLocalSocketAddress(), packet);
+				stack.getNetwork().relayMulticast((InetSocketAddress)this.getLocalSocketAddress(), packet);
 			}
 			else {
 				InetSocketAddress destination = new InetSocketAddress(packet.getAddress(),packet.getPort());
 				byte[] data = new byte[packet.getLength()];
 				System.arraycopy(packet.getData(), packet.getOffset(), data, 0, data.length);
 				DatagramPacket dp = new DatagramPacket(data, data.length, this.getLocalSocketAddress());
-				stack.getNetwork().send(destination, dp);
+				stack.getNetwork().relayUDP(destination, dp);
 			}
 
 		} finally  {
@@ -113,7 +112,8 @@ public class DatagramSocket {
 	private class Upcalls implements DatagramSocketUpcalls {
 		public void queue(DatagramPacket packet) {
 			incoming.add(packet);
-			new WakeUpEvent(stack.getTimeline()).schedule(0);
+			if (!blocked.isEmpty())
+				blocked.remove(0).schedule(0);
 		}
 	}
 	
@@ -122,22 +122,7 @@ public class DatagramSocket {
     	closed = true;
     	stack.removeUDPSocket((InetSocketAddress)this.getLocalSocketAddress());
     }
-    
-	private class WakeUpEvent extends Event {
-		public WakeUpEvent(Timeline timeline) {
-			super(timeline);
-		}
-
-		public void run() {
-			wakeup();
-		}
-	}
-
-    private void wakeup() {
-		if (!blocked.isEmpty())
-			blocked.remove(0).schedule(0);
-	}
-    
+        
 	public SocketAddress getLocalSocketAddress() {
 		return this.localSocketAddress;
 	}
