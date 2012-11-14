@@ -42,7 +42,7 @@ public class NetworkStack {
 	private final List<Integer> usedPorts = new LinkedList<Integer>();
 	private int INITIAL_PORT = 10000;
 	
-	private final String macAddress;
+	private String macAddress;
 	private final List<NetworkInterface> networkInterfaces = new LinkedList<NetworkInterface>();
 	
 	public NetworkStack(Timeline timeline, String host, Network network) throws UnknownHostException {
@@ -50,7 +50,9 @@ public class NetworkStack {
 		this.network = network;
 		
 		this.localAddress = network.addHost(host, this);
-		this.macAddress = network.generateMACAddress();
+		this.macAddress = "02:00";
+		for(int i=0;i<localAddress.getAddress().length;i++)
+			macAddress+=":"+Integer.toHexString(localAddress.getAddress()[i]);
 		this.networkInterfaces.add(new NetworkInterface(macAddress, localAddress));
 	}
 

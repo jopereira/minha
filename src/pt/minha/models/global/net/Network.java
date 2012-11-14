@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import pt.minha.kernel.log.Logger;
 import pt.minha.kernel.log.SimpleLoggerLog4j;
@@ -41,7 +40,6 @@ public class Network {
 	private Timeline timeline;
 	
 	// address generation and registry
-	private final Random random = new Random();
 	private int ip1 = 10;
 	private int ip2 = 0;
 	private int ip3 = 0;
@@ -71,26 +69,7 @@ public class Network {
 			// log will be disabled
 		}
 	}
-	
-	public String generateMACAddress() {
-		String mac[] = new String[6];
 		
-		mac[0] = "00";
-		mac[1] = "22";
-		mac[2] = "62";
-		mac[3] = Integer.toHexString(random.nextInt(127));
-		if ( 1 == mac[3].length() )
-			mac[3] = "0"+mac[3];
-		mac[4] = Integer.toHexString(random.nextInt(256));
-		if ( 1 == mac[4].length() )
-			mac[4] = "0"+mac[4];
-		mac[5] = Integer.toHexString(random.nextInt(256));
-		if ( 1 == mac[5].length() )
-			mac[5] = "0"+mac[5];
-		
-		return mac[0]+":"+mac[1]+":"+mac[2]+":"+mac[3]+":"+mac[4]+":"+mac[5];
-	}
-	
 	private String getAvailableIP() throws UnknownHostException {
 		if ( ip4 < 254 ) {
 			ip4++; 
