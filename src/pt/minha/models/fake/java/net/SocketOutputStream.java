@@ -33,7 +33,7 @@ import pt.minha.models.global.net.TCPPacketClose;
 import pt.minha.models.global.net.TCPPacketData;
 import pt.minha.models.local.lang.SimulationThread;
 
-public class SocketOutputStream extends OutputStream {
+class SocketOutputStream extends OutputStream {
 	private final Socket socket;
 	
 	private List<Integer> outgoing = new LinkedList<Integer>();
@@ -46,43 +46,20 @@ public class SocketOutputStream extends OutputStream {
 	
 	private boolean closed = false;
 	
-	public SocketOutputStream(Socket socket) {
+	SocketOutputStream(Socket socket) {
 		this.socket = socket;
 	}
 
-	/*
-	 * event stuff
-	 */
-	private class WakeWriteEvent extends Event {
-		private int sn;
-		
-		public WakeWriteEvent(int sn) {
-			super(socket.stack.getTimeline());
-			this.sn = sn;
-		}
-
-		public void run() {
-			wakeWrite(this.sn);
-		}
-	}
-	
-	private void wakeWrite(int sn) {
-		outgoing.add(sn);
-		if (!outgoingBlocked.isEmpty())
-			outgoingBlocked.remove(0).schedule(0);
-	}
-	
-	public void acknowledge(TCPPacketAck p) {
+	void acknowledge(TCPPacketAck p) {
 		this.transit -= p.getAckSize();
 		
 		if ( Log.network_tcp_stream_log_enabled )
 			Log.TCPdebug("SocketOutputStream acknowledge: "+p.getSn());
 		
-		new WakeWriteEvent(sn).schedule(0);
+		outgoing.add(sn);
+		if (!outgoingBlocked.isEmpty())
+			outgoingBlocked.remove(0).schedule(0);
 	}
-	/*
-	 * /event stuff
-	 */
 	
 	@Override
 	public void write(int b) throws IOException {

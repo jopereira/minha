@@ -142,10 +142,14 @@ public class NetworkStack {
 		}.schedule(0);
 	}
 	
-	public void handleConnect(InetSocketAddress destination, InetSocketAddress source, SocketUpcalls upcalls) {
-		ServerSocketUpcalls ssi = socketsTCP.get(destination);
-		if (ssi==null)
-			upcalls.accepted(null);
-		ssi.queueConnect(destination, source, upcalls);
+	public void handleConnect(final InetSocketAddress destination, final SocketUpcalls clientUpcalls) {
+		new Event(timeline) {
+			public void run() {
+				ServerSocketUpcalls ssi = socketsTCP.get(destination);
+				if (ssi==null) // connection refused
+					network.relayTCPAccept(clientUpcalls, null);
+				ssi.queueConnect(clientUpcalls);				
+			}
+		}.schedule(0);
 	}
 }

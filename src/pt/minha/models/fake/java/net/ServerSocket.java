@@ -37,7 +37,7 @@ import pt.minha.models.local.lang.SimulationThread;
 
 public class ServerSocket {
 	
-	private final List<WakeAcceptEvent> incomingAccept = new LinkedList<WakeAcceptEvent>();
+	private final List<SocketUpcalls> incomingAccept = new LinkedList<SocketUpcalls>();
 	private final List<Event> blockedAccept = new LinkedList<Event>();
 	private boolean closed = false;
 	private ServerSocketUpcalls upcalls = new Upcalls();
@@ -69,14 +69,12 @@ public class ServerSocket {
 			SimulationThread.currentSimulationThread().pause();
 		}
 
-		WakeAcceptEvent addresses = incomingAccept.remove(0);
-		Socket socket = new Socket(addresses.remote, addresses.local);
-		// inform client Socket that accept ended
+		SocketUpcalls cli = incomingAccept.remove(0);
+		Socket socket = new Socket(cli.getSocketAddress(), localSocketAddress);
 		
-		addresses.cli.accepted(socket.upcalls);
-	    //socket.connectedSocketKey = host.getNetwork().networkMap.SocketScheduleServerSocketAcceptDone(addresses.remote, addresses.local, socket.upcalls, addresses.cli);
+		stack.getNetwork().relayTCPAccept(cli, socket.upcalls);
 		socket.connected = true;
-		socket.target = addresses.cli;
+		socket.target = cli;
 		
 		/*if ( Log.network_tcp_log_enabled )
 			Log.TCPdebug("ServerSocket accept: "+socket.connectedSocketKey);*/
@@ -96,33 +94,16 @@ public class ServerSocket {
         	Log.TCPdebug("ServerSocket close: "+this.localSocketAddress);
 	}
     
-	private class WakeAcceptEvent extends Event {
-		public InetSocketAddress local;
-		public InetSocketAddress remote;
-		public SocketUpcalls cli;
-
-		public WakeAcceptEvent(Timeline timeline, InetSocketAddress local, InetSocketAddress remote, SocketUpcalls cli) {
-			super(timeline);
-			this.local = local;
-			this.remote = remote;
-			this.cli = cli;
-		}
-
-		public void run() {
-			incomingAccept.add(this);
-			if (!blockedAccept.isEmpty())
-				blockedAccept.remove(0).schedule(0);
-		}
-	}
-
     public String toString() {
         return "ServerSocket[addr=" + this.getLocalAddress() +
                 ",localport=" + this.getLocalPort()  + "]";
     }
 
     private class Upcalls implements ServerSocketUpcalls {
-		public void queueConnect(InetSocketAddress local, InetSocketAddress remote, SocketUpcalls cli) {
-			new WakeAcceptEvent(stack.getTimeline(), local, remote, cli).schedule(100000);
+		public void queueConnect(SocketUpcalls cli) {
+			incomingAccept.add(cli);
+			if (!blockedAccept.isEmpty())
+				blockedAccept.remove(0).schedule(0);
 		}
     }
     

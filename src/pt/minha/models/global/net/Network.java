@@ -152,43 +152,64 @@ public class Network {
 	/*
 	 * TCP
 	 */
-	public void relayTCPConnect(InetSocketAddress destination, InetSocketAddress source, SocketUpcalls upcalls) {
-		NetworkStack target = hosts.get(destination.getAddress());
-		if (target==null)
-			upcalls.accepted(null);
-		target.handleConnect(destination, source, upcalls);
+	public void relayTCPConnect(final InetSocketAddress serverAddr, final SocketUpcalls clientUpcalls) {
+		new Event(timeline) {
+			public void run() {
+				NetworkStack target = hosts.get(serverAddr.getAddress());
+				if (target==null)
+					clientUpcalls.acceptedBy(null); // no route to host
+				else
+					target.handleConnect(serverAddr, clientUpcalls);				
+			}			
+		}.schedule(0);
 	}
 	
-	public void relayTCPAck(TCPPacketAck p) {
-		if ( Log.network_tcp_stream_log_enabled )
-			Log.TCPdebug("Network acknowledge: "+p.getSn()+" "+p.getType());
-		
-		p.getDestination().acknowledge(p);
+	public void relayTCPAccept(final SocketUpcalls clientUpcalls, final SocketUpcalls serverUpcalls) {
+		new Event(timeline) {
+			public void run() {
+				clientUpcalls.acceptedBy(serverUpcalls);
+			}			
+		}.schedule(0);
+	}	
+	
+	public void relayTCPAck(final TCPPacketAck p) {
+		new Event(timeline) {
+			public void run() {
+				if ( Log.network_tcp_stream_log_enabled )
+					Log.TCPdebug("Network acknowledge: "+p.getSn()+" "+p.getType());
+				
+				p.getDestination().acknowledge(p);
+			}			
+		}.schedule(0);
 	}
 	
-	public void relayTCPData(TCPPacket p) throws IOException {
-		// delay send
-		if  ( (current_bandwidth+p.getSize())>BUFFER || !queue.isEmpty()) {
-			if ( Log.network_tcp_stream_log_enabled )
-				Log.TCPdebug("Network queue: "+p.getSn()+" "+p.getType());
-			
-			queue.add(p);
-			return;
-		}
-		
-		if ( Log.network_tcp_stream_log_enabled )
-			Log.TCPdebug("Network send: "+p.getSn()+" "+p.getType());
-		p.getDestination().scheduleRead(p);
-		current_bandwidth += p.getSize();
-		if ( bandwidth_log_enabled )
-			bandwidth_log += p.getSize();
-		
-		if ( !wakeEventEnabled ) {
-			wakeEventEnabled = true;
-			wakeEvent.schedule(RESOLUTION);
-			if ( bandwidth_log_enabled )
-				bandwidthLoggerEvent.schedule(BandwidthLoggerEventDELTA);
-		}
+	public void relayTCPData(final TCPPacket p) throws IOException {
+		new Event(timeline) {
+			public void run() {
+				// delay send
+				if  ( (current_bandwidth+p.getSize())>BUFFER || !queue.isEmpty()) {
+					if ( Log.network_tcp_stream_log_enabled )
+						Log.TCPdebug("Network queue: "+p.getSn()+" "+p.getType());
+					
+					queue.add(p);
+					return;
+				}
+				
+				if ( Log.network_tcp_stream_log_enabled )
+					Log.TCPdebug("Network send: "+p.getSn()+" "+p.getType());
+				p.getDestination().scheduleRead(p);
+				current_bandwidth += p.getSize();
+				if ( bandwidth_log_enabled )
+					bandwidth_log += p.getSize();
+				
+				if ( !wakeEventEnabled ) {
+					wakeEventEnabled = true;
+					wakeEvent.schedule(RESOLUTION);
+					if ( bandwidth_log_enabled )
+						bandwidthLoggerEvent.schedule(BandwidthLoggerEventDELTA);
+				}
+			}			
+		}.schedule(0);
 	}
 
 	public void relayUDP(final InetSocketAddress destination, final DatagramPacket p) {
@@ -307,5 +328,5 @@ public class Network {
 			if ( wakeEventEnabled )
 				this.schedule(BandwidthLoggerEventDELTA);
 		}
-	}	
+	}
 }

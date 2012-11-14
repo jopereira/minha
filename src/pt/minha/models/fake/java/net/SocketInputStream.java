@@ -28,7 +28,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import pt.minha.kernel.simulation.Event;
-import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.Log;
 import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.global.net.TCPPacket;
@@ -36,7 +35,7 @@ import pt.minha.models.global.net.TCPPacketAck;
 import pt.minha.models.global.net.TCPPacketData;
 import pt.minha.models.local.lang.SimulationThread;
 
-public class SocketInputStream extends InputStream {
+class SocketInputStream extends InputStream {
 	private final Socket socket;
 
 	private List<TCPPacket> incoming = new LinkedList<TCPPacket>();
@@ -50,24 +49,11 @@ public class SocketInputStream extends InputStream {
 	private long lastRead = 0;
 	private int sn = 0;
 	
-	public SocketInputStream(Socket socket) throws IOException {
+	SocketInputStream(Socket socket) throws IOException {
 		this.socket = socket;
 	}
-
-	/*
-	 * event stuff
-	 */
-	private class WakeReadEvent extends Event {
-		public WakeReadEvent(Timeline timeline) {
-			super(timeline);
-		}
-
-		public void run() {
-			wakeRead();
-		}
-	}
 	
-	public void scheduleRead(TCPPacket p) {
+	void scheduleRead(TCPPacket p) {
 		if ( closed )
 			return;
 		
@@ -75,14 +61,10 @@ public class SocketInputStream extends InputStream {
 			Log.TCPdebug("SocketInputStream scheduleRead: "+p.getSn()+" "+p.getType());
 		
 		incoming.add(p);
-		new WakeReadEvent(socket.stack.getTimeline()).schedule(0);
-	}
-	
-	private void wakeRead() {
 		if (!incomingBlocked.isEmpty())
 			incomingBlocked.remove(0).schedule(0);
 	}
-
+	
 	private synchronized int readFromIncomingQueue() throws IOException {
 		if (incoming.isEmpty()) {
 			incomingBlocked.add(SimulationThread.currentSimulationThread().getWakeup());
@@ -137,10 +119,6 @@ public class SocketInputStream extends InputStream {
 		return 0;
 	}
 
-	/*
-	 * /event stuff
-	 */
-	
 	@Override
 	public int read() throws IOException {
 		if ( this.socket.isClosed() )
@@ -211,7 +189,6 @@ public class SocketInputStream extends InputStream {
 		return this.n;
     }
 	
-
 	public void close() throws IOException {
 		this.socket.close();
 	}

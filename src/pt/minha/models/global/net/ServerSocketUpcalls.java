@@ -19,9 +19,8 @@
 
 package pt.minha.models.global.net;
 
-import java.net.InetSocketAddress;
 
 
 public interface ServerSocketUpcalls {
-	public void queueConnect(InetSocketAddress local, InetSocketAddress remote, SocketUpcalls client);
+	public void queueConnect(SocketUpcalls client);
 }

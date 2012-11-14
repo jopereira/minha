@@ -100,7 +100,7 @@ public class Socket {
 		SimulationThread.stopTime(0);
 		
 		// connect to ServerSocket		
-		stack.getNetwork().relayTCPConnect(remoteSocketAddress, (InetSocketAddress)this.getLocalSocketAddress(), upcalls);
+		stack.getNetwork().relayTCPConnect(remoteSocketAddress, upcalls);
 		
 		if (doneConnect==0) {
 			blockedConnect.add(SimulationThread.currentSimulationThread().getWakeup());
@@ -195,37 +195,36 @@ public class Socket {
     			",localaddr=" + this.getLocalSocketAddress()+"]";
     }
     
-	private void wakeConnect(SocketUpcalls scs) {
-		doneConnect++;
-		this.target = scs;
-		if (!blockedConnect.isEmpty())
-			blockedConnect.remove(0).schedule(0);
-	}
-	        
-	private class WakeConnectEvent extends Event {
-		public SocketUpcalls scs;
-		
-		public WakeConnectEvent(Timeline timeline, SocketUpcalls scs) {
-			super(timeline);
-			this.scs = scs;
-		}
-
-		public void run() {
-			wakeConnect(scs);
-		}
-	}
-
 	private class Upcalls implements SocketUpcalls {
-		public void accepted(SocketUpcalls serverClientSocket) {
-			new WakeConnectEvent(stack.getTimeline(), serverClientSocket).schedule(0);
+		public void acceptedBy(final SocketUpcalls serverClientSocket) {
+			new Event(stack.getTimeline()) {
+				public void run() {
+					doneConnect++;
+					target = serverClientSocket;
+					if (!blockedConnect.isEmpty())
+						blockedConnect.remove(0).schedule(0);
+				}
+			}.schedule(0);
 		}
 	
-		public void scheduleRead(TCPPacket p) {
-			in.scheduleRead(p);
+		public void scheduleRead(final TCPPacket p) {
+			new Event(stack.getTimeline()) {
+				public void run() {
+					in.scheduleRead(p);
+				}
+			}.schedule(0);
 		}
 		
-		public void acknowledge(TCPPacketAck p) {
-			out.acknowledge(p);
+		public void acknowledge(final TCPPacketAck p) {
+			new Event(stack.getTimeline()) {
+				public void run() {
+					out.acknowledge(p);
+				}
+			}.schedule(0);
+		}
+
+		public InetSocketAddress getSocketAddress() {
+			return localSocketAddress;
 		}
 	}
 	
