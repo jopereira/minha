@@ -134,6 +134,9 @@ public class Network {
 	public void relayTCPConnect(final InetSocketAddress serverAddr, final SocketUpcalls clientUpcalls) {
 		new Event(timeline) {
 			public void run() {
+				if ( Log.network_tcp_stream_log_enabled )
+					Log.TCPdebug("Network connect: "+clientUpcalls.getSocketAddress()+" "+serverAddr);
+
 				NetworkStack target = hosts.get(serverAddr.getAddress());
 				if (target==null)
 					clientUpcalls.acceptedBy(null); // no route to host
@@ -146,6 +149,9 @@ public class Network {
 	public void relayTCPAccept(final SocketUpcalls clientUpcalls, final SocketUpcalls serverUpcalls) {
 		new Event(timeline) {
 			public void run() {
+				if ( Log.network_tcp_stream_log_enabled )
+					Log.TCPdebug("Network connected: "+clientUpcalls.getSocketAddress()+" "+serverUpcalls.getSocketAddress());
+
 				clientUpcalls.acceptedBy(serverUpcalls);
 			}			
 		}.schedule(0);
