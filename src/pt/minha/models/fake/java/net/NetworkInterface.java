@@ -23,6 +23,8 @@ import java.net.InetAddress;
 import java.util.Enumeration;
 import java.util.Vector;
 
+import pt.minha.models.global.net.Network;
+import pt.minha.models.global.net.NetworkStack;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class NetworkInterface {
@@ -43,7 +45,8 @@ public class NetworkInterface {
 	
 	public static Enumeration<NetworkInterface> getNetworkInterfaces() {
 		Vector<NetworkInterface> aux = new Vector<NetworkInterface>();
-		aux.addAll(SimulationThread.currentSimulationThread().getHost().getNetwork().getNetworkInterfaces());
+		NetworkStack net = SimulationThread.currentSimulationThread().getHost().getNetwork(); 
+		aux.add(new NetworkInterface(net.getMACAddress(), net.getLocalAddress()));
 		return aux.elements();
 	}
 	

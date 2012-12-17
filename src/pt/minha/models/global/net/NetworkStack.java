@@ -32,7 +32,6 @@ import java.util.Map;
 
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
-import pt.minha.models.fake.java.net.NetworkInterface;
 
 public class NetworkStack {
 	private Network network;
@@ -43,7 +42,6 @@ public class NetworkStack {
 	private int INITIAL_PORT = 10000;
 	
 	private String macAddress;
-	private final List<NetworkInterface> networkInterfaces = new LinkedList<NetworkInterface>();
 	
 	public NetworkStack(Timeline timeline, String host, Network network) throws UnknownHostException {
 		this.timeline = timeline;
@@ -53,7 +51,6 @@ public class NetworkStack {
 		this.macAddress = "02:00";
 		for(int i=0;i<localAddress.getAddress().length;i++)
 			macAddress+=":"+Integer.toHexString(localAddress.getAddress()[i]);
-		this.networkInterfaces.add(new NetworkInterface(macAddress, localAddress));
 	}
 
 	public InetAddress getLocalAddress() {
@@ -64,10 +61,6 @@ public class NetworkStack {
 		return this.macAddress;
 	}
 	
-	public List<NetworkInterface> getNetworkInterfaces() {
-		return this.networkInterfaces;
-	}
-		
 	private int getAvailablePort() {
 		int port;
 
