@@ -65,7 +65,7 @@ class SocketInputStream extends InputStream {
 			incomingBlocked.remove(0).schedule(0);
 	}
 	
-	private synchronized int readFromIncomingQueue() throws IOException {
+	private int readFromIncomingQueue() throws IOException {
 		if (incoming.isEmpty()) {
 			incomingBlocked.add(SimulationThread.currentSimulationThread().getWakeup());
 			SimulationThread.currentSimulationThread().pause();

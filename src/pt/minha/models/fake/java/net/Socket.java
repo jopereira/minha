@@ -31,7 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import pt.minha.kernel.simulation.Event;
-import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.Log;
 import pt.minha.models.global.net.NetworkStack;
 import pt.minha.models.global.net.SocketUpcalls;
@@ -116,7 +115,7 @@ public class Socket {
 	    this.connected = true;
 		
 		if ( Log.network_tcp_log_enabled )
-			Log.TCPdebug("Socket connected: "+this.remoteSocketAddress);
+			Log.TCPdebug("Socket connected: "+this.localSocketAddress+" -> "+this.remoteSocketAddress);
 		
 		SimulationThread.startTime(0);
     }

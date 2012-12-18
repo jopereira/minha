@@ -71,7 +71,7 @@ class SocketOutputStream extends OutputStream {
 
 			byte[] copy = new byte[1];
 			copy[0] = new Integer(b).byteValue();
-			TCPPacket p = new TCPPacketData(this.socket.upcalls, this.sn++, copy);
+			TCPPacket p = new TCPPacketData(this.socket.target, this.sn++, copy);
 			this.writeImpl(p);
 		
 		} finally {
@@ -95,15 +95,15 @@ class SocketOutputStream extends OutputStream {
 
 			byte[] copy = new byte[len];
 			System.arraycopy(b, off, copy, 0, len);
-			TCPPacket p = new TCPPacketData(this.socket.upcalls, this.sn++, copy);
+			TCPPacket p = new TCPPacketData(this.socket.target, this.sn++, copy);
 			this.writeImpl(p);
-		
+			
 		} finally {
 			SimulationThread.startTime(0);			
 		}
 	}
 
-	public synchronized void writeImpl(TCPPacket p) throws IOException {
+	public void writeImpl(TCPPacket p) throws IOException {
 		// wait for acknowledge
 		while ( this.available() < p.getSize() ) {
 			outgoingBlocked.add(SimulationThread.currentSimulationThread().getWakeup());
