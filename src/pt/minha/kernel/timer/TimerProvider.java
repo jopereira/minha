@@ -24,7 +24,7 @@ public class TimerProvider {
 	
 	static {
 		try {
-			clz = Class.forName("sim.timer.NativeTimer");
+			clz = Class.forName("pt.minha.kernel.timer.NativeTimer");
 			
 		} catch(Throwable e) {
 			System.err.println("WARNING! Cannot find native timer. Using unreliable timer.");
