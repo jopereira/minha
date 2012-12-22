@@ -19,8 +19,7 @@
 
 package pt.minha.models.global.net;
 
-
-public abstract class TCPPacket {
+public abstract class TCPPacket implements Comparable<TCPPacket> {
 	private final PacketType type;
 	private final SocketUpcalls destination;
 	private final int sn;		// sequence number
@@ -49,6 +48,10 @@ public abstract class TCPPacket {
 		return this.size;
 	}
 	
+	public int compareTo(TCPPacket o) {
+		return this.sn-o.sn;
+	}
+
 	public String toString() {
 		return "\n{PACKET: "  
 				+ "; SN: " + this.sn

@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.PriorityQueue;
 
 import pt.minha.kernel.simulation.Event;
 import pt.minha.models.global.net.Log;
@@ -38,7 +39,7 @@ import pt.minha.models.local.lang.SimulationThread;
 class SocketInputStream extends InputStream {
 	private final Socket socket;
 
-	private List<TCPPacket> incoming = new LinkedList<TCPPacket>();
+	private PriorityQueue<TCPPacket> incoming = new PriorityQueue<TCPPacket>();
 	private List<Event> incomingBlocked = new LinkedList<Event>();
 	
 	private final byte[] buffer = new byte[BUFFER_SIZE];
@@ -66,7 +67,7 @@ class SocketInputStream extends InputStream {
 	}
 	
 	private int readFromIncomingQueue() throws IOException {
-		if (incoming.isEmpty()) {
+		while(!closed && (incoming.isEmpty() || incoming.peek().getSn()!=sn)) {
 			incomingBlocked.add(SimulationThread.currentSimulationThread().getWakeup());
 			SimulationThread.currentSimulationThread().pause();
 		}
@@ -74,7 +75,7 @@ class SocketInputStream extends InputStream {
 		if (closed)
 			return -1;
 		
-		TCPPacket p = incoming.remove(0);
+		TCPPacket p = incoming.peek();
 		
 		if ( Log.network_tcp_stream_log_enabled )
 			Log.TCPdebug("SocketInputStream read: "+p.getSn()+" "+p.getType());
