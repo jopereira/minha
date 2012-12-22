@@ -75,14 +75,11 @@ class SocketInputStream extends InputStream {
 		if (closed)
 			return -1;
 		
-		TCPPacket p = incoming.peek();
+		TCPPacket p = incoming.poll();
 		
 		if ( Log.network_tcp_stream_log_enabled )
 			Log.TCPdebug("SocketInputStream read: "+p.getSn()+" "+p.getType());
-		
-		if ( p.getSn() != this.sn )
-			throw new IOException("Wrong SN on "+this.socket.getLocalSocketAddress().toString()+": got: "+p.getSn()+" should be: "+this.sn);
-		
+				
 		// network delay
 		if ( NetworkCalibration.networkDelay ){
 			long now = SimulationThread.currentSimulationThread().getTimeline().getTime();
