@@ -92,7 +92,7 @@ class SocketInputStream extends InputStream {
 		switch ( p.getType() ) {
 			case Data:
 				// send acknowledge
-				TCPPacketAck ack = new TCPPacketAck(this.socket.upcalls, p.getSn(), p.getSize());
+				TCPPacketAck ack = new TCPPacketAck(this.socket.target, p.getSn(), p.getSize());
 				if ( Log.network_tcp_stream_log_enabled )
 					Log.TCPdebug("SocketInputStream acknowledge: "+ack.getSn()+" "+ack.getType());
 
