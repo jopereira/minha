@@ -24,73 +24,62 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.util.LinkedList;
-import java.util.List;
 
-import pt.minha.kernel.simulation.Event;
+import pt.minha.models.global.net.ListeningTCPSocket;
 import pt.minha.models.global.net.Log;
-import pt.minha.models.global.net.NetworkStack;
-import pt.minha.models.global.net.ServerSocketUpcalls;
-import pt.minha.models.global.net.SocketUpcalls;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class ServerSocket {
 	
-	private final List<SocketUpcalls> incomingAccept = new LinkedList<SocketUpcalls>();
-	private final List<Event> blockedAccept = new LinkedList<Event>();
 	private boolean closed = false;
-	private ServerSocketUpcalls upcalls = new Upcalls();
-	private NetworkStack stack;
-	private InetSocketAddress localSocketAddress;
+	private ListeningTCPSocket tcp; 
 	
 	public ServerSocket() throws IOException {
-		this(0);
+		tcp = new ListeningTCPSocket(SimulationThread.currentSimulationThread().getHost().getNetwork());
 	}
-
-	public ServerSocket(int port, int backlog, InetAddress address) throws IOException {
-		// FIXME: bind address and backlog not implemented
-		this(port);
-    }
 	
 	public ServerSocket(int port) throws IOException {
-		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
-		InetSocketAddress isa = stack.getBindAddress(port);
-		this.localSocketAddress = stack.addTCPSocket(isa,upcalls);
+		this(port, 5, null);
     }
-	
+
+	public ServerSocket(int port, int backlog, InetAddress address) throws IOException {
+		this();
+		
+		tcp.bind(new InetSocketAddress(address, port));
+		tcp.listen(backlog);
+    }
+
     public Socket accept() throws IOException {
 		if (closed)
-			throw new SocketException("accept on closed socket");
+			throw new SocketException("socket closed");
 
 		SimulationThread.stopTime(0);
-		if (incomingAccept.isEmpty()) {
-			blockedAccept.add(SimulationThread.currentSimulationThread().getWakeup());
+		
+		while (!tcp.acceptors.isReady()) {
+			tcp.acceptors.queue(SimulationThread.currentSimulationThread().getWakeup());
 			SimulationThread.currentSimulationThread().pause();
 		}
 
-		SocketUpcalls cli = incomingAccept.remove(0);
-		Socket socket = new Socket(cli.getSocketAddress(), localSocketAddress);
-		
-		stack.getNetwork().relayTCPAccept(cli, socket.upcalls);
-		socket.connected = true;
-		socket.target = cli;
+		Socket socket = new Socket(tcp.accept());
 		
 		if ( Log.network_tcp_log_enabled )
 			Log.TCPdebug("ServerSocket accept: "+socket.getLocalSocketAddress()+" <- "+socket.getRemoteSocketAddress());
 		
-		SimulationThread.startTime(0);		
+		SimulationThread.startTime(0);
+		
     	return socket;
     }
 	
     public void close() throws IOException {
     	if (closed)
     		return;
+    	
         closed = true;
         
-        stack.removeTCPSocket(this.localSocketAddress);
-        
+        tcp.close();
+                
         if ( Log.network_tcp_log_enabled )
-        	Log.TCPdebug("ServerSocket close: "+this.localSocketAddress);
+        	Log.TCPdebug("ServerSocket close: "+getLocalSocketAddress());
 	}
     
     public String toString() {
@@ -98,23 +87,15 @@ public class ServerSocket {
                 ",localport=" + this.getLocalPort()  + "]";
     }
 
-    private class Upcalls implements ServerSocketUpcalls {
-		public void queueConnect(SocketUpcalls cli) {
-			incomingAccept.add(cli);
-			if (!blockedAccept.isEmpty())
-				blockedAccept.remove(0).schedule(0);
-		}
-    }
-    
 	public SocketAddress getLocalSocketAddress() {
-		return this.localSocketAddress;
+		return tcp.getLocalAddress();
 	}
 	
 	public InetAddress getLocalAddress() {
-		return this.localSocketAddress.getAddress();
+		return tcp.getLocalAddress().getAddress();
 	}
 
 	public int getLocalPort() {
-		return this.localSocketAddress.getPort();
+		return tcp.getLocalAddress().getPort();
 	}
 }

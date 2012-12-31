@@ -17,18 +17,52 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.global.net;
+package pt.minha.models.global.io;
 
+import java.util.ArrayList;
+import java.util.List;
 
-public class TCPPacketData extends TCPPacket {
-	private final byte[] data;
+import pt.minha.kernel.simulation.Event;
 
-	public TCPPacketData(SocketUpcalls key, int sn, byte[] data) {
-		super(PacketType.Data, key, sn, data.length);
-		this.data = data;
+/**
+ * Manages waiting on I/O.
+ * 
+ * @author jop
+ */
+public abstract class BlockingHelper {
+	private List<Event> waiting = new ArrayList<Event>();
+	
+	/**
+	 * Test if ready for I/O operation.
+	 * 
+	 * @return true if will not block
+	 */
+	public abstract boolean isReady();
+	
+	/**
+	 * Shloud be called by derived classes when becoming ready.
+	 */
+	public void wakeup() {
+		for(Event ev: waiting)
+			ev.schedule(0);
+		waiting.clear();
 	}
 	
-	public byte[] getData() {
-		return this.data;
+	/**
+	 * Queue an event to schedule when ready.
+	 * 
+	 * @param ev the event
+	 */
+	public void queue(Event ev) {
+		waiting.add(ev);
+	}
+	
+	/**
+	 * Cancel a previously queued event.
+	 * 
+	 * @param ev the event
+	 */
+	public void cancel(Event ev) {
+		waiting.remove(ev);
 	}	
 }

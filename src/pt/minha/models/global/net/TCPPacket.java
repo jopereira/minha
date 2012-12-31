@@ -19,44 +19,60 @@
 
 package pt.minha.models.global.net;
 
-public abstract class TCPPacket implements Comparable<TCPPacket> {
-	private final PacketType type;
-	private final SocketUpcalls destination;
-	private final int sn;		// sequence number
-	private final int size;
+public class TCPPacket implements Comparable<TCPPacket> {
+	private final ClientTCPSocket source, destination;
+	private final int seq, ack, control;
+	private final byte[] data;
 	
-	public TCPPacket(PacketType type, SocketUpcalls dest, int sn, int size) {
-		this.type = type;
+	public final static int RST=1, FIN=2; 
+	
+	public TCPPacket(ClientTCPSocket src, ClientTCPSocket dest, int seq, int ack, byte[] data, int control) {
+		this.source = src;
 		this.destination = dest;
-		this.sn = sn;
-		this.size = size;
-	}
-
-	public PacketType getType() {
-		return this.type;
+		this.seq = seq;
+		this.ack = ack;
+		this.data = data;
+		this.control = control;
 	}
 	
-	public SocketUpcalls getDestination() {
-		return this.destination;
+	public ClientTCPSocket getSource() {
+		return source;
+	}
+	
+	public ClientTCPSocket getDestination() {
+		return destination;
 	}
 
-	public int getSn() {
-		return this.sn;
+	public int getSequence() {
+		return seq;
+	}
+
+	public int getAcknowledgement() {
+		return seq;
 	}
 	
 	public int getSize() {
-		return this.size;
+		return data.length;
+	}
+	
+	public byte[] getData() {
+		return data;
+	}
+	
+	public int getControl() {
+		return control;
 	}
 	
 	public int compareTo(TCPPacket o) {
-		return this.sn-o.sn;
+		return seq-o.seq;
 	}
-
+	
 	public String toString() {
-		return "\n{PACKET: "  
-				+ "; SN: " + this.sn
-				+ "; TYPE: " + this.type
-				+ "; SIZE: " + this.size
+		return "{PACKET: "  
+				+ "; SEQ: " + seq
+				+ "; ACK: " + ack
+				+ "; SIZE: " + getSize()
+				+ "; CONTROL: " + control
 				+ "}";
 	}
 }

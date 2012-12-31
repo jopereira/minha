@@ -131,57 +131,35 @@ public class Network {
 	/*
 	 * TCP
 	 */
-	public void relayTCPConnect(final InetSocketAddress serverAddr, final SocketUpcalls clientUpcalls) {
+	public void relayTCPConnect(final InetSocketAddress serverAddr, final TCPPacket tcpPacket) {
 		new Event(timeline) {
 			public void run() {
 				if ( Log.network_tcp_stream_log_enabled )
-					Log.TCPdebug("Network connect: "+clientUpcalls.getSocketAddress()+" "+serverAddr);
+					Log.TCPdebug("Network connect: "+tcpPacket.getSource().getLocalAddress()+" "+serverAddr);
 
 				NetworkStack target = hosts.get(serverAddr.getAddress());
 				if (target==null)
-					clientUpcalls.acceptedBy(null); // no route to host
+					tcpPacket.getSource().scheduleRead(new TCPPacket(null, tcpPacket.getSource(), 0, 0, new byte[0], TCPPacket.RST));
 				else
-					target.handleConnect(serverAddr, clientUpcalls);				
+					target.handleConnect(serverAddr, tcpPacket);				
 			}			
 		}.schedule(0);
 	}
-	
-	public void relayTCPAccept(final SocketUpcalls clientUpcalls, final SocketUpcalls serverUpcalls) {
-		new Event(timeline) {
-			public void run() {
-				if ( Log.network_tcp_stream_log_enabled )
-					Log.TCPdebug("Network connected: "+clientUpcalls.getSocketAddress()+" "+serverUpcalls.getSocketAddress());
-
-				clientUpcalls.acceptedBy(serverUpcalls);
-			}			
-		}.schedule(0);
-	}	
-	
-	public void relayTCPAck(final TCPPacketAck p) {
-		new Event(timeline) {
-			public void run() {
-				if ( Log.network_tcp_stream_log_enabled )
-					Log.TCPdebug("Network acknowledge: "+p.getSn()+" "+p.getType());
-				
-				p.getDestination().acknowledge(p);
-			}			
-		}.schedule(0);
-	}
-	
-	public void relayTCPData(final TCPPacket p) throws IOException {
+		
+	public void relayTCPData(final TCPPacket p) {
 		new Event(timeline) {
 			public void run() {
 				// delay send
 				if  ( (current_bandwidth+p.getSize())>BUFFER || !queue.isEmpty()) {
 					if ( Log.network_tcp_stream_log_enabled )
-						Log.TCPdebug("Network queue: "+p.getSn()+" "+p.getType());
+						Log.TCPdebug("Network queue: "+p.getSequence());
 					
 					queue.add(p);
 					return;
 				}
 				
 				if ( Log.network_tcp_stream_log_enabled )
-					Log.TCPdebug("Network send: "+p.getSn()+" "+p.getType());
+					Log.TCPdebug("Network send: "+p.getSequence());
 				p.getDestination().scheduleRead(p);
 				current_bandwidth += p.getSize();
 				if ( bandwidth_log_enabled )
@@ -273,7 +251,7 @@ public class Network {
 					break;
 				else {
 					if ( Log.network_tcp_stream_log_enabled )
-						Log.TCPdebug("Network send from queue: "+p.getSn()+" "+p.getType());
+						Log.TCPdebug("Network send from queue: "+p.getSequence());
 					//networkMap.SocketScheduleRead(p.getKey(), p);
 					p.getDestination().scheduleRead(p);
 					queue.remove(0);

@@ -22,49 +22,25 @@ package pt.minha.models.fake.java.net;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.util.LinkedList;
-import java.util.List;
 
-import pt.minha.kernel.simulation.Event;
+import pt.minha.models.global.Debug;
+import pt.minha.models.global.net.ClientTCPSocket;
 import pt.minha.models.global.net.Log;
-import pt.minha.models.global.net.NetworkStack;
-import pt.minha.models.global.net.SocketUpcalls;
-import pt.minha.models.global.net.TCPPacket;
-import pt.minha.models.global.net.TCPPacketAck;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class Socket {
-	private int doneConnect = 0;
-	private List<Event> blockedConnect = new LinkedList<Event>();
-	private SocketInputStream in;
-	private SocketOutputStream out;	
-	private InetSocketAddress remoteSocketAddress;
-	final SocketUpcalls upcalls = new Upcalls();
-	private InetSocketAddress localSocketAddress;
 	
-	protected boolean connected = false;
-	//protected String connectedSocketKey;
-	private boolean closed = false;
-	private boolean shutOut = false;
-	private boolean shutIn = false;
-	SocketUpcalls target;
-	NetworkStack stack;
-	
+	private ClientTCPSocket tcp;
+	private boolean closed;
+	private InputStream in;
+	private OutputStream out;
+
 	public Socket() throws IOException {
-		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
-		
-		this.localSocketAddress = stack.getBindAddress(0);
-
-		this.in = new SocketInputStream(this);
-		this.out = new SocketOutputStream(this);
-
-		if ( Log.network_tcp_log_enabled )
-			Log.TCPdebug("Socket bind: "+this.localSocketAddress);
+		tcp = new ClientTCPSocket(SimulationThread.currentSimulationThread().getHost().getNetwork());
 	}
 	
     public Socket(InetAddress address, int port) throws IOException {
@@ -76,167 +52,159 @@ public class Socket {
     	this(InetAddress.getByName(address), port);
     }
     
-	protected Socket(InetSocketAddress local, InetSocketAddress remote) throws IOException {
-		/*
-		 * Create a "copy" to remote peer.
-		 */
-		this.localSocketAddress = remote;
-		this.remoteSocketAddress = local;
+	Socket(ClientTCPSocket tcp) {
+		this.tcp = tcp;
+		createStreams();
+	}
+	
+	private void createStreams() {
+		in = new InputStream() {
+			public int read(byte[] b, int off, int len) throws IOException {
+				try {
+					SimulationThread.stopTime(0);
+
+					while (!tcp.readers.isReady()) {
+						tcp.readers.queue(SimulationThread.currentSimulationThread().getWakeup());
+						SimulationThread.currentSimulationThread().pause();
+					}
+
+					return tcp.read(b, off, len);
+				} finally {
+					SimulationThread.startTime(0);					
+				}
+			}
+
+			public int read() throws IOException {
+				byte[] buf = new byte[1];
+				int res = read(buf, 0, 1);
+				if (res<0)
+					return res;
+				else
+					return buf[0];
+			}
+
+			public void close() throws IOException {
+				super.close();
+				Socket.this.close();
+			}
+		};
 		
-		this.in = new SocketInputStream(this);
-		this.out = new SocketOutputStream(this);
-		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
+		out = new OutputStream() {
+			public void write(byte[] b, int off, int len) throws IOException {
+				try {
+					SimulationThread.stopTime(0);
+					
+					while (!tcp.writers.isReady()) {
+						tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
+						SimulationThread.currentSimulationThread().pause();
+					}
+					
+					tcp.write(b, off, len);
+				} finally {
+					SimulationThread.startTime(0);					
+				}
+			}
+
+			public void close() throws IOException {
+				super.close();
+				Socket.this.close();
+			}
+
+			public void write(int b) throws IOException {
+				write(new byte[]{(byte)b});
+			}
+		};
 	}
 
     public void connect(SocketAddress endpoint) throws IOException {
 		if (closed)
-			throw new SocketException("connect on closed socket");
-        
-        InetSocketAddress epoint = (InetSocketAddress) endpoint;
-        this.remoteSocketAddress = epoint;
-        
-		// wait to ServerSocket.accept() end
-		SimulationThread.stopTime(0);
+			throw new SocketException("socket closed");
+
+		try {
+			SimulationThread.stopTime(0);
+
+			tcp.connect((InetSocketAddress) endpoint);
+			
+			if (!tcp.connectors.isReady()) {
+				tcp.connectors.queue(SimulationThread.currentSimulationThread().getWakeup());
+				SimulationThread.currentSimulationThread().pause();
+			}
+			
+			if (!tcp.connectors.isReady())
+				throw new SocketException("connection refused");
+        				
+			createStreams();
+			
+			if ( Log.network_tcp_log_enabled )
+				Log.TCPdebug("Socket connected: "+tcp.getLocalAddress()+" -> "+tcp.getRemoteAddress());
 		
-		// connect to ServerSocket		
-		stack.getNetwork().relayTCPConnect(remoteSocketAddress, upcalls);
-		
-		if (doneConnect==0) {
-			blockedConnect.add(SimulationThread.currentSimulationThread().getWakeup());
-			SimulationThread.currentSimulationThread().pause();
-		}
-		doneConnect--;
-		
-		if (target==null) {
+		} finally {
 			SimulationThread.startTime(0);
-			throw new ConnectException();
 		}
-		
-	    this.connected = true;
-		
-		if ( Log.network_tcp_log_enabled )
-			Log.TCPdebug("Socket connected: "+this.localSocketAddress+" -> "+this.remoteSocketAddress);
-		
-		SimulationThread.startTime(0);
-    }
-    
-    public InputStream getInputStream() throws IOException {
-        return this.in;
     }
     
     public OutputStream getOutputStream() throws IOException {
-        return this.out;
+    	if (closed)
+    		throw new SocketException("socket closed");
+    	
+        return out;
     }
 
-    public InetAddress getInetAddress() {
-    	return remoteSocketAddress.getAddress();
-    }
-    
-    public int getPort() {
-    	return remoteSocketAddress.getPort();
-    }
-    
-    public SocketAddress getRemoteSocketAddress() {
-    	return remoteSocketAddress;
+    public InputStream getInputStream() throws IOException {
+    	if (closed)
+    		throw new SocketException("socket closed");
+
+    	return in;
     }
         
     public void shutdownOutput() throws IOException {    	
-    	shutOut = true;
-    	this.out.close();
+    	tcp.shutdownOutput();
     }
     
     public void shutdownInput() throws IOException {
-    	shutIn = true;
-    	this.in.close();
+    	tcp.shutdownInput();
     }
 
     public void close() throws IOException {
         if (closed)
-            return;    
+            return;   
+        
         this.closed = true;
         
-        // close pipes
-        if ( null!=this.in && !this.shutIn ) {
-        	this.shutIn = true;
-        	this.in.closeImpl();
-        }
-        if ( null!=this.out && !this.shutOut ) {
-        	this.shutOut = true;
-       		this.out.closeImpl();
-        }
-                
-        if (this.connected) {
-	        // We need to remove local key and not remote endpoint key
-	        /*int keySeparator = this.connectedSocketKey.lastIndexOf('-');
-	        String localConnectedSocketKey = this.connectedSocketKey.substring(0, keySeparator);
-	        String connectedSocketKeySuffix = this.connectedSocketKey.substring(keySeparator);
-	        if ( connectedSocketKeySuffix.equals("-client") )
-	        	localConnectedSocketKey += "-server";
-	        else
-	        	localConnectedSocketKey += "-client";
-	        
-	        host.getNetwork().networkMap.removeConnectedSocket(localConnectedSocketKey);
-	        
-	        if ( Log.network_tcp_log_enabled )
-	        	Log.TCPdebug("Socket close: "+this.connectedSocketKey);
-	        
-	        this.connectedSocketKey = null;*/    	
-	        this.connected = false;
-        }
+        shutdownInput();
+        shutdownOutput();
     }
-
+    
 	public boolean isClosed() {
 		return closed;
 	}
     
-    public String toString() {
-   		return "Socket[addr=" + this.remoteSocketAddress +
-    			",localaddr=" + this.getLocalSocketAddress()+"]";
+    public SocketAddress getRemoteSocketAddress() {
+    	return tcp.getRemoteAddress();
     }
     
-	private class Upcalls implements SocketUpcalls {
-		public void acceptedBy(final SocketUpcalls serverClientSocket) {
-			new Event(stack.getTimeline()) {
-				public void run() {
-					doneConnect++;
-					target = serverClientSocket;
-					if (!blockedConnect.isEmpty())
-						blockedConnect.remove(0).schedule(0);
-				}
-			}.schedule(0);
-		}
-	
-		public void scheduleRead(final TCPPacket p) {
-			new Event(stack.getTimeline()) {
-				public void run() {
-					in.scheduleRead(p);
-				}
-			}.schedule(0);
-		}
-		
-		public void acknowledge(final TCPPacketAck p) {
-			new Event(stack.getTimeline()) {
-				public void run() {
-					out.acknowledge(p);
-				}
-			}.schedule(0);
-		}
-
-		public InetSocketAddress getSocketAddress() {
-			return localSocketAddress;
-		}
-	}
-	
+    public InetAddress getInetAddress() {
+    	return tcp.getRemoteAddress().getAddress();
+    }
+    
+    public int getPort() {
+    	return tcp.getRemoteAddress().getPort();
+    }
+    
 	public SocketAddress getLocalSocketAddress() {
-		return this.localSocketAddress;
+		return tcp.getLocalAddress();
 	}
 	
 	public InetAddress getLocalAddress() {
-		return this.localSocketAddress.getAddress();
+		return tcp.getLocalAddress().getAddress();
 	}
 
-	public int getLocalPort() {
-		return this.localSocketAddress.getPort();
+	public int getLocalPort() {		
+		return tcp.getLocalAddress().getPort();
 	}
 
+    public String toString() {
+   		return "Socket[addr=" + this.getRemoteSocketAddress() +
+    			",localaddr=" + this.getLocalSocketAddress()+"]";
+    }
 }
