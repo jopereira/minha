@@ -26,7 +26,6 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 
 import pt.minha.models.global.net.ListeningTCPSocket;
-import pt.minha.models.global.net.Log;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class ServerSocket {
@@ -62,9 +61,6 @@ public class ServerSocket {
 
 		Socket socket = new Socket(tcp.accept());
 		
-		if ( Log.network_tcp_log_enabled )
-			Log.TCPdebug("ServerSocket accept: "+socket.getLocalSocketAddress()+" <- "+socket.getRemoteSocketAddress());
-		
 		SimulationThread.startTime(0);
 		
     	return socket;
@@ -77,9 +73,6 @@ public class ServerSocket {
         closed = true;
         
         tcp.close();
-                
-        if ( Log.network_tcp_log_enabled )
-        	Log.TCPdebug("ServerSocket close: "+getLocalSocketAddress());
 	}
     
     public String toString() {

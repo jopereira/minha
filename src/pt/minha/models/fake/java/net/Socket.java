@@ -27,9 +27,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
 
-import pt.minha.models.global.Debug;
 import pt.minha.models.global.net.ClientTCPSocket;
-import pt.minha.models.global.net.Log;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class Socket {
@@ -135,9 +133,6 @@ public class Socket {
         				
 			createStreams();
 			
-			if ( Log.network_tcp_log_enabled )
-				Log.TCPdebug("Socket connected: "+tcp.getLocalAddress()+" -> "+tcp.getRemoteAddress());
-		
 		} finally {
 			SimulationThread.startTime(0);
 		}

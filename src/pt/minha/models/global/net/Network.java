@@ -134,9 +134,6 @@ public class Network {
 	public void relayTCPConnect(final InetSocketAddress serverAddr, final TCPPacket tcpPacket) {
 		new Event(timeline) {
 			public void run() {
-				if ( Log.network_tcp_stream_log_enabled )
-					Log.TCPdebug("Network connect: "+tcpPacket.getSource().getLocalAddress()+" "+serverAddr);
-
 				NetworkStack target = hosts.get(serverAddr.getAddress());
 				if (target==null)
 					tcpPacket.getSource().scheduleRead(new TCPPacket(null, tcpPacket.getSource(), 0, 0, new byte[0], TCPPacket.RST));
@@ -151,15 +148,11 @@ public class Network {
 			public void run() {
 				// delay send
 				if  ( (current_bandwidth+p.getSize())>BUFFER || !queue.isEmpty()) {
-					if ( Log.network_tcp_stream_log_enabled )
-						Log.TCPdebug("Network queue: "+p.getSequence());
 					
 					queue.add(p);
 					return;
 				}
 				
-				if ( Log.network_tcp_stream_log_enabled )
-					Log.TCPdebug("Network send: "+p.getSequence());
 				p.getDestination().scheduleRead(p);
 				current_bandwidth += p.getSize();
 				if ( bandwidth_log_enabled )
@@ -250,9 +243,6 @@ public class Network {
 				if ( (current_bandwidth+p.getSize()) > BUFFER )
 					break;
 				else {
-					if ( Log.network_tcp_stream_log_enabled )
-						Log.TCPdebug("Network send from queue: "+p.getSequence());
-					//networkMap.SocketScheduleRead(p.getKey(), p);
 					p.getDestination().scheduleRead(p);
 					queue.remove(0);
 					current_bandwidth += p.getSize();
