@@ -109,6 +109,9 @@ public class NetworkCalibration {
         * @return
         */
 	public static long getNetworkDelay(int payload) {
+		if (!networkDelay)
+			return 0;
+		
 		double res = 0;
 		
 		for (int i = real_degree; i >= 0; i--)

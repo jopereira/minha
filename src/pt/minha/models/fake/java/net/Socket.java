@@ -28,6 +28,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 
 import pt.minha.models.global.net.ClientTCPSocket;
+import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class Socket {
@@ -58,6 +59,8 @@ public class Socket {
 	private void createStreams() {
 		in = new InputStream() {
 			public int read(byte[] b, int off, int len) throws IOException {
+				long cost = 0;
+				
 				try {
 					SimulationThread.stopTime(0);
 
@@ -65,10 +68,14 @@ public class Socket {
 						tcp.readers.queue(SimulationThread.currentSimulationThread().getWakeup());
 						SimulationThread.currentSimulationThread().pause();
 					}
+					
+					int res = tcp.read(b, off, len); 
 
-					return tcp.read(b, off, len);
+					cost = NetworkCalibration.readCost*len;
+					
+					return res;
 				} finally {
-					SimulationThread.startTime(0);					
+					SimulationThread.startTime(cost);					
 				}
 			}
 
@@ -89,6 +96,8 @@ public class Socket {
 		
 		out = new OutputStream() {
 			public void write(byte[] b, int off, int len) throws IOException {
+				long cost = 0;
+				
 				try {
 					SimulationThread.stopTime(0);
 					
@@ -98,8 +107,10 @@ public class Socket {
 					}
 					
 					tcp.write(b, off, len);
+					
+					cost = NetworkCalibration.writeCost*len;
 				} finally {
-					SimulationThread.startTime(0);					
+					SimulationThread.startTime(cost);					
 				}
 			}
 
