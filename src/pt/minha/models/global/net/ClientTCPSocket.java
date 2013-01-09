@@ -118,12 +118,6 @@ public class ClientTCPSocket extends AbstractTCPSocket {
 			return;
 		}
 	
-		// Should I reset the connection?
-		if (finSent && in.isClosed()) {
-			sendPacket(new TCPPacket(this, peer, seqOut, seqIn, new byte[0], TCPPacket.RST));			
-			return;
-		}
-		
 		// Handle packet processing in sequence
 		incoming.add(p);
 		handlePacket();		
@@ -162,6 +156,12 @@ public class ClientTCPSocket extends AbstractTCPSocket {
 			return;
 		
 		TCPPacket p = incoming.poll();
+
+		// Should I reset the connection?
+		if (p.getSize()>0 && finSent && in.isClosed()) {
+			sendPacket(new TCPPacket(this, peer, seqOut, seqIn, new byte[0], TCPPacket.RST));			
+			return;
+		}
 
 		// Handle acknowledgment
 		if (p.getAcknowledgement() > ackedOut) {
@@ -273,7 +273,7 @@ public class ClientTCPSocket extends AbstractTCPSocket {
 	 * Close outgoing stream.
 	 */
 	public void shutdownOutput() {
-		if (out.isClosed())
+		if (out.isClosing())
 			return;
 
 		out.close(true);
@@ -285,9 +285,15 @@ public class ClientTCPSocket extends AbstractTCPSocket {
 	 * Close incoming stream.
 	 */
 	public void shutdownInput() {
-		if (in.isClosed())
+		if (in.isClosing())
 			return;
 		
 		in.close(false);
 	}	
+	
+	public String toString() {
+		return "["+getLocalAddress()+"-"+getRemoteAddress()+"] "+
+				"s("+seqOut+" "+ackedOut+" "+out.isClosing()+" "+finSent+") "+
+				"r("+seqIn+" "+ackedIn+" "+in.isClosing()+") ";
+	}
 }
