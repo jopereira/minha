@@ -35,6 +35,7 @@ import pt.minha.models.global.io.Buffer;
 public class ClientTCPSocket extends AbstractTCPSocket {
 	public static final int MTU = 1500;
 	public static final int PIPE_BUF = 512;
+	public static final int WINDOW_SIZE = 64*1024;
 	
 	private PriorityQueue<TCPPacket> incoming = new PriorityQueue<TCPPacket>();
 
@@ -117,6 +118,18 @@ public class ClientTCPSocket extends AbstractTCPSocket {
 			connectors.wakeup();
 			return;
 		}
+
+		// Oportunistically handle acknowledgment, even if out of order
+		if (p.getAcknowledgement() > ackedOut) {
+			ackedOut = p.getAcknowledgement();
+			writers.wakeup();
+			
+			// Established?
+			if (peer==null && ackedOut >= 0) {
+				peer = p.getSource();
+				connectors.wakeup();
+			}
+		}
 	
 		// Handle packet processing in sequence
 		incoming.add(p);
@@ -163,18 +176,6 @@ public class ClientTCPSocket extends AbstractTCPSocket {
 			return;
 		}
 
-		// Handle acknowledgment
-		if (p.getAcknowledgement() > ackedOut) {
-			ackedOut = p.getAcknowledgement();
-			writers.wakeup();
-			
-			// Established?
-			if (peer==null && ackedOut >= 0) {
-				peer = p.getSource();
-				connectors.wakeup();
-			}
-		}
-
 		// Handle data
 		in.push(p.getData(), 0, p.getSize());
 		seqIn += p.getSize();
@@ -189,12 +190,16 @@ public class ClientTCPSocket extends AbstractTCPSocket {
 		sendPacket();
 	}
 	
-	private void sendPacket() {		
+	private void sendPacket() {
 		// Prepare data
 		int op = out.getUsed();
 				
 		if (op > MTU)
 			op = MTU;
+
+		// Flow control
+		if (op >= WINDOW_SIZE-(seqOut-ackedOut))
+			op = WINDOW_SIZE-(seqOut-ackedOut);
 		
 		byte[] data = new byte[op];
 		out.pop(data,  0,  op);
