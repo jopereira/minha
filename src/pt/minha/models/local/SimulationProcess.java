@@ -35,6 +35,7 @@ import pt.minha.models.global.EntryHandler;
 import pt.minha.models.global.EntryInterface;
 import pt.minha.models.global.ExitHandler;
 import pt.minha.models.global.ResultHolder;
+import pt.minha.models.global.disk.Storage;
 import pt.minha.models.global.net.NetworkStack;
 import pt.minha.models.local.lang.SimulationThread;
 
@@ -43,13 +44,15 @@ public class SimulationProcess implements EntryInterface {
 	private long threadId = 0;	
 	private Resource cpu;
 	private NetworkStack network;
+	private Storage storage;
 	private Host host;
 	private Map<Object,Object> sysProps;
 		
-	public SimulationProcess(Host host, Resource cpu, NetworkStack network, Map<Object,Object> props) {
+	public SimulationProcess(Host host, Resource cpu, NetworkStack network, Storage storage, Map<Object,Object> props) {
 		this.host = host;
 		this.cpu = cpu;
 		this.network = network;
+		this.storage = storage;
 		this.sysProps = props;
 	}
 	
@@ -63,6 +66,10 @@ public class SimulationProcess implements EntryInterface {
 	
 	public NetworkStack getNetwork() {
 		return network;
+	}
+	
+	public Storage getStorage() {
+		return storage;
 	}
 
 	public Timeline getTimeline() {

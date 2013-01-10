@@ -32,6 +32,7 @@ import java.util.Properties;
 import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.simulation.Resource;
 import pt.minha.kernel.simulation.Timeline;
+import pt.minha.models.global.disk.Storage;
 import pt.minha.models.global.net.Network;
 import pt.minha.models.global.net.NetworkStack;
 
@@ -45,15 +46,17 @@ public class Host implements Closeable {
 	World world;
 	private NetworkStack network;
 	private Resource cpu;
+	private Storage storage;
 	private ClassConfig cc;
 	private boolean closed;
 	
-	Host(World world, ClassConfig cc, Timeline timeline, String ip, Network network) throws SimulationException{
+	Host(World world, ClassConfig cc, Timeline timeline, String ip, Network network, Properties sc) throws SimulationException{
 		this.world = world;
 		this.cc = cc;
 		try {
 			this.network = new NetworkStack(timeline, ip, network);
 			this.cpu = new Resource(timeline, this.network.getLocalAddress().getHostAddress());
+			this.storage = new Storage(sc, timeline);
 		} catch (UnknownHostException e) {
 			throw new SimulationException(e);
 		}
@@ -67,7 +70,7 @@ public class Host implements Closeable {
 	 * @throws SimulationException
 	 */
 	public Process createProcess() throws SimulationException {
-		Process proc = new Process(this, cc, network, cpu, null);
+		Process proc = new Process(this, cc, network, cpu, storage, null);
 		procs.add(proc);
 		return proc;
 	}
@@ -81,7 +84,7 @@ public class Host implements Closeable {
 	 * @throws SimulationException
 	 */
 	public Process createProcess(Properties props) throws SimulationException {
-		Process proc = new Process(this, cc, network, cpu, props);
+		Process proc = new Process(this, cc, network, cpu, storage, props);
 		procs.add(proc);
 		return proc;
 	}

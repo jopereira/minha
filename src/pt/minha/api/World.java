@@ -52,6 +52,7 @@ public class World implements Closeable {
 	
 	private ClassConfig cc;
 	private Calibration nc;
+	private Properties sc;
 	private Scheduler sched;
 	private Network network;
 	private List<Host> hosts = new ArrayList<Host>();
@@ -107,6 +108,9 @@ public class World implements Closeable {
 		logger.info("using up to {} processors, {}ns fuzzyness", procs, fuzzyness);
 		
 		network = new Network(nc);
+		
+		props.load(ClassLoader.getSystemClassLoader().getResourceAsStream("storage.properties"));
+		sc = new Properties(props);
 	}
 	
 	/**
@@ -117,7 +121,7 @@ public class World implements Closeable {
 	 * @throws SimulationException
 	 */
 	public Host createHost(String ip) throws SimulationException {
-		Host host = new Host(this, cc, sched.createTimeline(), ip, network);
+		Host host = new Host(this, cc, sched.createTimeline(), ip, network, sc);
 		hosts.add(host);
 		return host;
 	}

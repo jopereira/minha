@@ -38,6 +38,10 @@ public class System {
 			SimulationThread.startTime(0);
 		}
 	}
+	
+	public static void gc(){
+		java.lang.System.gc();
+	}
 
 	public static long currentTimeMillis() {
 		return nanoTime()/1000000;
@@ -54,7 +58,7 @@ public class System {
 	public static String getProperty(String prop) {
 		return getProperties().getProperty(prop);
 	}
-	
+
 	public static String getProperty(String prop, String value) {
 		return getProperties().getProperty(prop, value);
 	}

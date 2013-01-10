@@ -38,4 +38,8 @@ public class Runtime {
 	public int availableProcessors() {
 		return 1;
 	}
+
+	public long totalMemory(){
+		return 1024;
+	}
 }

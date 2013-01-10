@@ -19,12 +19,17 @@
 
 package pt.minha.models.fake.java.io;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+
+import pt.minha.models.local.lang.SimulationThread;
 
 public class File {
 	private final String path;
 	private final java.io.File impl;
+	private final String hostName;
 	
 	public static final char separatorChar     = java.io.File.separatorChar;
 	public static final String separator       = java.io.File.separator;
@@ -32,12 +37,71 @@ public class File {
 	public static final String pathSeparator   = java.io.File.pathSeparator;
 	
 	public File(String path) {
-		this.path = path;
-		this.impl = new java.io.File(this.path);
+		this.hostName = SimulationThread.currentSimulationThread().getHost().getName();
+		this.createTree();
+		this.path = this.removeNonVirtPath(path);
+		this.impl = new java.io.File(this.hostName + File.separator + this.path);
 	}
 	
+	private String removeNonVirtPath(String path){
+		if(!path.contains(this.hostName)) return path;
+		
+		return path.split(this.hostName)[1];
+	}
+	
+	private File(java.io.File f){
+		this.hostName = SimulationThread.currentSimulationThread().getHost().getName();
+		this.impl = f;
+		this.path = this.removeNonVirtPath(f.getPath());
+	}
+	
+	java.io.File getImpl(){
+		return this.impl;
+	}
+	
+	public boolean createNewFile() throws IOException{
+		return this.impl.createNewFile();
+	}
+	
+	public void deleteOnExit(){
+		this.impl.deleteOnExit();
+	}
+	
+	public long length(){
+		return this.impl.length();
+	}
+	
+	/**
+	 * Function responsible for directory tree creation
+	 * @param dir - name of disk directory, in this case ip
+	 */
+	private void createTree(){
+		java.io.File newDir = new java.io.File(this.hostName);
+		if(!newDir.exists()) newDir.mkdir();
+	}
+
+	//TODO: Review
 	public String getAbsolutePath() {
-		return path;
+		return this.removeNonVirtPath(this.impl.getAbsolutePath());
+	}
+
+	//TODO: Review
+	public String getPath(){
+		return this.path;
+	}
+	
+	//TODO: Review
+	public String getCanonicalPath() throws IOException{
+		return this.removeNonVirtPath(this.impl.getCanonicalPath());
+	}
+	
+	//TODO: Review
+	public String getParent(){
+		String parent = this.impl.getParent();
+		
+		if(parent == null || parent.equals(this.hostName)) return null;
+		
+		return this.removeNonVirtPath(parent);
 	}
 	
 	public boolean isFile() {
@@ -66,6 +130,19 @@ public class File {
 	
     public boolean mkdirs() {
     	return this.impl.mkdirs();
+    }
+    
+    public boolean renameTo(File dest){
+    	return this.impl.renameTo(dest.getImpl());
+    }
+    
+    public File[] listFiles(){
+    	ArrayList<File> files = new ArrayList<File>();
+    	
+    	for(java.io.File f : this.impl.listFiles())
+    		files.add(new File(f));
+    	
+    	return files.toArray(new File[files.size()]);
     }
     
     public URI toURI() {
