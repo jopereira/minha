@@ -19,14 +19,22 @@
 
 package pt.minha.models.fake.java.nio.channels.spi;
 
+import java.io.IOException;
+import java.nio.channels.IllegalBlockingModeException;
+import java.nio.channels.IllegalSelectorException;
+import java.util.Set;
+
 import pt.minha.models.fake.java.nio.channels.SelectableChannel;
 import pt.minha.models.fake.java.nio.channels.SelectionKey;
 import pt.minha.models.fake.java.nio.channels.Selector;
+import pt.minha.models.global.io.BlockingHelper;
+import pt.minha.models.local.nio.SelectorImpl;
 
 public abstract class AbstractSelectableChannel extends SelectableChannel {
 
 	private SelectorProvider provider;
 	private boolean blocking;
+	private Set<SelectionKey> keys;
 
 	public AbstractSelectableChannel(SelectorProvider provider) {
 		this.provider = provider;
@@ -49,15 +57,21 @@ public abstract class AbstractSelectableChannel extends SelectableChannel {
 	}
 
 	@Override
-	public SelectionKey register(Selector selector, int operation,
-			Object attachment) {
-		// TODO Auto-generated method stub
-		return null;
+	public SelectionKey register(Selector selector, int operation, Object attachment) throws IOException {
+		if (isBlocking())
+			throw new IllegalBlockingModeException();
+		if (provider() != selector.provider())
+			throw new IllegalSelectorException();
+		SelectionKey key = ((SelectorImpl)selector).register(this, operation, attachment);
+		keys.add(key);
+		return key;
 	}
-
+	
 	@Override
-	public SelectionKey register(Selector selector, int operation) {
-		// TODO Auto-generated method stub
-		return super.register(selector, operation);
+	protected void implCloseChannel() throws IOException {
+		for(SelectionKey key: keys)
+			key.cancel();
 	}
+	
+	public abstract BlockingHelper helperFor(int op);	
 }

@@ -199,6 +199,9 @@ public class Socket {
         
         shutdownInput();
         shutdownOutput();
+        
+        if (channel!=null)
+        	channel.close();
     }
     
 	public boolean isClosed() {

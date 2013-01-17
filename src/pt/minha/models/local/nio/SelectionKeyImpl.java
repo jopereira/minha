@@ -24,35 +24,5 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.spi.AbstractSelectionKey;
 
-class SelectionKeyImpl extends AbstractSelectionKey {
+import pt.minha.kernel.simulation.Event;
 
-	@Override
-	public SelectableChannel channel() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Selector selector() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public int interestOps() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public SelectionKey interestOps(int ops) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public int readyOps() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-}

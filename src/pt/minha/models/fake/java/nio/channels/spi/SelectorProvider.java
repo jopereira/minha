@@ -20,8 +20,8 @@
 package pt.minha.models.fake.java.nio.channels.spi;
 
 import java.io.IOException;
-import java.nio.channels.Selector;
 
+import pt.minha.models.fake.java.nio.channels.Selector;
 import pt.minha.models.fake.java.nio.channels.ServerSocketChannel;
 import pt.minha.models.fake.java.nio.channels.SocketChannel;
 import pt.minha.models.local.nio.SelectorProviderImpl;
@@ -29,7 +29,7 @@ import pt.minha.models.local.nio.SelectorProviderImpl;
 public abstract class SelectorProvider {
 	private static SelectorProviderImpl instance = new SelectorProviderImpl();
 	
-	public static SelectorProviderImpl provider() { return instance; }
+	public static SelectorProvider provider() { return instance; }
 	
 	public abstract SocketChannel openSocketChannel() throws IOException;
 	public abstract ServerSocketChannel openServerSocketChannel() throws IOException;

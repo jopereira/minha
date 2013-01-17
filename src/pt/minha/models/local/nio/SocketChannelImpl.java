@@ -25,10 +25,12 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.NoConnectionPendingException;
+import java.nio.channels.SelectionKey;
 
 import pt.minha.models.fake.java.net.Socket;
 import pt.minha.models.fake.java.nio.channels.SocketChannel;
 import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
+import pt.minha.models.global.io.BlockingHelper;
 import pt.minha.models.global.net.ClientTCPSocket;
 import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.local.lang.SimulationThread;
@@ -150,6 +152,19 @@ public class SocketChannelImpl extends SocketChannel {
 
 	@Override
 	protected void implCloseChannel() throws IOException {
-		socket.close();
+		super.implCloseChannel();
+		if (socket!=null)
+			socket.close();
+	}
+	
+	@Override
+	public BlockingHelper helperFor(int op) {
+		if (op == SelectionKey.OP_READ)
+			return tcp.readers;
+		if (op == SelectionKey.OP_WRITE)
+			return tcp.writers;
+		if (op == SelectionKey.OP_CONNECT)
+			return tcp.connectors;
+		return null;
 	}
 }

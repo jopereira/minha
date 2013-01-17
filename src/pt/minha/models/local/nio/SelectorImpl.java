@@ -20,54 +20,74 @@
 package pt.minha.models.local.nio;
 
 import java.io.IOException;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.spi.AbstractSelectableChannel;
-import java.nio.channels.spi.AbstractSelector;
-import java.nio.channels.spi.SelectorProvider;
+import java.nio.channels.CancelledKeyException;
 import java.util.Set;
 
-class SelectorImpl extends AbstractSelector {
-	protected SelectorImpl(SelectorProvider provider) {
-		super(provider);
-		// TODO Auto-generated constructor stub
-	}
+import pt.minha.kernel.simulation.Event;
+import pt.minha.models.fake.java.nio.channels.SelectableChannel;
+import pt.minha.models.fake.java.nio.channels.SelectionKey;
+import pt.minha.models.fake.java.nio.channels.Selector;
+import pt.minha.models.fake.java.nio.channels.spi.AbstractSelectableChannel;
+import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
+import pt.minha.models.global.io.BlockingHelper;
+import pt.minha.models.local.lang.SimulationThread;
 
-	@Override
-	protected void implCloseSelector() throws IOException {
-		// TODO Auto-generated method stub
+public class SelectorImpl extends Selector {
+	private SelectorProvider provider;
+	private Set<SelectionKey> keys, selectedKeys, ready, canceled;
+	private BlockingHelper selectors = new BlockingHelper() {
+		@Override
+		public boolean isReady() {
+			return !selectedKeys.isEmpty();
+		}
+	};
+	private boolean wakeup;
 		
+	protected SelectorImpl(SelectorProvider provider) {
+		this.provider = provider;
 	}
 
 	@Override
-	protected SelectionKey register(AbstractSelectableChannel ch, int ops,
-			Object att) {
-		// TODO Auto-generated method stub
-		return null;
+	public SelectorProvider provider() {
+		return provider;
 	}
 
 	@Override
 	public Set<SelectionKey> keys() {
-		// TODO Auto-generated method stub
-		return null;
+		return keys;
 	}
 
 	@Override
 	public Set<SelectionKey> selectedKeys() {
-		// TODO Auto-generated method stub
-		return null;
+		return selectedKeys;
 	}
 
 	@Override
 	public int selectNow() throws IOException {
-		// TODO Auto-generated method stub
-		return 0;
+		ready.removeAll(canceled);
+		keys.removeAll(canceled);
+		selectedKeys.removeAll(canceled);
+		
+		int oldsize = selectedKeys.size();
+		selectedKeys.addAll(ready);
+		ready.clear();
+		return selectedKeys.size()-oldsize;
 	}
 
 	@Override
 	public int select(long timeout) throws IOException {
-		// TODO Auto-generated method stub
-		return 0;
+		try {
+			SimulationThread.stopTime(0);
+			
+			while(!wakeup && !selectors.isReady()) {
+				selectors.queue(SimulationThread.currentSimulationThread().getWakeup());
+				SimulationThread.currentSimulationThread().pause();
+			}
+			
+			return selectNow();
+		} finally {
+			SimulationThread.startTime(0);
+		}
 	}
 
 	@Override
@@ -77,7 +97,126 @@ class SelectorImpl extends AbstractSelector {
 
 	@Override
 	public Selector wakeup() {
-		// TODO Auto-generated method stub
-		return null;
+		wakeup = true;
+		selectors.wakeup();
+		return this;
+	}
+
+	public SelectionKey register(AbstractSelectableChannel cb, int operation, Object attachment) {
+		SelectionKeyImpl key = new SelectionKeyImpl(cb);
+		key.interestOps(operation);
+		key.attach(attachment);
+		keys.add(key);
+		return key;
+	}
+	
+	private void selected(SelectionKey key) {
+		ready.add(key);
+	}
+	private void canceled(SelectionKey key) {
+		canceled.add(key);
+	}
+	
+	class SelectionKeyImpl extends SelectionKey {
+		private Event wakeup;
+		private int interest, ready;
+		private Object attachment;
+		private AbstractSelectableChannel channel;
+		private boolean cancelled;
+		
+		public SelectionKeyImpl(AbstractSelectableChannel channel) {
+			wakeup = new Event(SimulationThread.currentSimulationThread().getTimeline()) {
+				@Override
+				public void run() {
+					test(OP_READ);
+					test(OP_WRITE);
+					test(OP_CONNECT);
+					test(OP_ACCEPT);
+					if (ready!=0)
+						selected(SelectionKeyImpl.this);
+				}
+			};
+			this.channel = channel;
+		}
+
+		@Override
+		public Selector selector() {
+			return SelectorImpl.this;
+		}
+
+		@Override
+		public int interestOps() {
+			checkCancel();
+			
+			return interest;
+		}
+
+		private void test(int op) {
+			if ((interest & op)==0)
+				return;
+			if (channel.helperFor(op).isReady())
+				ready |= op;
+			channel.helperFor(op).queue(wakeup);
+		}
+		
+		private void update(int op, int ops) {
+			if ((interest & op)==0 && (ops &op)!=0) {
+				if (channel.helperFor(op).isReady())
+					ready |= op;
+				channel.helperFor(op).queue(wakeup);
+			}
+			if ((interest & op)!=0 && (ops &op)==0)
+				channel.helperFor(op).cancel(wakeup);
+		}
+		
+		@Override
+		public SelectionKey interestOps(int ops) {
+			checkCancel();
+			
+			update(OP_READ, ops);
+			update(OP_WRITE, ops);
+			update(OP_CONNECT, ops);
+			update(OP_ACCEPT, ops);
+			interest = ops;
+			if (ready!=0)
+				selected(SelectionKeyImpl.this);
+			return this;
+		}
+
+		@Override
+		public int readyOps() {
+			checkCancel();
+			
+			return ready;
+		}
+
+		@Override
+		public Object attach(Object attachment) {
+			Object previous = this.attachment;
+			this.attachment = attachment;
+			return previous;
+		}
+
+		@Override
+		public Object attachment() {
+			return attachment;
+		}
+
+		@Override
+		public SelectableChannel channel() {
+			return channel;
+		}
+
+		@Override
+		public void cancel() {
+			interestOps(0);
+			cancelled = true;
+			canceled(SelectionKeyImpl.this);
+		}
+		
+		private void checkCancel() {
+			if (cancelled)
+				throw new CancelledKeyException();
+		}
 	}
 }

@@ -29,5 +29,16 @@ public abstract class SelectionKey {
 	public abstract Object attach(Object attachment);
 
 	public abstract Object attachment();
+
+	public abstract Selector selector();
+
+	public abstract SelectableChannel channel();
+
+	public abstract int interestOps();
+
+	public abstract SelectionKey interestOps(int ops);
+
+	public abstract int readyOps();
 	
+	public abstract void cancel();
 }

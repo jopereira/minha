@@ -19,8 +19,8 @@
 
 package pt.minha.models.global.io;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import pt.minha.kernel.simulation.Event;
 
@@ -30,7 +30,7 @@ import pt.minha.kernel.simulation.Event;
  * @author jop
  */
 public abstract class BlockingHelper {
-	private List<Event> waiting = new ArrayList<Event>();
+	private Set<Event> waiting = new HashSet<Event>();
 	
 	/**
 	 * Test if ready for I/O operation.

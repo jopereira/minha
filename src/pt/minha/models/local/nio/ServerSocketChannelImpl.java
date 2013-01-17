@@ -21,11 +21,13 @@ package pt.minha.models.local.nio;
 
 import java.io.IOException;
 import java.net.SocketException;
+import java.nio.channels.SelectionKey;
 
 import pt.minha.models.fake.java.net.ServerSocket;
 import pt.minha.models.fake.java.nio.channels.ServerSocketChannel;
 import pt.minha.models.fake.java.nio.channels.SocketChannel;
 import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
+import pt.minha.models.global.io.BlockingHelper;
 import pt.minha.models.global.net.ClientTCPSocket;
 import pt.minha.models.global.net.ListeningTCPSocket;
 import pt.minha.models.local.lang.SimulationThread;
@@ -75,6 +77,15 @@ class ServerSocketChannelImpl extends ServerSocketChannel {
 
 	@Override
 	protected void implCloseChannel() throws IOException {
-		socket.close();
+		super.implCloseChannel();
+		if (socket!=null)
+			socket.close();
+	}
+
+	@Override
+	public BlockingHelper helperFor(int op) {
+		if (op == SelectionKey.OP_ACCEPT)
+			return tcp.acceptors;
+		return null;
 	}
 }

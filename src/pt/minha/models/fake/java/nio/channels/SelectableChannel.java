@@ -19,6 +19,7 @@
 
 package pt.minha.models.fake.java.nio.channels;
 
+import java.io.IOException;
 import java.nio.channels.spi.AbstractInterruptibleChannel;
 
 import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
@@ -33,9 +34,9 @@ public abstract class SelectableChannel extends AbstractInterruptibleChannel {
 	
 	public abstract SelectorProvider provider();
 	
-	public abstract SelectionKey register(Selector selector, int operation, Object attachment);
+	public abstract SelectionKey register(Selector selector, int operation, Object attachment) throws IOException;
 	
-	public SelectionKey register(Selector selector, int operation) {
+	public SelectionKey register(Selector selector, int operation) throws IOException {
 		return register(selector, operation, null);
 	}
 }

@@ -20,8 +20,8 @@
 package pt.minha.models.local.nio;
 
 import java.io.IOException;
-import java.nio.channels.spi.AbstractSelector;
 
+import pt.minha.models.fake.java.nio.channels.Selector;
 import pt.minha.models.fake.java.nio.channels.ServerSocketChannel;
 import pt.minha.models.fake.java.nio.channels.SocketChannel;
 import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
@@ -29,7 +29,7 @@ import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
 public class SelectorProviderImpl extends SelectorProvider {
 
 	@Override
-	public AbstractSelector openSelector() throws IOException {
+	public Selector openSelector() throws IOException {
 		return new SelectorImpl(null);
 	}
 

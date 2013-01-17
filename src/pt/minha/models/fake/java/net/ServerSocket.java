@@ -92,6 +92,9 @@ public class ServerSocket {
         closed = true;
         
         tcp.close();
+        
+        if (channel!=null)
+        	channel.close();
 	}
     
     public boolean isClosed() {
