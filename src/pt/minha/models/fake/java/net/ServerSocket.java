@@ -24,14 +24,17 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.nio.channels.IllegalBlockingModeException;
 
+import pt.minha.models.fake.java.nio.channels.ServerSocketChannel;
 import pt.minha.models.global.net.ListeningTCPSocket;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class ServerSocket {
 	
 	private boolean closed = false;
-	private ListeningTCPSocket tcp; 
+	private ListeningTCPSocket tcp;
+	private ServerSocketChannel channel; 
 	
 	public ServerSocket() throws IOException {
 		tcp = new ListeningTCPSocket(SimulationThread.currentSimulationThread().getHost().getNetwork());
@@ -47,25 +50,41 @@ public class ServerSocket {
 		tcp.bind(new InetSocketAddress(address, port));
 		tcp.listen(backlog);
     }
+	
+	public ServerSocket(ServerSocketChannel channel, ListeningTCPSocket tcp) {
+		this.tcp = tcp;
+		this.channel = channel;
+	}
+	
+	public ServerSocketChannel getChannel() {
+		return channel;
+	}
 
+	private void checkBlocking() throws IOException {
+		if (channel != null && !channel.isBlocking())
+			throw new IllegalBlockingModeException();
+	}
+	
     public Socket accept() throws IOException {
 		if (closed)
 			throw new SocketException("socket closed");
 
 		SimulationThread.stopTime(0);
+
+		checkBlocking();
 		
 		while (!tcp.acceptors.isReady()) {
 			tcp.acceptors.queue(SimulationThread.currentSimulationThread().getWakeup());
 			SimulationThread.currentSimulationThread().pause();
 		}
 
-		Socket socket = new Socket(tcp.accept());
+		Socket socket = new Socket(null, tcp.accept());
 		
 		SimulationThread.startTime(0);
 		
     	return socket;
     }
-	
+    
     public void close() throws IOException {
     	if (closed)
     		return;
@@ -75,6 +94,10 @@ public class ServerSocket {
         tcp.close();
 	}
     
+    public boolean isClosed() {
+    	return closed;
+    }
+	
     public String toString() {
         return "ServerSocket[addr=" + this.getLocalAddress() +
                 ",localport=" + this.getLocalPort()  + "]";

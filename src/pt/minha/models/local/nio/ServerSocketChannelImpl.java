@@ -20,39 +20,61 @@
 package pt.minha.models.local.nio;
 
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.nio.channels.spi.SelectorProvider;
+import java.net.SocketException;
+
+import pt.minha.models.fake.java.net.ServerSocket;
+import pt.minha.models.fake.java.nio.channels.ServerSocketChannel;
+import pt.minha.models.fake.java.nio.channels.SocketChannel;
+import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
+import pt.minha.models.global.net.ClientTCPSocket;
+import pt.minha.models.global.net.ListeningTCPSocket;
+import pt.minha.models.local.lang.SimulationThread;
+
+// pondo o channel em non-blocking, posso usar o accept do socket?
+// se usar o accept, o socket que obtenho, tem channel?
 
 class ServerSocketChannelImpl extends ServerSocketChannel {
+	private ServerSocket socket;
+	private ListeningTCPSocket tcp;
 
 	protected ServerSocketChannelImpl(SelectorProvider provider) {
-		super(provider);
-		// TODO Auto-generated constructor stub
+		super(null);
+		tcp = new ListeningTCPSocket(SimulationThread.currentSimulationThread().getHost().getNetwork());
+		this.socket = new ServerSocket(this, tcp);
 	}
 
 	@Override
 	public ServerSocket socket() {
-		// TODO Auto-generated method stub
-		return null;
+		return socket;
 	}
 
 	@Override
 	public SocketChannel accept() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		if (socket.isClosed())
+			throw new SocketException("socket closed");
+
+		try {
+			SimulationThread.stopTime(0);
+			
+			while (isBlocking() && !tcp.acceptors.isReady()) {
+				tcp.acceptors.queue(SimulationThread.currentSimulationThread().getWakeup());
+				SimulationThread.currentSimulationThread().pause();
+			}
+	
+			ClientTCPSocket ctcp = tcp.accept();
+			if (ctcp == null)
+				return null;
+			
+			SocketChannel socket = new SocketChannelImpl(provider(), ctcp);
+			
+	    	return socket;
+		} finally {
+			SimulationThread.startTime(0);
+		}
 	}
 
 	@Override
-	protected void implCloseSelectableChannel() throws IOException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	protected void implConfigureBlocking(boolean block) throws IOException {
-		// TODO Auto-generated method stub
-		
+	protected void implCloseChannel() throws IOException {
+		socket.close();
 	}
 }

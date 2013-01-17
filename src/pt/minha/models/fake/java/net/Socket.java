@@ -26,7 +26,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.nio.channels.IllegalBlockingModeException;
 
+import pt.minha.models.fake.java.nio.channels.SocketChannel;
 import pt.minha.models.global.net.ClientTCPSocket;
 import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.local.lang.SimulationThread;
@@ -37,6 +39,7 @@ public class Socket {
 	private boolean closed;
 	private InputStream in;
 	private OutputStream out;
+	private SocketChannel channel;
 
 	public Socket() throws IOException {
 		tcp = new ClientTCPSocket(SimulationThread.currentSimulationThread().getHost().getNetwork());
@@ -51,11 +54,22 @@ public class Socket {
     	this(InetAddress.getByName(address), port);
     }
     
-	Socket(ClientTCPSocket tcp) {
+	public Socket(SocketChannel channel, ClientTCPSocket tcp) {
 		this.tcp = tcp;
-		createStreams();
+		this.channel = channel;
+		if (channel == null)
+			createStreams();
 	}
 	
+	public SocketChannel getChannel() {
+		return channel;
+	}
+	
+	private void checkBlocking() throws IOException {
+		if (channel != null && !channel.isBlocking())
+			throw new IllegalBlockingModeException();
+	}
+
 	private void createStreams() {
 		in = new InputStream() {
 			public int read(byte[] b, int off, int len) throws IOException {
@@ -63,7 +77,9 @@ public class Socket {
 				
 				try {
 					SimulationThread.stopTime(0);
-
+					
+					checkBlocking();
+					
 					while (!tcp.readers.isReady()) {
 						tcp.readers.queue(SimulationThread.currentSimulationThread().getWakeup());
 						SimulationThread.currentSimulationThread().pause();
@@ -101,6 +117,8 @@ public class Socket {
 				try {
 					SimulationThread.stopTime(0);
 					
+					checkBlocking();
+
 					while (!tcp.writers.isReady()) {
 						tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
 						SimulationThread.currentSimulationThread().pause();
@@ -132,6 +150,8 @@ public class Socket {
 		try {
 			SimulationThread.stopTime(0);
 
+			checkBlocking();
+			
 			tcp.connect((InetSocketAddress) endpoint);
 			
 			if (!tcp.connectors.isReady()) {

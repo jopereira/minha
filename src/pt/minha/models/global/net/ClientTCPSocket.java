@@ -44,6 +44,7 @@ public class ClientTCPSocket extends AbstractTCPSocket {
 	private int seqOut = 0, ackedOut = -1, seqIn = 0, ackedIn = -1;
 	private Buffer out = new Buffer(), in = new Buffer();
 	
+	private boolean synSent;
 	private boolean finSent;
 	
 	public BlockingHelper readers, writers, connectors;
@@ -65,7 +66,8 @@ public class ClientTCPSocket extends AbstractTCPSocket {
 	public void connect(InetSocketAddress addr) throws SocketException {		
 		if (getLocalAddress()==null)
 			bind(null);
-				
+
+		synSent = true;
 		sendPacket(new TCPPacket(this, null, seqOut, seqIn, new byte[0], 0), addr);
 	}
 	
@@ -79,6 +81,7 @@ public class ClientTCPSocket extends AbstractTCPSocket {
 		
 		init();
 		
+		synSent = true;
 		receivePacket(syn);
 	}
 	
@@ -295,6 +298,10 @@ public class ClientTCPSocket extends AbstractTCPSocket {
 		
 		in.close(false);
 	}	
+	
+	public boolean isConnecting() {
+		return synSent;
+	}
 	
 	public String toString() {
 		return "["+getLocalAddress()+"-"+getRemoteAddress()+"] "+

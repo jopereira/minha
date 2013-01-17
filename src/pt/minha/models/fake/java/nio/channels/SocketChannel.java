@@ -17,22 +17,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.fake.java.nio.channels.spi;
+package pt.minha.models.fake.java.nio.channels;
 
 import java.io.IOException;
-import java.nio.channels.Selector;
+import java.net.SocketAddress;
+import java.nio.channels.ByteChannel;
 
-import pt.minha.models.fake.java.nio.channels.ServerSocketChannel;
-import pt.minha.models.fake.java.nio.channels.SocketChannel;
-import pt.minha.models.local.nio.SelectorProviderImpl;
+import pt.minha.models.fake.java.net.Socket;
+import pt.minha.models.fake.java.nio.channels.spi.AbstractSelectableChannel;
+import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
 
-public abstract class SelectorProvider {
-	private static SelectorProviderImpl instance = new SelectorProviderImpl();
+public abstract class SocketChannel extends AbstractSelectableChannel implements ByteChannel {
+
+	protected SocketChannel(SelectorProvider provider) {
+		super(provider);
+	}
+
+	public abstract Socket socket();
+
+	public abstract boolean isConnected();
+
+	public abstract boolean isConnectionPending();
 	
-	public static SelectorProviderImpl provider() { return instance; }
+	public abstract boolean connect(SocketAddress remote) throws IOException;
 	
-	public abstract SocketChannel openSocketChannel() throws IOException;
-	public abstract ServerSocketChannel openServerSocketChannel() throws IOException;
-	
-	public abstract Selector openSelector() throws IOException;
+	public abstract boolean finishConnect() throws IOException;
+
+	@Override
+	public int validOps() {
+		return SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE;
+	}
 }

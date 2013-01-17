@@ -20,29 +20,41 @@
 package pt.minha.models.local.nio;
 
 import java.io.IOException;
-import java.net.Socket;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
-import java.nio.channels.spi.SelectorProvider;
+import java.nio.channels.NoConnectionPendingException;
 
-class SocketChannelImpl extends SocketChannel {
+import pt.minha.models.fake.java.net.Socket;
+import pt.minha.models.fake.java.nio.channels.SocketChannel;
+import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
+import pt.minha.models.global.net.ClientTCPSocket;
+import pt.minha.models.global.net.NetworkCalibration;
+import pt.minha.models.local.lang.SimulationThread;
 
-	protected SocketChannelImpl(SelectorProvider provider) {
+public class SocketChannelImpl extends SocketChannel {
+	private Socket socket;
+	private ClientTCPSocket tcp;
+
+	public SocketChannelImpl(SelectorProvider provider) {
+		this(provider, new ClientTCPSocket(SimulationThread.currentSimulationThread().getHost().getNetwork()));
+	}
+
+	public SocketChannelImpl(SelectorProvider provider, ClientTCPSocket tcp) {
 		super(provider);
-		// TODO Auto-generated constructor stub
+		this.tcp = tcp;
+		this.socket = new Socket(this, tcp);
 	}
 
 	@Override
 	public Socket socket() {
-		// TODO Auto-generated method stub
-		return null;
+		return socket;
 	}
 
 	@Override
 	public boolean isConnected() {
-		// TODO Auto-generated method stub
-		return false;
+		return tcp.connectors.isReady();
 	}
 
 	@Override
@@ -52,52 +64,92 @@ class SocketChannelImpl extends SocketChannel {
 	}
 
 	@Override
-	public boolean connect(SocketAddress remote) throws IOException {
-		// TODO Auto-generated method stub
+	public boolean connect(SocketAddress endpoint) throws IOException {
+		if (socket.isClosed())
+			throw new SocketException("socket closed");
+
+		try {
+			SimulationThread.stopTime(0);
+
+			tcp.connect((InetSocketAddress) endpoint);
+			
+			if (!isBlocking())
+				return false;
+			
+			if (!tcp.connectors.isReady()) {
+				tcp.connectors.queue(SimulationThread.currentSimulationThread().getWakeup());
+				SimulationThread.currentSimulationThread().pause();
+			}
+			
+			if (!tcp.connectors.isReady())
+				throw new SocketException("connection refused");
+			
+		} finally {
+			SimulationThread.startTime(0);
+		}
+
 		return false;
 	}
 
 	@Override
 	public boolean finishConnect() throws IOException {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public int read(ByteBuffer dst) throws IOException {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public long read(ByteBuffer[] dsts, int offset, int length)
-			throws IOException {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public int write(ByteBuffer src) throws IOException {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public long write(ByteBuffer[] srcs, int offset, int length)
-			throws IOException {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	protected void implCloseSelectableChannel() throws IOException {
-		// TODO Auto-generated method stub
+		if (tcp.isConnecting() == false) throw new NoConnectionPendingException();
 		
+		// throw exception?
+		
+		return tcp.connectors.isReady();
 	}
 
 	@Override
-	protected void implConfigureBlocking(boolean block) throws IOException {
-		// TODO Auto-generated method stub
+	public int read(ByteBuffer b) throws IOException {
+		long cost = 0;
 		
+		try {
+			SimulationThread.stopTime(0);
+
+			while (isBlocking() && !tcp.readers.isReady()) {
+				tcp.readers.queue(SimulationThread.currentSimulationThread().getWakeup());
+				SimulationThread.currentSimulationThread().pause();
+			}
+			
+			int res = tcp.read(b.array(), b.position(), b.remaining());
+			
+			b.position(b.position()+res);
+
+			cost = NetworkCalibration.readCost*res;
+			
+			return res;
+		} finally {
+			SimulationThread.startTime(cost);					
+		}
+	}
+
+	@Override
+	public int write(ByteBuffer b) throws IOException {
+		long cost = 0;
+		
+		try {
+			SimulationThread.stopTime(0);
+			
+			while (isBlocking() && !tcp.writers.isReady()) {
+				tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
+				SimulationThread.currentSimulationThread().pause();
+			}
+			
+			int res = tcp.write(b.array(), b.position(), b.remaining());
+			
+			b.position(b.position()+res);
+			
+			cost = NetworkCalibration.writeCost*res;
+			
+			return res;
+		} finally {
+			SimulationThread.startTime(cost);					
+		}
+	}
+
+	@Override
+	protected void implCloseChannel() throws IOException {
+		socket.close();
 	}
 }

@@ -17,22 +17,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.fake.java.nio.channels.spi;
+package pt.minha.models.fake.java.nio.channels;
 
-import java.io.IOException;
-import java.nio.channels.Selector;
+import java.nio.channels.spi.AbstractInterruptibleChannel;
 
-import pt.minha.models.fake.java.nio.channels.ServerSocketChannel;
-import pt.minha.models.fake.java.nio.channels.SocketChannel;
-import pt.minha.models.local.nio.SelectorProviderImpl;
+import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
 
-public abstract class SelectorProvider {
-	private static SelectorProviderImpl instance = new SelectorProviderImpl();
+public abstract class SelectableChannel extends AbstractInterruptibleChannel {
+
+	public abstract int validOps();
 	
-	public static SelectorProviderImpl provider() { return instance; }
+	public abstract boolean isBlocking();
 	
-	public abstract SocketChannel openSocketChannel() throws IOException;
-	public abstract ServerSocketChannel openServerSocketChannel() throws IOException;
+	public abstract SelectableChannel configureBlocking(boolean mode);
 	
-	public abstract Selector openSelector() throws IOException;
+	public abstract SelectorProvider provider();
+	
+	public abstract SelectionKey register(Selector selector, int operation, Object attachment);
+	
+	public SelectionKey register(Selector selector, int operation) {
+		return register(selector, operation, null);
+	}
 }
