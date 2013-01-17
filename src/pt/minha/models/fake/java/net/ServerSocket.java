@@ -64,7 +64,11 @@ public class ServerSocket {
 		if (channel != null && !channel.isBlocking())
 			throw new IllegalBlockingModeException();
 	}
-	
+
+	public void bind(SocketAddress address) throws IOException {
+		tcp.bind((InetSocketAddress)address);
+	}
+
     public Socket accept() throws IOException {
 		if (closed)
 			throw new SocketException("socket closed");

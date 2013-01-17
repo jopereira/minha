@@ -32,13 +32,15 @@ public abstract class SocketChannel extends AbstractSelectableChannel implements
 	protected SocketChannel(SelectorProvider provider) {
 		super(provider);
 	}
+	
+	public static SocketChannel open() throws IOException { return SelectorProvider.provider().openSocketChannel(); }
 
 	public abstract Socket socket();
 
 	public abstract boolean isConnected();
 
 	public abstract boolean isConnectionPending();
-	
+
 	public abstract boolean connect(SocketAddress remote) throws IOException;
 	
 	public abstract boolean finishConnect() throws IOException;

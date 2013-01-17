@@ -33,19 +33,18 @@ public class ListeningTCPSocket extends AbstractTCPSocket {
 
 	public ListeningTCPSocket(NetworkStack stack) {
 		super(stack);
+		acceptors = new BlockingHelper() {
+			public boolean isReady() {
+				return !incomingAccept.isEmpty();
+			}
+		};
 	}
 	
 	public void listen(int backlog) throws SocketException {
 		if (backlog<=0) backlog = 1;
 		if (backlog>5) backlog = 5;
 		this.backlog = backlog;
-		stack.addTCPSocket(getLocalAddress(), this);
-		
-		acceptors = new BlockingHelper() {
-			public boolean isReady() {
-				return !incomingAccept.isEmpty();
-			}
-		};
+		stack.addTCPSocket(getLocalAddress(), this);		
 	}
 
 	public ClientTCPSocket accept() {

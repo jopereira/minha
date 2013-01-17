@@ -166,5 +166,5 @@ public class SocketChannelImpl extends SocketChannel {
 		if (op == SelectionKey.OP_CONNECT)
 			return tcp.connectors;
 		return null;
-	}
+	}	
 }

@@ -20,6 +20,7 @@
 package pt.minha.models.fake.java.nio.channels;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 
 import pt.minha.models.fake.java.net.ServerSocket;
 import pt.minha.models.fake.java.nio.channels.spi.AbstractSelectableChannel;
@@ -30,12 +31,15 @@ public abstract class ServerSocketChannel extends AbstractSelectableChannel {
 		super(provider);
 	}
 
+	public static ServerSocketChannel open() throws IOException { return SelectorProvider.provider().openServerSocketChannel(); }
+
+
 	@Override
 	public int validOps() {
 		return SelectionKey.OP_ACCEPT;
 	}
 	
 	public abstract ServerSocket socket();
-
+	
 	public abstract SocketChannel accept() throws IOException;
 }

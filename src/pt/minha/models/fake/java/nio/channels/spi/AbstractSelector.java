@@ -17,29 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.local.nio;
+package pt.minha.models.fake.java.nio.channels.spi;
 
-import java.io.IOException;
+import pt.minha.models.fake.java.nio.channels.Selector;
 
-import pt.minha.models.fake.java.nio.channels.ServerSocketChannel;
-import pt.minha.models.fake.java.nio.channels.SocketChannel;
-import pt.minha.models.fake.java.nio.channels.spi.AbstractSelector;
-import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
+public abstract class AbstractSelector extends Selector {
 
-public class SelectorProviderImpl extends SelectorProvider {
-
-	@Override
-	public AbstractSelector openSelector() throws IOException {
-		return new SelectorImpl(null);
-	}
-
-	@Override
-	public ServerSocketChannel openServerSocketChannel() throws IOException {
-		return new ServerSocketChannelImpl(this);
-	}
-
-	@Override
-	public SocketChannel openSocketChannel() throws IOException {
-		return new SocketChannelImpl(this);
-	}
 }

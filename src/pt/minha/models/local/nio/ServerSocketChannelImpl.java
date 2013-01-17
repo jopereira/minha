@@ -32,9 +32,6 @@ import pt.minha.models.global.net.ClientTCPSocket;
 import pt.minha.models.global.net.ListeningTCPSocket;
 import pt.minha.models.local.lang.SimulationThread;
 
-// pondo o channel em non-blocking, posso usar o accept do socket?
-// se usar o accept, o socket que obtenho, tem channel?
-
 class ServerSocketChannelImpl extends ServerSocketChannel {
 	private ServerSocket socket;
 	private ListeningTCPSocket tcp;

@@ -22,6 +22,7 @@ package pt.minha.models.fake.java.nio.channels.spi;
 import java.io.IOException;
 import java.nio.channels.IllegalBlockingModeException;
 import java.nio.channels.IllegalSelectorException;
+import java.util.HashSet;
 import java.util.Set;
 
 import pt.minha.models.fake.java.nio.channels.SelectableChannel;
@@ -38,6 +39,7 @@ public abstract class AbstractSelectableChannel extends SelectableChannel {
 
 	public AbstractSelectableChannel(SelectorProvider provider) {
 		this.provider = provider;
+		keys = new HashSet<SelectionKey>();
 	}
 
 	@Override

@@ -21,6 +21,7 @@ package pt.minha.models.local.nio;
 
 import java.io.IOException;
 import java.nio.channels.CancelledKeyException;
+import java.util.HashSet;
 import java.util.Set;
 
 import pt.minha.kernel.simulation.Event;
@@ -28,11 +29,12 @@ import pt.minha.models.fake.java.nio.channels.SelectableChannel;
 import pt.minha.models.fake.java.nio.channels.SelectionKey;
 import pt.minha.models.fake.java.nio.channels.Selector;
 import pt.minha.models.fake.java.nio.channels.spi.AbstractSelectableChannel;
+import pt.minha.models.fake.java.nio.channels.spi.AbstractSelector;
 import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
 import pt.minha.models.global.io.BlockingHelper;
 import pt.minha.models.local.lang.SimulationThread;
 
-public class SelectorImpl extends Selector {
+public class SelectorImpl extends AbstractSelector {
 	private SelectorProvider provider;
 	private Set<SelectionKey> keys, selectedKeys, ready, canceled;
 	private BlockingHelper selectors = new BlockingHelper() {
@@ -45,6 +47,10 @@ public class SelectorImpl extends Selector {
 		
 	protected SelectorImpl(SelectorProvider provider) {
 		this.provider = provider;
+		keys = new HashSet<SelectionKey>();
+		selectedKeys = new HashSet<SelectionKey>();
+		ready = new HashSet<SelectionKey>();
+		canceled = new HashSet<SelectionKey>();
 	}
 
 	@Override
@@ -160,7 +166,7 @@ public class SelectorImpl extends Selector {
 		}
 		
 		private void update(int op, int ops) {
-			if ((interest & op)==0 && (ops &op)!=0) {
+			if ((interest & op)==0 && (ops & op)!=0) {
 				if (channel.helperFor(op).isReady())
 					ready |= op;
 				channel.helperFor(op).queue(wakeup);

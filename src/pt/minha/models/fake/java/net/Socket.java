@@ -143,6 +143,10 @@ public class Socket {
 		};
 	}
 
+	public void bind(SocketAddress address) throws IOException {
+		tcp.bind((InetSocketAddress)address);
+	}
+
     public void connect(SocketAddress endpoint) throws IOException {
 		if (closed)
 			throw new SocketException("socket closed");
