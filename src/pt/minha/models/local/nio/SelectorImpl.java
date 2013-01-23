@@ -85,9 +85,16 @@ public class SelectorImpl extends AbstractSelector {
 		try {
 			SimulationThread.stopTime(0);
 			
-			while(!wakeup && !selectors.isReady()) {
+			SimulationThread current = SimulationThread.currentSimulationThread();
+			
+			long deadline = current.getTimeline().getTime() + timeout*1000000;
+			
+			while((timeout==0 || deadline<current.getTimeline().getTime()) && !wakeup && !selectors.isReady()) {
 				selectors.queue(SimulationThread.currentSimulationThread().getWakeup());
+				if (timeout>0)
+					SimulationThread.currentSimulationThread().getWakeup().schedule(deadline-current.getTimeline().getTime());
 				SimulationThread.currentSimulationThread().pause();
+				selectors.cancel(SimulationThread.currentSimulationThread().getWakeup());
 			}
 			
 			return selectNow();
