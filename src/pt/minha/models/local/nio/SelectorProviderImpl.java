@@ -30,7 +30,7 @@ public class SelectorProviderImpl extends SelectorProvider {
 
 	@Override
 	public AbstractSelector openSelector() throws IOException {
-		return new SelectorImpl(null);
+		return new SelectorImpl(this);
 	}
 
 	@Override

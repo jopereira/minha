@@ -37,7 +37,7 @@ class ServerSocketChannelImpl extends ServerSocketChannel {
 	private ListeningTCPSocket tcp;
 
 	protected ServerSocketChannelImpl(SelectorProvider provider) {
-		super(null);
+		super(provider);
 		tcp = new ListeningTCPSocket(SimulationThread.currentSimulationThread().getHost().getNetwork());
 		this.socket = new ServerSocket(this, tcp);
 	}
