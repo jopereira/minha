@@ -22,12 +22,13 @@ package pt.minha.models.fake.java.nio.channels;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.GatheringByteChannel;
 
 import pt.minha.models.fake.java.net.Socket;
 import pt.minha.models.fake.java.nio.channels.spi.AbstractSelectableChannel;
 import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
 
-public abstract class SocketChannel extends AbstractSelectableChannel implements ByteChannel {
+public abstract class SocketChannel extends AbstractSelectableChannel implements ByteChannel, GatheringByteChannel {
 
 	protected SocketChannel(SelectorProvider provider) {
 		super(provider);

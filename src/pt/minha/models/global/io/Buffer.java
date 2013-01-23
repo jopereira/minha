@@ -1,5 +1,7 @@
 package pt.minha.models.global.io;
 
+import java.nio.ByteBuffer;
+
 public class Buffer {
 	private static final int bufferSize = 32*1024;
 
@@ -7,6 +9,28 @@ public class Buffer {
 	private int h, t, n;
 	private boolean closed;
 
+
+	public int push(ByteBuffer b) {
+		if (closed)
+			return -1;
+		
+		int done = 0;
+				
+		while(b.hasRemaining() && n<bufferSize) {
+			int op = b.remaining();
+			if (op > bufferSize-n)
+				op = bufferSize-n;
+			if (op > bufferSize-h)
+				op = bufferSize-h;
+			b.get(buffer, h, op);
+			done += op;
+			n += op;
+			h = (h + op) % bufferSize;
+		}
+		
+		return done;
+	}
+	
 	public int push(byte[] data, int offset, int len) {
 		if (closed)
 			return -1;

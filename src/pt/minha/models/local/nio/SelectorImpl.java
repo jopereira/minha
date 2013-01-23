@@ -36,11 +36,12 @@ import pt.minha.models.local.lang.SimulationThread;
 
 public class SelectorImpl extends AbstractSelector {
 	private SelectorProvider provider;
-	private Set<SelectionKey> keys, selectedKeys, ready, canceled;
+	private Set<SelectionKey> keys, selectedKeys, canceled;
+	private Set<SelectionKeyImpl> ready;
 	private BlockingHelper selectors = new BlockingHelper() {
 		@Override
 		public boolean isReady() {
-			return !selectedKeys.isEmpty();
+			return !ready.isEmpty();
 		}
 	};
 	private boolean wakeup;
@@ -49,7 +50,7 @@ public class SelectorImpl extends AbstractSelector {
 		this.provider = provider;
 		keys = new HashSet<SelectionKey>();
 		selectedKeys = new HashSet<SelectionKey>();
-		ready = new HashSet<SelectionKey>();
+		ready = new HashSet<SelectionKeyImpl>();
 		canceled = new HashSet<SelectionKey>();
 	}
 
@@ -70,26 +71,25 @@ public class SelectorImpl extends AbstractSelector {
 
 	@Override
 	public int selectNow() throws IOException {
-		ready.removeAll(canceled);
-		keys.removeAll(canceled);
-		selectedKeys.removeAll(canceled);
-		
-		int oldsize = selectedKeys.size();
-		selectedKeys.addAll(ready);
-		ready.clear();
-		return selectedKeys.size()-oldsize;
+		return select(-1);
 	}
 
 	@Override
 	public int select(long timeout) throws IOException {
-		try {
+		try {			
 			SimulationThread.stopTime(0);
+			
+			Set<SelectionKeyImpl> previous = ready;
+			ready = new HashSet<SelectorImpl.SelectionKeyImpl>();
+			
+			for(SelectionKeyImpl key: previous)
+				key.retest();
 			
 			SimulationThread current = SimulationThread.currentSimulationThread();
 			
 			long deadline = current.getTimeline().getTime() + timeout*1000000;
 			
-			while((timeout==0 || deadline<current.getTimeline().getTime()) && !wakeup && !selectors.isReady()) {
+			while((timeout==0 || deadline>current.getTimeline().getTime()) && !wakeup && !selectors.isReady()) {
 				selectors.queue(SimulationThread.currentSimulationThread().getWakeup());
 				if (timeout>0)
 					SimulationThread.currentSimulationThread().getWakeup().schedule(deadline-current.getTimeline().getTime());
@@ -97,7 +97,15 @@ public class SelectorImpl extends AbstractSelector {
 				selectors.cancel(SimulationThread.currentSimulationThread().getWakeup());
 			}
 			
-			return selectNow();
+			wakeup = false;
+			ready.removeAll(canceled);
+			keys.removeAll(canceled);
+			selectedKeys.removeAll(canceled);
+			
+			int oldsize = selectedKeys.size();
+			selectedKeys.addAll(ready);
+			
+			return selectedKeys.size()-oldsize;
 		} finally {
 			SimulationThread.startTime(0);
 		}
@@ -123,10 +131,11 @@ public class SelectorImpl extends AbstractSelector {
 		return key;
 	}
 	
-	private void selected(SelectionKey key) {
+	private void selected(SelectionKeyImpl key) {
 		ready.add(key);
+		selectors.wakeup();
 	}
-	private void canceled(SelectionKey key) {
+	private void canceled(SelectionKeyImpl key) {
 		canceled.add(key);
 	}
 	
@@ -141,15 +150,20 @@ public class SelectorImpl extends AbstractSelector {
 			wakeup = new Event(SimulationThread.currentSimulationThread().getTimeline()) {
 				@Override
 				public void run() {
-					test(OP_READ);
-					test(OP_WRITE);
-					test(OP_CONNECT);
-					test(OP_ACCEPT);
-					if (ready!=0)
-						selected(SelectionKeyImpl.this);
+					retest();
 				}
 			};
 			this.channel = channel;
+		}
+		
+		void retest() {
+			ready=0;
+			test(OP_READ);
+			test(OP_WRITE);
+			test(OP_CONNECT);
+			test(OP_ACCEPT);
+			if (ready!=0)
+				selected(this);			
 		}
 
 		@Override
@@ -230,6 +244,35 @@ public class SelectorImpl extends AbstractSelector {
 		private void checkCancel() {
 			if (cancelled)
 				throw new CancelledKeyException();
+		}
+		
+		@Override
+		public boolean isValid() {
+			return !cancelled;
+		}
+
+		@Override
+		public boolean isReadable() {
+			return (ready&OP_READ)!=0;
+		}
+
+		@Override
+		public boolean isWritable() {
+			return (ready&OP_WRITE)!=0;
+		}
+
+		@Override
+		public boolean isAcceptable() {
+			return (ready&OP_ACCEPT)!=0;
+		}
+
+		@Override
+		public boolean isConnectable() {
+			return (ready&OP_CONNECT)!=0;
+		}
+		
+		public String toString() {
+			return "SK("+interest+", "+ready+", "+channel+")";
 		}
 	}
 }

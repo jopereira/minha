@@ -41,4 +41,11 @@ public abstract class SelectionKey {
 	public abstract int readyOps();
 	
 	public abstract void cancel();
+	
+	public abstract boolean isValid();
+	public abstract boolean isReadable();
+	public abstract boolean isWritable();
+	public abstract boolean isAcceptable();
+	public abstract boolean isConnectable();
+
 }

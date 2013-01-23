@@ -21,6 +21,7 @@ package pt.minha.models.global.net;
 
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.nio.ByteBuffer;
 import java.util.PriorityQueue;
 
 import pt.minha.kernel.simulation.Event;
@@ -260,6 +261,27 @@ public class ClientTCPSocket extends AbstractTCPSocket {
 		return op;
 	}
 	
+	/**
+	 * Send data.
+	 * 
+	 * @param b data array
+	 * @return number of bytes written
+	 * @throws SocketException in case of broken pipe condition
+	 */
+	public int write(ByteBuffer b) throws SocketException {
+		if (out.isClosed())
+			throw new SocketException("broken pipe");
+		
+		if (b.remaining() <= PIPE_BUF && out.getFree() <= b.remaining())
+			return 0;
+
+		int op = out.push(b);
+		
+		sendPacket();
+		
+		return op;
+	}
+
 	/**
 	 * Receive data.
 	 * 

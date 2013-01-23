@@ -138,10 +138,8 @@ public class SocketChannelImpl extends SocketChannel {
 				SimulationThread.currentSimulationThread().pause();
 			}
 			
-			int res = tcp.write(b.array(), b.position(), b.remaining());
-			
-			b.position(b.position()+res);
-			
+			int res = tcp.write(b);
+						
 			cost = NetworkCalibration.writeCost*res;
 			
 			return res;
@@ -150,6 +148,24 @@ public class SocketChannelImpl extends SocketChannel {
 		}
 	}
 
+	@Override
+	public long write(ByteBuffer[] b) throws IOException {
+		return write(b, 0, b.length);
+	}
+
+		@Override
+	public long write(ByteBuffer[] b, int offset, int len) throws IOException {
+		long total = 0;
+		
+		for(int i=0;i<len;i++) {
+			total += write(b[offset+i]);
+			if (b[offset+i].hasRemaining())
+				break;
+		}
+		
+		return total;
+	}
+	
 	@Override
 	protected void implCloseChannel() throws IOException {
 		super.implCloseChannel();

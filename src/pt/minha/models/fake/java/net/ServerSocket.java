@@ -46,9 +46,8 @@ public class ServerSocket {
 
 	public ServerSocket(int port, int backlog, InetAddress address) throws IOException {
 		this();
-		
-		tcp.bind(new InetSocketAddress(address, port));
-		tcp.listen(backlog);
+
+		this.bind(new InetSocketAddress(address, port), backlog);
     }
 	
 	public ServerSocket(ServerSocketChannel channel, ListeningTCPSocket tcp) {
@@ -66,7 +65,12 @@ public class ServerSocket {
 	}
 
 	public void bind(SocketAddress address) throws IOException {
+		bind(address, 5);
+	}
+
+	public void bind(SocketAddress address, int backlog) throws IOException {
 		tcp.bind((InetSocketAddress)address);
+		tcp.listen(backlog);
 	}
 
     public Socket accept() throws IOException {

@@ -20,7 +20,6 @@
 package pt.minha.models.fake.java.nio.channels;
 
 import java.io.IOException;
-import java.net.SocketAddress;
 
 import pt.minha.models.fake.java.net.ServerSocket;
 import pt.minha.models.fake.java.nio.channels.spi.AbstractSelectableChannel;
