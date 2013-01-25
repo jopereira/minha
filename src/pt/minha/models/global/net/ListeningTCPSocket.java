@@ -25,7 +25,7 @@ import java.util.List;
 
 import pt.minha.models.global.io.BlockingHelper;
 
-public class ListeningTCPSocket extends AbstractTCPSocket {
+public class ListeningTCPSocket extends AbstractSocket {
 	
 	private int backlog;
 	private final List<TCPPacket> incomingAccept = new LinkedList<TCPPacket>();

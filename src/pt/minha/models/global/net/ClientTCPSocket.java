@@ -33,7 +33,7 @@ import pt.minha.models.global.io.Buffer;
  * 
  * @author jop
  */
-public class ClientTCPSocket extends AbstractTCPSocket {
+public class ClientTCPSocket extends AbstractSocket {
 	public static final int MTU = 1500;
 	public static final int PIPE_BUF = 512;
 	public static final int WINDOW_SIZE = 64*1024;

@@ -98,7 +98,7 @@ public class NetworkStack {
 		return timeline;
 	}
 		
-	private final Map<InetSocketAddress, DatagramSocketUpcalls> socketsUDP = new HashMap<InetSocketAddress, DatagramSocketUpcalls>();
+	private final Map<InetSocketAddress, UDPSocket> socketsUDP = new HashMap<InetSocketAddress, UDPSocket>();
 	private final Map<InetSocketAddress, ListeningTCPSocket> socketsTCP = new HashMap<InetSocketAddress, ListeningTCPSocket>();
 	
 	public InetSocketAddress addTCPSocket(InetSocketAddress isa, ListeningTCPSocket ab) throws SocketException {
@@ -109,11 +109,11 @@ public class NetworkStack {
 		return isa;
 	}
 
-	public InetSocketAddress addUDPSocket(InetSocketAddress isa, DatagramSocketUpcalls ab) throws SocketException {
+	public InetSocketAddress addUDPSocket(InetSocketAddress isa, UDPSocket udpSocket) throws SocketException {
 		if ( socketsUDP.containsKey(isa) )
 			throw new BindException(isa.toString() + " Cannot assign requested address on UDP");
 
-		socketsUDP.put(isa, ab);
+		socketsUDP.put(isa, udpSocket);
 		return isa;
 	}
 
@@ -130,7 +130,7 @@ public class NetworkStack {
 	public void handleDatagram(final InetSocketAddress destination, final DatagramPacket packet) {
 		new Event(timeline) {
 			public void run() {
-				DatagramSocketUpcalls sgds = socketsUDP.get(destination);
+				UDPSocket sgds = socketsUDP.get(destination);
 				if (sgds!=null)
 					sgds.queue(packet);
 			}			

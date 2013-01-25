@@ -22,15 +22,15 @@ package pt.minha.models.global.net;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 
-public abstract class AbstractTCPSocket {
+public abstract class AbstractSocket {
 	private InetSocketAddress local;
 	protected NetworkStack stack;
 
-	protected AbstractTCPSocket(NetworkStack stack) {
+	protected AbstractSocket(NetworkStack stack) {
 		this.stack = stack;
 	}
 	
-	protected AbstractTCPSocket(NetworkStack stack, InetSocketAddress local) {
+	protected AbstractSocket(NetworkStack stack, InetSocketAddress local) {
 		this.stack = stack;
 		this.local = local;
 	}
