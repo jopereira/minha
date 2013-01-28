@@ -21,6 +21,7 @@ package pt.minha.models.fake.java.nio.channels.spi;
 
 import java.io.IOException;
 
+import pt.minha.models.fake.java.nio.channels.DatagramChannel;
 import pt.minha.models.fake.java.nio.channels.ServerSocketChannel;
 import pt.minha.models.fake.java.nio.channels.SocketChannel;
 import pt.minha.models.local.nio.SelectorProviderImpl;
@@ -32,6 +33,8 @@ public abstract class SelectorProvider {
 	
 	public abstract SocketChannel openSocketChannel() throws IOException;
 	public abstract ServerSocketChannel openServerSocketChannel() throws IOException;
+	
+	public abstract DatagramChannel openDatagramChannel() throws IOException;
 	
 	public abstract AbstractSelector openSelector() throws IOException;
 }

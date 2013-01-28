@@ -17,35 +17,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.local.nio;
+package pt.minha.models.fake.java.nio.channels;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.channels.ByteChannel;
 
-import pt.minha.models.fake.java.nio.channels.DatagramChannel;
-import pt.minha.models.fake.java.nio.channels.ServerSocketChannel;
-import pt.minha.models.fake.java.nio.channels.SocketChannel;
-import pt.minha.models.fake.java.nio.channels.spi.AbstractSelector;
+import pt.minha.models.fake.java.net.DatagramSocket;
+import pt.minha.models.fake.java.nio.channels.spi.AbstractSelectableChannel;
 import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
 
-public class SelectorProviderImpl extends SelectorProvider {
+public abstract class DatagramChannel extends AbstractSelectableChannel implements ByteChannel {
 
-	@Override
-	public AbstractSelector openSelector() throws IOException {
-		return new SelectorImpl(this);
+	protected DatagramChannel(SelectorProvider provider) {
+		super(provider);
 	}
+	
+	public static DatagramChannel open() throws IOException { return SelectorProvider.provider().openDatagramChannel(); }
+
+	public abstract DatagramSocket socket();
+	
+	public abstract DatagramChannel connect(SocketAddress address);
+
+	public abstract DatagramChannel disconnect();
+	
+	public abstract boolean isConnected();
 
 	@Override
-	public ServerSocketChannel openServerSocketChannel() throws IOException {
-		return new ServerSocketChannelImpl(this);
-	}
-
-	@Override
-	public SocketChannel openSocketChannel() throws IOException {
-		return new SocketChannelImpl(this);
-	}
-
-	@Override
-	public DatagramChannel openDatagramChannel() throws IOException {
-		return new DatagramChannelImpl(this);
+	public int validOps() {
+		return SelectionKey.OP_READ | SelectionKey.OP_WRITE;
 	}
 }

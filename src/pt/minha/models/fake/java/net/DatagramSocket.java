@@ -26,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
 
+import pt.minha.models.fake.java.nio.channels.DatagramChannel;
 import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.global.net.UDPSocket;
 import pt.minha.models.local.lang.SimulationThread;
@@ -34,6 +35,7 @@ public class DatagramSocket {
 	protected UDPSocket udp;
 	
     private boolean closed = false;
+    private DatagramChannel channel;
 		
 	public DatagramSocket() throws SocketException{
 		this(0);
@@ -52,6 +54,11 @@ public class DatagramSocket {
 		udp.bind((InetSocketAddress)address);
 	}
 	
+	public DatagramSocket(DatagramChannel channel, UDPSocket udp) {
+		this.udp = udp;
+		this.channel = channel;
+	}
+
 	public void bind(SocketAddress address) throws SocketException {
 		udp.bind((InetSocketAddress)address);
 	}
@@ -114,5 +121,9 @@ public class DatagramSocket {
 
 	public int getLocalPort() {
 		return udp.getLocalAddress().getPort();
+	}
+	
+	public DatagramChannel getChannel() {
+		return channel;
 	}
 }

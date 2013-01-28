@@ -37,13 +37,21 @@ import pt.minha.models.global.io.BlockingHelper;
 public class UDPSocket extends AbstractSocket {
 	private List<DatagramPacket> incoming = new ArrayList<DatagramPacket>();
 	
-	public BlockingHelper readers;
+	public BlockingHelper readers, writers;
+
+	private InetSocketAddress remote;
 
 	public UDPSocket(NetworkStack stack) {
 		super(stack);
 		readers = new BlockingHelper() {
 			public boolean isReady() {
 				return !incoming.isEmpty();
+			}
+		};
+		writers = new BlockingHelper() {
+			public boolean isReady() {
+				/* This is needed to support select() in datagram channels. */
+				return true;
 			}
 		};
 	}
@@ -64,6 +72,10 @@ public class UDPSocket extends AbstractSocket {
     	stack.removeUDPSocket(new InetSocketAddress(addr, getLocalAddress().getPort()));
     }
 	
+    public void connect(InetSocketAddress addr) {
+    	remote = addr;
+    }
+    
 	public void send(DatagramPacket packet) throws SocketException {
 		if (packet.getAddress().isMulticastAddress())
 			stack.getNetwork().relayMulticast((InetSocketAddress)getLocalAddress(), packet);
@@ -87,5 +99,9 @@ public class UDPSocket extends AbstractSocket {
 	public void queue(DatagramPacket packet) {
 		incoming.add(packet);
 		readers.wakeup();
+	}
+	
+	public InetSocketAddress getRemoteAddress() {
+		return remote;
 	}
 }
