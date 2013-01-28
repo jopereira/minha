@@ -191,10 +191,10 @@ public class ClientTCPSocket extends AbstractSocket {
 		if (readers.isReady())
 			readers.wakeup();
 
-		sendPacket();
+		uncork();
 	}
 	
-	private void sendPacket() {
+	public void uncork() {
 		// Prepare data
 		int op = out.getUsed();
 				
@@ -256,8 +256,6 @@ public class ClientTCPSocket extends AbstractSocket {
 
 		int op = out.push(b, off, len);
 		
-		sendPacket();
-		
 		return op;
 	}
 	
@@ -276,8 +274,6 @@ public class ClientTCPSocket extends AbstractSocket {
 			return 0;
 
 		int op = out.push(b);
-		
-		sendPacket();
 		
 		return op;
 	}
@@ -308,7 +304,7 @@ public class ClientTCPSocket extends AbstractSocket {
 
 		out.close(true);
 		
-		sendPacket();
+		uncork();
 	}
 
 	/**

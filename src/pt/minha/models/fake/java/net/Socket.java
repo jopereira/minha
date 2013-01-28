@@ -119,14 +119,26 @@ public class Socket {
 					
 					checkBlocking();
 
-					while (!tcp.writers.isReady()) {
-						tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
-						SimulationThread.currentSimulationThread().pause();
+					int total = 0, res = 0;
+					
+					while(res < len) {
+						while (!tcp.writers.isReady()) {
+							if (res > 0) {
+								total += res;
+								res = 0;
+								cost = NetworkCalibration.writeCost*total;
+								tcp.uncork();
+							}
+							tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
+							SimulationThread.currentSimulationThread().pause();
+						}
+						
+						res += tcp.write(b, off+res, len-res);
 					}
+					total += res;			
+					tcp.uncork();
 					
-					tcp.write(b, off, len);
-					
-					cost = NetworkCalibration.writeCost*len;
+					cost = NetworkCalibration.writeCost*total;
 				} finally {
 					SimulationThread.startTime(cost);					
 				}

@@ -131,18 +131,30 @@ public class SocketChannelImpl extends SocketChannel {
 		long cost = 0;
 		
 		try {
-			SimulationThread.stopTime(0);
+			int total = 0, res = 0;
 			
-			while (isBlocking() && !tcp.writers.isReady()) {
-				tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
-				SimulationThread.currentSimulationThread().pause();
+			while(b.hasRemaining()) {
+				while (isBlocking() && !tcp.writers.isReady()) {
+					if (res > 0) {
+						total += res;
+						res = 0;
+						cost = NetworkCalibration.writeCost*total;
+						tcp.uncork();
+					}
+					tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
+					SimulationThread.currentSimulationThread().pause();
+				}
+
+				res += tcp.write(b);
+				if (!isBlocking())
+					break;
 			}
-			
-			int res = tcp.write(b);
-						
-			cost = NetworkCalibration.writeCost*res;
-			
-			return res;
+			total += res;			
+			tcp.uncork();
+		
+			cost += NetworkCalibration.writeCost*total;
+				
+			return total;
 		} finally {
 			SimulationThread.startTime(cost);					
 		}
@@ -153,17 +165,42 @@ public class SocketChannelImpl extends SocketChannel {
 		return write(b, 0, b.length);
 	}
 
-		@Override
+	@Override
 	public long write(ByteBuffer[] b, int offset, int len) throws IOException {
-		long total = 0;
+		long cost = 0;
+			
+		try {
+			SimulationThread.stopTime(0);
+
+			int total = 0, res = 0;
+			
+			for(int i=0;i<len;) {
+				while (isBlocking() && !tcp.writers.isReady()) {
+					if (res > 0) {
+						total += res;
+						res = 0;
+						cost = NetworkCalibration.writeCost*total;
+						tcp.uncork();
+					}
+					tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
+					SimulationThread.currentSimulationThread().pause();
+				}
+
+				res += tcp.write(b[offset+i]);
+				if (!b[offset+i].hasRemaining())
+					i++;
+				else if (!isBlocking())
+					break;
+			}
+			total += res;			
+			tcp.uncork();
 		
-		for(int i=0;i<len;i++) {
-			total += write(b[offset+i]);
-			if (b[offset+i].hasRemaining())
-				break;
+			cost += NetworkCalibration.writeCost*total;
+				
+			return total;
+		} finally {
+			SimulationThread.startTime(cost);					
 		}
-		
-		return total;
 	}
 	
 	@Override
