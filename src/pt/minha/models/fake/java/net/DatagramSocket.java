@@ -126,4 +126,8 @@ public class DatagramSocket {
 	public DatagramChannel getChannel() {
 		return channel;
 	}
+
+	public boolean isClosed() {
+		return closed;
+	}
 }

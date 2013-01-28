@@ -104,6 +104,9 @@ public class SocketChannelImpl extends SocketChannel {
 
 	@Override
 	public int read(ByteBuffer b) throws IOException {
+		if (socket.isClosed())
+			throw new SocketException("socket closed");
+
 		long cost = 0;
 		
 		try {
@@ -128,6 +131,9 @@ public class SocketChannelImpl extends SocketChannel {
 
 	@Override
 	public int write(ByteBuffer b) throws IOException {
+		if (socket.isClosed())
+			throw new SocketException("socket closed");
+
 		long cost = 0;
 		
 		try {
@@ -167,6 +173,9 @@ public class SocketChannelImpl extends SocketChannel {
 
 	@Override
 	public long write(ByteBuffer[] b, int offset, int len) throws IOException {
+		if (socket.isClosed())
+			throw new SocketException("socket closed");
+
 		long cost = 0;
 			
 		try {

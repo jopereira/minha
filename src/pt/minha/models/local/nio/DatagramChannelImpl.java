@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.SelectionKey;
@@ -46,6 +47,9 @@ public class DatagramChannelImpl extends DatagramChannel {
 
 	@Override
 	public int read(ByteBuffer dst) throws IOException {
+		if (socket.isClosed())
+			throw new SocketException("socket closed");
+
 		if (!isConnected())
 			throw new NotYetConnectedException();
 
@@ -80,6 +84,9 @@ public class DatagramChannelImpl extends DatagramChannel {
 
 	@Override
 	public int write(ByteBuffer src) throws IOException {
+		if (socket.isClosed())
+			throw new SocketException("socket closed");
+
 		if (!isConnected())
 			throw new NotYetConnectedException();
 		
