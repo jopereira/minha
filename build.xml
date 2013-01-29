@@ -1,4 +1,4 @@
-<project name="minha" default="build" basedir=".">
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="minha" default="build" basedir=".">
 	<!-- set global properties for this build -->
 	<property name="src"		value="src*"/>
 	<property name="lib" 	 	value="lib"/>
@@ -9,13 +9,15 @@
 	<property name="compile-debug"	value="on"/>
 	<property name="compile-target"	value="1.6"/>
 
-	<!-- BUILD -->
-	<target name="build" depends="compile,jar,csrc"/>
+	<target name="build" depends="package,native" description="build everything"/>
 
-	<!-- COMPILE -->
-	<target name="compile">
+	<target name="resolve" description="fetch dependencies with Ivy">
+		<ivy:retrieve />
+	</target>
+
+	<target name="compile" description="compile Java source files">
 		<mkdir dir="${build}"/>
-		<javac destdir="${build}" debug="${compile-debug}" target="${compile-target}" includeantruntime="false">
+		<javac destdir="${build}" debug="${compile-debug}" source="${compile-target}" target="${compile-target}" includeantruntime="false">
 			<src>
 				<dirset dir=".">
 					<include name="${src}"/>
@@ -29,13 +31,11 @@
 		</javac>
 	</target>
 
-	<!-- JAR -->
-	<target name="jar" depends="compile">
-		<jar destfile="${build-root}/minha.jar" basedir="${build}" includes="**/*.class"/>
+	<target name="package" depends="compile" description="package into jar file">
+		<jar destfile="${jars}/minha.jar" basedir="${build}" includes="**/*.class"/>
 	</target>
 
-	<!-- BUILD C SRC -->
-	<target name="csrc" depends="compile">
+	<target name="native" depends="compile" description="build native timer">
 		<mkdir dir="${build-root}/${csrc}"/>
 		<copy todir="${build-root}/${csrc}">
 			<fileset dir="${csrc}">
@@ -48,7 +48,6 @@
 		</exec>
 	</target>
 
-	<!-- CLEAN UP -->
 	<target name="clean" description="clean up" >
 		<delete dir="${build-root}"/>
 	</target>
