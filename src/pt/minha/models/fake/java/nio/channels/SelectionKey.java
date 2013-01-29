@@ -17,17 +17,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.global.net;
+package pt.minha.models.fake.java.nio.channels;
 
-public class TCPPacketAck extends TCPPacket {
-	private final int acksize;
+public abstract class SelectionKey {
+
+	public static final int OP_READ = 1;
+	public static final int OP_WRITE = 4;
+	public static final int OP_CONNECT = 8;
+	public static final int OP_ACCEPT = 16;
+
+	public abstract Object attach(Object attachment);
+
+	public abstract Object attachment();
+
+	public abstract Selector selector();
+
+	public abstract SelectableChannel channel();
+
+	public abstract int interestOps();
+
+	public abstract SelectionKey interestOps(int ops);
+
+	public abstract int readyOps();
 	
-	public TCPPacketAck(SocketUpcalls key, int sn, int acksize) {
-		super(PacketType.Ack, key, sn, 1);
-		this.acksize = acksize;
-	}
+	public abstract void cancel();
 	
-	public int getAckSize() {
-		return this.acksize;
-	}
+	public abstract boolean isValid();
+	public abstract boolean isReadable();
+	public abstract boolean isWritable();
+	public abstract boolean isAcceptable();
+	public abstract boolean isConnectable();
+
 }

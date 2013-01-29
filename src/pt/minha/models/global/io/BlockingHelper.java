@@ -17,17 +17,52 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.global.net;
+package pt.minha.models.global.io;
 
-import java.net.InetSocketAddress;
+import java.util.HashSet;
+import java.util.Set;
 
+import pt.minha.kernel.simulation.Event;
 
-public interface SocketUpcalls {
-	public void acceptedBy(SocketUpcalls serverClientSocket);
+/**
+ * Manages waiting on I/O.
+ * 
+ * @author jop
+ */
+public abstract class BlockingHelper {
+	private Set<Event> waiting = new HashSet<Event>();
 	
-	public void scheduleRead(TCPPacket p);
+	/**
+	 * Test if ready for I/O operation.
+	 * 
+	 * @return true if will not block
+	 */
+	public abstract boolean isReady();
 	
-	public void acknowledge(TCPPacketAck p);
-
-	public InetSocketAddress getSocketAddress();
+	/**
+	 * Shloud be called by derived classes when becoming ready.
+	 */
+	public void wakeup() {
+		for(Event ev: waiting)
+			ev.schedule(0);
+		waiting.clear();
+	}
+	
+	/**
+	 * Queue an event to schedule when ready.
+	 * 
+	 * @param ev the event
+	 */
+	public void queue(Event ev) {
+		waiting.add(ev);
+	}
+	
+	/**
+	 * Cancel a previously queued event.
+	 * 
+	 * @param ev the event
+	 */
+	public void cancel(Event ev) {
+		waiting.remove(ev);
+	}	
 }

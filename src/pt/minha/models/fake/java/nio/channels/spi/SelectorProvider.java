@@ -17,18 +17,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.global.net;
+package pt.minha.models.fake.java.nio.channels.spi;
 
+import java.io.IOException;
 
-public class TCPPacketData extends TCPPacket {
-	private final byte[] data;
+import pt.minha.models.fake.java.nio.channels.DatagramChannel;
+import pt.minha.models.fake.java.nio.channels.ServerSocketChannel;
+import pt.minha.models.fake.java.nio.channels.SocketChannel;
+import pt.minha.models.local.nio.SelectorProviderImpl;
 
-	public TCPPacketData(SocketUpcalls key, int sn, byte[] data) {
-		super(PacketType.Data, key, sn, data.length);
-		this.data = data;
-	}
+public abstract class SelectorProvider {
+	private static SelectorProviderImpl instance = new SelectorProviderImpl();
 	
-	public byte[] getData() {
-		return this.data;
-	}	
+	public static SelectorProvider provider() { return instance; }
+	
+	public abstract SocketChannel openSocketChannel() throws IOException;
+	public abstract ServerSocketChannel openServerSocketChannel() throws IOException;
+	
+	public abstract DatagramChannel openDatagramChannel() throws IOException;
+	
+	public abstract AbstractSelector openSelector() throws IOException;
 }

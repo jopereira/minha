@@ -241,6 +241,10 @@ public class SimulationThread extends Thread {
 		public void run() {
 			wakeup();
 		}
+		
+		public String toString() {
+			return "Wakeup "+SimulationThread.this;
+		}
 	}
 	
 	public String toString() {

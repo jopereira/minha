@@ -17,26 +17,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.fake.java.net;
+package pt.minha.models.fake.java.nio.channels;
 
 import java.io.IOException;
-import java.net.InetAddress;
+import java.nio.channels.spi.AbstractInterruptibleChannel;
 
-public class MulticastSocket extends DatagramSocket {
+import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
+
+public abstract class SelectableChannel extends AbstractInterruptibleChannel {
+
+	public abstract int validOps();
 	
-    public MulticastSocket() throws IOException {
-        super();
-    }
-    
-    public MulticastSocket(int port) throws IOException {
-        super(port);
-    }
-
-    public void joinGroup(InetAddress addr) throws IOException {
-    	udp.joinGroup(addr);
-    }
-
-    public void leaveGroup(InetAddress addr) throws IOException {
-    	udp.leaveGroup(addr);
-    }
+	public abstract boolean isBlocking();
+	
+	public abstract SelectableChannel configureBlocking(boolean mode);
+	
+	public abstract SelectorProvider provider();
+	
+	public abstract SelectionKey register(Selector selector, int operation, Object attachment) throws IOException;
+	
+	public SelectionKey register(Selector selector, int operation) throws IOException {
+		return register(selector, operation, null);
+	}
 }

@@ -98,10 +98,10 @@ public class NetworkStack {
 		return timeline;
 	}
 		
-	private final Map<InetSocketAddress, DatagramSocketUpcalls> socketsUDP = new HashMap<InetSocketAddress, DatagramSocketUpcalls>();
-	private final Map<InetSocketAddress, ServerSocketUpcalls> socketsTCP = new HashMap<InetSocketAddress, ServerSocketUpcalls>();
+	private final Map<InetSocketAddress, UDPSocket> socketsUDP = new HashMap<InetSocketAddress, UDPSocket>();
+	private final Map<InetSocketAddress, ListeningTCPSocket> socketsTCP = new HashMap<InetSocketAddress, ListeningTCPSocket>();
 	
-	public InetSocketAddress addTCPSocket(InetSocketAddress isa, ServerSocketUpcalls ab) throws SocketException {
+	public InetSocketAddress addTCPSocket(InetSocketAddress isa, ListeningTCPSocket ab) throws SocketException {
 		if ( socketsTCP.containsKey(isa) )
 			throw new BindException(isa.toString() + " Cannot assign requested address on TCP");
 
@@ -109,11 +109,11 @@ public class NetworkStack {
 		return isa;
 	}
 
-	public InetSocketAddress addUDPSocket(InetSocketAddress isa, DatagramSocketUpcalls ab) throws SocketException {
+	public InetSocketAddress addUDPSocket(InetSocketAddress isa, UDPSocket udpSocket) throws SocketException {
 		if ( socketsUDP.containsKey(isa) )
 			throw new BindException(isa.toString() + " Cannot assign requested address on UDP");
 
-		socketsUDP.put(isa, ab);
+		socketsUDP.put(isa, udpSocket);
 		return isa;
 	}
 
@@ -130,20 +130,21 @@ public class NetworkStack {
 	public void handleDatagram(final InetSocketAddress destination, final DatagramPacket packet) {
 		new Event(timeline) {
 			public void run() {
-				DatagramSocketUpcalls sgds = socketsUDP.get(destination);
+				UDPSocket sgds = socketsUDP.get(destination);
 				if (sgds!=null)
 					sgds.queue(packet);
 			}			
 		}.schedule(0);
 	}
 	
-	public void handleConnect(final InetSocketAddress destination, final SocketUpcalls clientUpcalls) {
+	public void handleConnect(final InetSocketAddress destination, final TCPPacket p) {
 		new Event(timeline) {
 			public void run() {
-				ServerSocketUpcalls ssi = socketsTCP.get(destination);
-				if (ssi==null) // connection refused
-					network.relayTCPAccept(clientUpcalls, null);
-				ssi.queueConnect(clientUpcalls);				
+				ListeningTCPSocket ssi = socketsTCP.get(destination);
+				if (ssi==null)
+					ssi = socketsTCP.get(new InetSocketAddress(destination.getPort()));
+				if (ssi==null || !ssi.queueConnect(p)) // connection refused
+					network.relayTCPData(new TCPPacket(null, p.getSource(), 0, 0, new byte[0], TCPPacket.RST));
 			}
 		}.schedule(0);
 	}

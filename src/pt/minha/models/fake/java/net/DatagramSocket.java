@@ -25,38 +25,42 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.util.LinkedList;
-import java.util.List;
 
-import pt.minha.kernel.simulation.Event;
-import pt.minha.models.global.net.DatagramSocketUpcalls;
+import pt.minha.models.fake.java.nio.channels.DatagramChannel;
 import pt.minha.models.global.net.NetworkCalibration;
-import pt.minha.models.global.net.NetworkStack;
+import pt.minha.models.global.net.UDPSocket;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class DatagramSocket {
+	protected UDPSocket udp;
 	
-	private List<DatagramPacket> incoming = new LinkedList<DatagramPacket>();
-	private List<Event> blocked = new LinkedList<Event>();
-    private long lastRead = 0;
     private boolean closed = false;
-    protected DatagramSocketUpcalls upcalls = new Upcalls();
-	protected NetworkStack stack;
-	protected InetSocketAddress localSocketAddress;
+    private DatagramChannel channel;
 		
 	public DatagramSocket() throws SocketException{
 		this(0);
 	}
 	
 	public DatagramSocket(int port) throws SocketException {
-		stack = SimulationThread.currentSimulationThread().getHost().getNetwork();
-		InetSocketAddress isa = stack.getBindAddress(port);
-		this.localSocketAddress = stack.addUDPSocket(isa,upcalls);
+		this(new InetSocketAddress(port));
 	}
 
 	public DatagramSocket(int port, InetAddress address) throws SocketException {
-		// FIXME: bind address not implemented
-		this(port);
+		this(new InetSocketAddress(address,port));
+	}
+
+	public DatagramSocket(SocketAddress address) throws SocketException {
+		udp=new UDPSocket(SimulationThread.currentSimulationThread().getHost().getNetwork());
+		udp.bind((InetSocketAddress)address);
+	}
+	
+	public DatagramSocket(DatagramChannel channel, UDPSocket udp) {
+		this.udp = udp;
+		this.channel = channel;
+	}
+
+	public void bind(SocketAddress address) throws SocketException {
+		udp.bind((InetSocketAddress)address);
 	}
 
 	public void send(DatagramPacket packet) throws IOException {
@@ -66,17 +70,8 @@ public class DatagramSocket {
 		try {
 			SimulationThread.stopTime(NetworkCalibration.writeCost*packet.getLength());
 			
-			if (packet.getAddress().isMulticastAddress()) {
-				stack.getNetwork().relayMulticast((InetSocketAddress)this.getLocalSocketAddress(), packet);
-			}
-			else {
-				InetSocketAddress destination = new InetSocketAddress(packet.getAddress(),packet.getPort());
-				byte[] data = new byte[packet.getLength()];
-				System.arraycopy(packet.getData(), packet.getOffset(), data, 0, data.length);
-				DatagramPacket dp = new DatagramPacket(data, data.length, this.getLocalSocketAddress());
-				stack.getNetwork().relayUDP(destination, dp);
-			}
-
+			udp.send(packet);
+			
 		} finally  {
 			SimulationThread.startTime(0);
 		}
@@ -85,53 +80,54 @@ public class DatagramSocket {
 	public void receive(DatagramPacket packet) throws IOException {
 		if (closed)
 			throw new SocketException("receive on closed socket");
-	
-		SimulationThread.stopTime(0);
-		if (incoming.isEmpty()) {
-			blocked.add(SimulationThread.currentSimulationThread().getWakeup());
-			SimulationThread.currentSimulationThread().pause();
-		}
 
-		DatagramPacket p=incoming.remove(0);
+		int cost = 0;
 		
-		// network delay
-		if ( NetworkCalibration.networkDelay ){
-			long now = SimulationThread.currentSimulationThread().getTimeline().getTime();
-			long delay = NetworkCalibration.getNetworkDelay(packet.getLength());
-			if ( (now-this.lastRead)>delay )
-				SimulationThread.currentSimulationThread().idle(delay);
+		try {
+			SimulationThread.stopTime(0);
+			
+			while(!udp.readers.isReady() && !closed) {
+				udp.readers.queue(SimulationThread.currentSimulationThread().getWakeup());
+				SimulationThread.currentSimulationThread().pause();
+			}
+			
+			if (closed)
+				throw new SocketException("receive on closed socket");
+			
+			DatagramPacket p=udp.receive();
+					
+			System.arraycopy(p.getData(), 0, packet.getData(), packet.getOffset(), p.getLength());
+			packet.setAddress(p.getAddress());
+			packet.setPort(p.getPort());
+			cost = p.getLength();
+		
+		} finally {
+			SimulationThread.startTime(NetworkCalibration.readCost*cost);
 		}
-		this.lastRead = SimulationThread.currentSimulationThread().getTimeline().getTime();
-		
-		System.arraycopy(p.getData(), 0, packet.getData(), packet.getOffset(), p.getLength());
-		packet.setAddress(p.getAddress());
-		packet.setPort(p.getPort());
-		SimulationThread.startTime(NetworkCalibration.readCost*p.getLength());
 	}
 
-	private class Upcalls implements DatagramSocketUpcalls {
-		public void queue(DatagramPacket packet) {
-			incoming.add(packet);
-			if (!blocked.isEmpty())
-				blocked.remove(0).schedule(0);
-		}
-	}
-	
     public void close() {
-    	// FIXME: wake up receivers? synchronization?
     	closed = true;
-    	stack.removeUDPSocket((InetSocketAddress)this.getLocalSocketAddress());
+    	udp.shutdown();
     }
         
 	public SocketAddress getLocalSocketAddress() {
-		return this.localSocketAddress;
+		return udp.getLocalAddress();
 	}
 	
 	public InetAddress getLocalAddress() {
-		return this.localSocketAddress.getAddress();
+		return udp.getLocalAddress().getAddress();
 	}
 
 	public int getLocalPort() {
-		return this.localSocketAddress.getPort();
+		return udp.getLocalAddress().getPort();
+	}
+	
+	public DatagramChannel getChannel() {
+		return channel;
+	}
+
+	public boolean isClosed() {
+		return closed;
 	}
 }

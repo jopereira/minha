@@ -17,8 +17,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.global.net;
+package pt.minha.models.fake.java.nio.channels;
 
-public enum PacketType {
-	Data, Ack, Close;
+import java.io.IOException;
+
+import pt.minha.models.fake.java.net.ServerSocket;
+import pt.minha.models.fake.java.nio.channels.spi.AbstractSelectableChannel;
+import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
+
+public abstract class ServerSocketChannel extends AbstractSelectableChannel {
+	protected ServerSocketChannel(SelectorProvider provider) {
+		super(provider);
+	}
+
+	public static ServerSocketChannel open() throws IOException { return SelectorProvider.provider().openServerSocketChannel(); }
+
+
+	@Override
+	public int validOps() {
+		return SelectionKey.OP_ACCEPT;
+	}
+	
+	public abstract ServerSocket socket();
+	
+	public abstract SocketChannel accept() throws IOException;
 }

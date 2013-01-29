@@ -19,8 +19,34 @@
 
 package pt.minha.models.global.net;
 
+import java.net.InetSocketAddress;
+import java.net.SocketException;
 
+public abstract class AbstractSocket {
+	private InetSocketAddress local;
+	protected NetworkStack stack;
 
-public interface ServerSocketUpcalls {
-	public void queueConnect(SocketUpcalls client);
+	protected AbstractSocket(NetworkStack stack) {
+		this.stack = stack;
+	}
+	
+	protected AbstractSocket(NetworkStack stack, InetSocketAddress local) {
+		this.stack = stack;
+		this.local = local;
+	}
+
+	public void bind(InetSocketAddress addr) throws SocketException {
+		if (local!=null)
+			throw new SocketException("already bound");
+		
+		// FIXME: Bind address is ignored
+		if (addr != null && addr.getPort()!=0)
+			local = stack.getBindAddress(addr.getPort());
+		else
+			local = stack.getBindAddress(0);
+	}
+	
+	public InetSocketAddress getLocalAddress() {
+		return local;
+	}
 }
