@@ -30,14 +30,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
+import pt.minha.kernel.simulation.Usage;
 
 public class Network {
-	private Logger logger = LoggerFactory.getLogger(Network.class);
+	private Usage usage;
 
 	private Timeline timeline;
 	
@@ -62,8 +60,7 @@ public class Network {
 	public Network(Timeline timeline) {
 		this.timeline = timeline;
 		this.wakeEvent = new WakeEvent();
-		if (logger.isInfoEnabled())
-			bandwidthLoggerEvent = new BandwidthLoggerEvent();
+		usage = new Usage(timeline, 1000000000, "network", 1, "bytes/s");
 	}
 		
 	private String getAvailableIP() throws UnknownHostException {
@@ -151,14 +148,11 @@ public class Network {
 				
 				p.getDestination().scheduleRead(p);
 				current_bandwidth += p.getSize();
-				if (logger.isInfoEnabled())
-					bandwidth_log += p.getSize();
+				usage.using(p.getSize());
 				
 				if ( !wakeEventEnabled ) {
 					wakeEventEnabled = true;
 					wakeEvent.schedule(RESOLUTION);
-					if (logger.isInfoEnabled())
-						bandwidthLoggerEvent.schedule(BandwidthLoggerEventDELTA);
 				}
 			}			
 		}.schedule(0);
@@ -179,14 +173,11 @@ public class Network {
 					stack.handleDatagram(destination, p);
 				
 				current_bandwidth += p.getLength();
-				if (logger.isInfoEnabled())
-					bandwidth_log += p.getLength();
+				usage.using(p.getLength());
 				
 				if ( !wakeEventEnabled ) {
 					wakeEventEnabled = true;
 					wakeEvent.schedule(RESOLUTION);
-					if (logger.isInfoEnabled())
-						bandwidthLoggerEvent.schedule(BandwidthLoggerEventDELTA);
 				}
 			}			
 		}.schedule(0);
@@ -242,37 +233,13 @@ public class Network {
 					p.getDestination().scheduleRead(p);
 					queue.remove(0);
 					current_bandwidth += p.getSize();
-					if (logger.isInfoEnabled())
-						bandwidth_log += p.getSize();
+					usage.using(p.getSize());
 				}
 			}
 			
 			// schedule next run
 			if ( wakeEventEnabled )
 				this.schedule(RESOLUTION);
-		}
-	}
-
-	/*
-	 * network logger
-	 */
-	private long bandwidth_log = 0;
-	private final long BandwidthLoggerEventDELTA = 1000000000;
-	private BandwidthLoggerEvent bandwidthLoggerEvent;
-		
-	private class BandwidthLoggerEvent extends Event {
-
-		public BandwidthLoggerEvent() {
-			super(timeline);
-		}
-
-		public void run() {
-			logger.info("net usage:{}:{}", getTimeline().getTime(),bandwidth_log);
-			bandwidth_log = 0;
-			
-			// schedule next run
-			if ( wakeEventEnabled )
-				this.schedule(BandwidthLoggerEventDELTA);
 		}
 	}
 }

@@ -21,14 +21,22 @@ package pt.minha.kernel.simulation;
 
 import java.util.PriorityQueue;
 
+
 public class Timeline implements Runnable {
+	private Usage usage;
+	
 	private long now = 0;
 	private PriorityQueue<Event> events = new PriorityQueue<Event>();
+	
+	public static double toSeconds(long time) {
+		return ((double)time)/1e9;
+	}
 	
 	private long simulationTime;
 
 	public Timeline(long simulationTime) {
 		this.simulationTime = simulationTime*1000000000;
+		usage = new Usage(this, 1000000000, "simulation", 1, "events/s"); 
 	}
 	
 	public void schedule(Event e) {
@@ -69,6 +77,7 @@ public class Timeline implements Runnable {
 			
 			now = next.time;			
 			next.execute();
+			usage.using(1);
 		}
 	}
 }

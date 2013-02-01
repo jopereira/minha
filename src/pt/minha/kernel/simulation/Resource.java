@@ -22,42 +22,27 @@ package pt.minha.kernel.simulation;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Resource extends Event {
-	private String name;
 	private boolean busy, stopped;
 	private LinkedList<Event> queue;
 	private Event wakeup;
-
-	private static final long GRANULARITY = 100000000;
-	private long free_since;
-	private long ti, tu;
 	
-	private Logger logger = LoggerFactory.getLogger(Resource.class);
+	private Usage usage;
 	
 	public Resource(Timeline timeline, String host) throws UnknownHostException {
 		super(timeline);
 		
 		this.queue = new LinkedList<Event>();
-		this.name = host;
+		
+		usage = new Usage(timeline, 1000000000, "cpu."+host, 1e-7, "%"); 
 	}
 		
 	public synchronized void run() {
 		wakeup.schedule(0);
 		wakeup = null;
 		busy = false;
-		
-		if (logger.isInfoEnabled()) {
-			free_since = getTimeline().getTime();
-			if (tu > 0 && tu + ti > GRANULARITY) {
-				logger.info("cpu usage @ {}:{}:{}:{}",name,getTimeline().getTime(),tu,ti);
-				tu=0;
-				ti=0;
-			}
-		}
-		
+				
 		restart();
 	}
 	
@@ -69,10 +54,7 @@ public class Resource extends Event {
 			return;
 		
 		busy = true;
-		
-		if (logger.isInfoEnabled())
-			ti += getTimeline().getTime() - free_since;
-		
+				
 		Event event = queue.removeFirst();
 		event.schedule(0);
 	}
@@ -86,8 +68,7 @@ public class Resource extends Event {
 	}
 
 	public synchronized void release(long delta, Event wakeup) {
-		if (logger.isInfoEnabled())
-			tu += delta;
+		usage.using(delta);
 		
 		this.wakeup = wakeup;
 		this.schedule(delta);

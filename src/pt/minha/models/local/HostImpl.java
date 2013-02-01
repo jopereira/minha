@@ -44,7 +44,7 @@ public class HostImpl implements HostInterface {
 		
 	public HostImpl(Timeline timeline, String host, Network network) throws UnknownHostException, FileNotFoundException {
 		this.network = new NetworkStack(timeline, host, network);
-		this.cpu = new Resource(timeline, this.network.getLocalAddress().toString());
+		this.cpu = new Resource(timeline, this.network.getLocalAddress().getHostAddress());
 	}
 	
 	public Resource getCPU() {
