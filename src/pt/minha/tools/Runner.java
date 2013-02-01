@@ -31,8 +31,18 @@ import pt.minha.api.World;
 public class Runner {
 	
 	public static void main(String[] args) {
-		try {			
-			World hv = new World();
+		try {						
+			long simulationTime = Long.parseLong(System.getProperty("simulationTime", "0"));
+
+			System.err.println("==== Minha -- middleware testing platform <http://www.minha.pt/>");
+			System.err.println("==== Copyright (c) 2011-2013, Universidade do Minho.");
+			System.err.println("==== License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>");
+			System.err.println("==== This is free software: you are free to change and redistribute it.");
+			System.err.println("==== There is NO WARRANTY, to the extent permitted by law.");
+			System.err.println("====================================================================================");
+			System.err.println("running for: " + simulationTime + " simulated seconds");
+
+			World hv = new World(simulationTime);
 			
 			CommandLineArgumentsParser cla = new CommandLineArgumentsParser(args);
 			
@@ -49,8 +59,7 @@ public class Runner {
 			long stime=hv.run();
 			
 			System.err.println("====================================================================================");
-			System.err.println("==== Simulation finished: "+((double)(System.nanoTime()-time)/1e9)+"s real time / "+(((double)stime)/1e9)+"s simulation time ====");
-			System.err.println("====================================================================================");
+			System.err.println("simulation finished: "+((double)(System.nanoTime()-time)/1e9)+"s real time / "+(((double)stime)/1e9)+"s simulation time ====");
 			
 		} catch (Exception e) {
 			e.printStackTrace();

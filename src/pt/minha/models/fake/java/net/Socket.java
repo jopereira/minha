@@ -30,7 +30,6 @@ import java.nio.channels.IllegalBlockingModeException;
 
 import pt.minha.models.fake.java.nio.channels.SocketChannel;
 import pt.minha.models.global.net.ClientTCPSocket;
-import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class Socket {
@@ -87,7 +86,7 @@ public class Socket {
 					
 					int res = tcp.read(b, off, len); 
 
-					cost = NetworkCalibration.readCost*len;
+					cost = tcp.getNetwork().getConfig().readCost*len;
 					
 					return res;
 				} finally {
@@ -126,7 +125,7 @@ public class Socket {
 							if (res > 0) {
 								total += res;
 								res = 0;
-								cost = NetworkCalibration.writeCost*total;
+								cost = tcp.getNetwork().getConfig().writeCost*total;
 								tcp.uncork();
 							}
 							tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
@@ -138,7 +137,7 @@ public class Socket {
 					total += res;			
 					tcp.uncork();
 					
-					cost = NetworkCalibration.writeCost*total;
+					cost = tcp.getNetwork().getConfig().writeCost*total;
 				} finally {
 					SimulationThread.startTime(cost);					
 				}

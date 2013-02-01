@@ -25,7 +25,7 @@ import java.util.Properties;
 import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.Network;
-import pt.minha.models.global.net.NetworkCalibration;
+import pt.minha.models.global.net.NetworkConfig;
 
 /**
  * This is the main entry point for Minha. It provides a method to create
@@ -33,32 +33,32 @@ import pt.minha.models.global.net.NetworkCalibration;
  */
 public class World {
 	private ClassConfig cc;
+	private NetworkConfig nc;
 	private Timeline timeline;
 	private Network network;
 	
-	public World() throws Exception {
-		if (timeline!=null)
-			throw new Exception("more than one simulation is not yet implemented");
-		
-		long simulationTime = Long.parseLong(System.getProperty("simulationTime", "0"));
-
-		System.err.println("====================================================================================");
-		System.err.println("==== Simulation time: " + simulationTime + "s");
+	public World(long simulationTime) throws Exception {		
 		
 		// load network calibration values
-		NetworkCalibration.load();
+		Properties props = new Properties();
+		props.load(ClassLoader.getSystemClassLoader().getResourceAsStream("default.network.properties"));			
+		props = new Properties(props);
+		InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("network.properties"); 
+		if (is!=null)
+			props.load(is);
+		nc = new NetworkConfig(props);
 		
 		// load instrumentation properties
-		Properties props = new Properties();
+		props = new Properties();
 		props.load(ClassLoader.getSystemClassLoader().getResourceAsStream("default.instrument.properties"));			
 		props = new Properties(props);
-		InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("instrument.properties"); 
+		is = ClassLoader.getSystemClassLoader().getResourceAsStream("instrument.properties"); 
 		if (is!=null)
 			props.load(is);
 		cc = new ClassConfig(props);
 		timeline = new Timeline(simulationTime);
 		
-		network = new Network(timeline);
+		network = new Network(timeline, nc);
 	}
 	
 	/**

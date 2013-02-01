@@ -13,7 +13,6 @@ import pt.minha.models.fake.java.net.DatagramSocket;
 import pt.minha.models.fake.java.nio.channels.DatagramChannel;
 import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
 import pt.minha.models.global.io.BlockingHelper;
-import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.global.net.UDPSocket;
 import pt.minha.models.local.lang.SimulationThread;
 
@@ -75,7 +74,7 @@ public class DatagramChannelImpl extends DatagramChannel {
 			
 			dst.put(p.getData(), p.getOffset(), res);
 			
-			cost = NetworkCalibration.readCost*p.getLength();
+			cost = udp.getNetwork().getConfig().readCost*p.getLength();
 			
 			return res;
 		} finally {
@@ -101,7 +100,7 @@ public class DatagramChannelImpl extends DatagramChannel {
 			
 			udp.send(new DatagramPacket(data, data.length, udp.getRemoteAddress()));
 						
-			cost = NetworkCalibration.writeCost*data.length;
+			cost = udp.getNetwork().getConfig().writeCost*data.length;
 			
 			return data.length;
 		} finally {

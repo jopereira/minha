@@ -27,7 +27,6 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 
 import pt.minha.models.fake.java.nio.channels.DatagramChannel;
-import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.global.net.UDPSocket;
 import pt.minha.models.local.lang.SimulationThread;
 
@@ -68,8 +67,8 @@ public class DatagramSocket {
 			throw new SocketException("send on closed socket");
 		
 		try {
-			SimulationThread.stopTime(NetworkCalibration.writeCost*packet.getLength());
-			
+			SimulationThread.stopTime(udp.getNetwork().getConfig().writeCost*packet.getLength());
+
 			udp.send(packet);
 			
 		} finally  {
@@ -102,7 +101,7 @@ public class DatagramSocket {
 			cost = p.getLength();
 		
 		} finally {
-			SimulationThread.startTime(NetworkCalibration.readCost*cost);
+			SimulationThread.startTime(udp.getNetwork().getConfig().readCost*cost);
 		}
 	}
 

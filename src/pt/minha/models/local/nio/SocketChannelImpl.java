@@ -32,7 +32,6 @@ import pt.minha.models.fake.java.nio.channels.SocketChannel;
 import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
 import pt.minha.models.global.io.BlockingHelper;
 import pt.minha.models.global.net.ClientTCPSocket;
-import pt.minha.models.global.net.NetworkCalibration;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class SocketChannelImpl extends SocketChannel {
@@ -121,7 +120,7 @@ public class SocketChannelImpl extends SocketChannel {
 			
 			b.position(b.position()+res);
 
-			cost = NetworkCalibration.readCost*res;
+			cost = tcp.getNetwork().getConfig().readCost*res;
 			
 			return res;
 		} finally {
@@ -144,7 +143,7 @@ public class SocketChannelImpl extends SocketChannel {
 					if (res > 0) {
 						total += res;
 						res = 0;
-						cost = NetworkCalibration.writeCost*total;
+						cost = tcp.getNetwork().getConfig().writeCost*total;
 						tcp.uncork();
 					}
 					tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
@@ -158,7 +157,7 @@ public class SocketChannelImpl extends SocketChannel {
 			total += res;			
 			tcp.uncork();
 		
-			cost += NetworkCalibration.writeCost*total;
+			cost = tcp.getNetwork().getConfig().writeCost*total;
 				
 			return total;
 		} finally {
@@ -188,7 +187,7 @@ public class SocketChannelImpl extends SocketChannel {
 					if (res > 0) {
 						total += res;
 						res = 0;
-						cost = NetworkCalibration.writeCost*total;
+						cost = tcp.getNetwork().getConfig().writeCost*total;
 						tcp.uncork();
 					}
 					tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
@@ -204,7 +203,7 @@ public class SocketChannelImpl extends SocketChannel {
 			total += res;			
 			tcp.uncork();
 		
-			cost += NetworkCalibration.writeCost*total;
+			cost = tcp.getNetwork().getConfig().writeCost*total;
 				
 			return total;
 		} finally {

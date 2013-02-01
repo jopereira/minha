@@ -20,7 +20,6 @@
 package pt.minha.models.fake.java.nio.channels;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.channels.ByteChannel;
 

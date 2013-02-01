@@ -48,19 +48,24 @@ public class Network {
 	private final Map<InetAddress, List<NetworkStack>> multicastSockets = new HashMap<InetAddress, List<NetworkStack>>();
 	
 	// bandwidth control
+	NetworkConfig config;
 	private final long BUFFER = 128*1024;
-	private final long BANDWIDTH = NetworkCalibration.networkBandwidth/8; // bytes
+	private final long BANDWIDTH; // bytes
 	private final long RESOLUTION = 40000; // 40 us;
-	private final long DELTA = BANDWIDTH/(1000000000/RESOLUTION);
+	private final long DELTA;
 	private long current_bandwidth = 0;
 	private final WakeEvent wakeEvent;
 	private boolean wakeEventEnabled = false;
 	private final LinkedList<TCPPacket> queue = new LinkedList<TCPPacket>();
 		
-	public Network(Timeline timeline) {
+	public Network(Timeline timeline, NetworkConfig config) {
 		this.timeline = timeline;
 		this.wakeEvent = new WakeEvent();
 		usage = new Usage(timeline, 1000000000, "network", 1, "bytes/s");
+		this.config = config;
+		
+		BANDWIDTH = config.networkBandwidth/8; // bytes
+		DELTA = BANDWIDTH/(1000000000/RESOLUTION);
 	}
 		
 	private String getAvailableIP() throws UnknownHostException {
@@ -161,7 +166,7 @@ public class Network {
 	public void relayUDP(final InetSocketAddress destination, final DatagramPacket p) {
 		new Event(timeline) {
 			public void run() {
-				if ( NetworkCalibration.isLostPacket() )
+				if ( config.isLostPacket() )
 					return;
 				
 				// drop packet
@@ -191,12 +196,12 @@ public class Network {
 					return;
 				
 				// Lost in sender
-				if ( NetworkCalibration.isLostPacket() )
+				if ( config.isLostPacket() )
 					return;
 						
 				for (NetworkStack target : targets) {
 					// Lost in receiver
-					if ( NetworkCalibration.isLostPacket() )
+					if ( config.isLostPacket() )
 						continue;
 					
 					byte[] data = new byte[packet.getLength()];

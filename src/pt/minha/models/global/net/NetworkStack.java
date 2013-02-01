@@ -148,4 +148,8 @@ public class NetworkStack {
 			}
 		}.schedule(0);
 	}
+	
+	public NetworkConfig getConfig() {
+		return network.config;
+	}
 }

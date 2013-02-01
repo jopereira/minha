@@ -49,4 +49,8 @@ public abstract class AbstractSocket {
 	public InetSocketAddress getLocalAddress() {
 		return local;
 	}
+	
+	public NetworkStack getNetwork() {
+		return stack;
+	}
 }

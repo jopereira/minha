@@ -23,7 +23,6 @@ import java.net.InetAddress;
 import java.util.Enumeration;
 import java.util.Vector;
 
-import pt.minha.models.global.net.Network;
 import pt.minha.models.global.net.NetworkStack;
 import pt.minha.models.local.lang.SimulationThread;
 

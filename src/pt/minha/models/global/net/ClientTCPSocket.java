@@ -163,7 +163,7 @@ public class ClientTCPSocket extends AbstractSocket {
 			public void run() {
 				receivePacket(p);
 			}
-		}.schedule(NetworkCalibration.getNetworkDelay(p.getSize()));
+		}.schedule(stack.getConfig().getNetworkDelay(p.getSize()));
 	}
 	
 	private void handlePacket() {
