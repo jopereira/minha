@@ -74,8 +74,8 @@ public class Socket {
 			public int read(byte[] b, int off, int len) throws IOException {
 				long cost = 0;
 				
+				long time = SimulationThread.stopTime(0);
 				try {
-					SimulationThread.stopTime(0);
 					
 					checkBlocking();
 					
@@ -90,6 +90,8 @@ public class Socket {
 					
 					return res;
 				} finally {
+					tcp.readAt(time+cost);
+					
 					SimulationThread.startTime(cost);					
 				}
 			}
@@ -113,8 +115,8 @@ public class Socket {
 			public void write(byte[] b, int off, int len) throws IOException {
 				long cost = 0;
 				
+				long time = SimulationThread.stopTime(0);
 				try {
-					SimulationThread.stopTime(0);
 					
 					checkBlocking();
 
@@ -139,6 +141,8 @@ public class Socket {
 					
 					cost = tcp.getNetwork().getConfig().writeCost*total;
 				} finally {
+					tcp.writeAt(time);
+					
 					SimulationThread.startTime(cost);					
 				}
 			}

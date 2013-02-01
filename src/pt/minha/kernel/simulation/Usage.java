@@ -39,7 +39,7 @@ public class Usage extends Event {
 		super(timeline);
 		this.interval = interval;
 		this.base = -1;
-		this.logger = LoggerFactory.getLogger("usage."+id);
+		this.logger = LoggerFactory.getLogger("pt.minha.Usage."+id);
 		this.factor = factor;
 		this.units = units;
 	}

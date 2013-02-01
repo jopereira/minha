@@ -59,7 +59,7 @@ public class Runner {
 			long stime=hv.run();
 			
 			System.err.println("====================================================================================");
-			System.err.println("simulation finished: "+((double)(System.nanoTime()-time)/1e9)+"s real time / "+(((double)stime)/1e9)+"s simulation time ====");
+			System.err.println("simulation finished: "+((double)(System.nanoTime()-time)/1e9)+"s real time / "+(((double)stime)/1e9)+"s simulation time");
 			
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -108,8 +108,8 @@ public class SocketChannelImpl extends SocketChannel {
 
 		long cost = 0;
 		
+		long time = SimulationThread.stopTime(0);
 		try {
-			SimulationThread.stopTime(0);
 
 			while (isBlocking() && !tcp.readers.isReady()) {
 				tcp.readers.queue(SimulationThread.currentSimulationThread().getWakeup());
@@ -124,6 +124,7 @@ public class SocketChannelImpl extends SocketChannel {
 			
 			return res;
 		} finally {
+			tcp.readAt(time+cost);
 			SimulationThread.startTime(cost);					
 		}
 	}
@@ -135,6 +136,7 @@ public class SocketChannelImpl extends SocketChannel {
 
 		long cost = 0;
 		
+		long time = SimulationThread.stopTime(0);
 		try {
 			int total = 0, res = 0;
 			
@@ -161,6 +163,7 @@ public class SocketChannelImpl extends SocketChannel {
 				
 			return total;
 		} finally {
+			tcp.writeAt(time);
 			SimulationThread.startTime(cost);					
 		}
 	}
@@ -177,8 +180,8 @@ public class SocketChannelImpl extends SocketChannel {
 
 		long cost = 0;
 			
+		long time = SimulationThread.stopTime(0);
 		try {
-			SimulationThread.stopTime(0);
 
 			int total = 0, res = 0;
 			
@@ -207,6 +210,7 @@ public class SocketChannelImpl extends SocketChannel {
 				
 			return total;
 		} finally {
+			tcp.writeAt(time);
 			SimulationThread.startTime(cost);					
 		}
 	}

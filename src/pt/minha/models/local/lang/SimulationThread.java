@@ -209,11 +209,11 @@ public class SimulationThread extends Thread {
 	 * the simulation time, thus blocking the calling thread.
 	 * @throws InterruptedException 
 	 */
-	public static void stopTime(long overhead) {
-		((SimulationThread) currentThread()).doStopTime(overhead);
+	public static long stopTime(long overhead) {
+		return ((SimulationThread) currentThread()).doStopTime(overhead);
 	}
 	
-	private void doStopTime(long overhead) {
+	private long doStopTime(long overhead) {
 		long delta = timer.getTime() - time;
 		
 		if (time<0)
@@ -223,6 +223,8 @@ public class SimulationThread extends Thread {
 		
 		host.getCPU().release(delta+overhead, getWakeup());
 		pause();
+		
+		return getTimeline().getTime();
 	}
 	
 	public void idle(long delta) {

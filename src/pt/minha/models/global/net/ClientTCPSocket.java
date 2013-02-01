@@ -24,7 +24,11 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.PriorityQueue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import pt.minha.kernel.simulation.Event;
+import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.io.BlockingHelper;
 import pt.minha.models.global.io.Buffer;
 
@@ -322,8 +326,17 @@ public class ClientTCPSocket extends AbstractSocket {
 	}
 	
 	public String toString() {
-		return "["+getLocalAddress()+"-"+getRemoteAddress()+"] "+
+		return "["+getLocalAddress().getAddress().getHostAddress()+"-"+getRemoteAddress().getAddress().getHostAddress()+"] "+
 				"s("+seqOut+" "+ackedOut+" "+out.isClosing()+" "+finSent+") "+
 				"r("+seqIn+" "+ackedIn+" "+in.isClosing()+") ";
+	}
+	
+	private static Logger logger = LoggerFactory.getLogger("pt.minha.TCP");
+
+	public void readAt(long l) {
+		logger.info("[ {} s ] {}:{}-{}:{} recv to {} bytes", Timeline.toSeconds(l), getLocalAddress().getAddress().getHostAddress(), getLocalAddress().getPort(), getRemoteAddress().getAddress().getHostAddress(), getRemoteAddress().getPort(), seqIn+in.getUsed());		
+	}
+	public void writeAt(long l) {
+		logger.info("[ {} s ] {}:{}-{}:{} sent to {} bytes", Timeline.toSeconds(l), getLocalAddress().getAddress().getHostAddress(), getLocalAddress().getPort(), getRemoteAddress().getAddress().getHostAddress(), getRemoteAddress().getPort(), seqIn+in.getUsed());
 	}
 }
