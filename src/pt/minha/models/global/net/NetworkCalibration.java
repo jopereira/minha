@@ -21,9 +21,8 @@ package pt.minha.models.global.net;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Properties;
 import java.util.Random;
-
-import pt.minha.kernel.util.PropertiesLoader;
 
 public class NetworkCalibration {
 	public static long writeCost;
@@ -45,7 +44,9 @@ public class NetworkCalibration {
 		networkDelay = false;
 		if ( null != filename ) {
 			System.err.println("==== Loading network calibration from '" + filename + "'");
-			PropertiesLoader conf = new PropertiesLoader(filename);
+			Properties conf = new Properties();
+	        conf.load(NetworkCalibration.class.getClassLoader().getResourceAsStream(filename));
+
 			writeCost = Long.parseLong(conf.getProperty("network.writeCost"));
 			readCost = Long.parseLong(conf.getProperty("network.readCost"));
 			networkBandwidth = Long.parseLong(conf.getProperty("network.networkBandwidth"));

@@ -30,13 +30,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import pt.minha.kernel.log.Logger;
-import pt.minha.kernel.log.SimpleLoggerLog4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
-import pt.minha.kernel.util.PropertiesLoader;
 
 public class Network {
+	private Logger logger = LoggerFactory.getLogger(Network.class);
+
 	private Timeline timeline;
 	
 	// address generation and registry
@@ -60,14 +62,8 @@ public class Network {
 	public Network(Timeline timeline) {
 		this.timeline = timeline;
 		this.wakeEvent = new WakeEvent();
-		try {
-			PropertiesLoader conf = new PropertiesLoader(Logger.LOG_CONF_FILENAME);
-			bandwidth_log_enabled = Boolean.parseBoolean(conf.getProperty("network.bandwith.log"));
-			if ( bandwidth_log_enabled )
-				bandwidthLoggerEvent = new BandwidthLoggerEvent();
-		} catch (Exception e) {
-			// log will be disabled
-		}
+		if (logger.isInfoEnabled())
+			bandwidthLoggerEvent = new BandwidthLoggerEvent();
 	}
 		
 	private String getAvailableIP() throws UnknownHostException {
@@ -155,13 +151,13 @@ public class Network {
 				
 				p.getDestination().scheduleRead(p);
 				current_bandwidth += p.getSize();
-				if ( bandwidth_log_enabled )
+				if (logger.isInfoEnabled())
 					bandwidth_log += p.getSize();
 				
 				if ( !wakeEventEnabled ) {
 					wakeEventEnabled = true;
 					wakeEvent.schedule(RESOLUTION);
-					if ( bandwidth_log_enabled )
+					if (logger.isInfoEnabled())
 						bandwidthLoggerEvent.schedule(BandwidthLoggerEventDELTA);
 				}
 			}			
@@ -183,13 +179,13 @@ public class Network {
 					stack.handleDatagram(destination, p);
 				
 				current_bandwidth += p.getLength();
-				if ( bandwidth_log_enabled )
+				if (logger.isInfoEnabled())
 					bandwidth_log += p.getLength();
 				
 				if ( !wakeEventEnabled ) {
 					wakeEventEnabled = true;
 					wakeEvent.schedule(RESOLUTION);
-					if ( bandwidth_log_enabled )
+					if (logger.isInfoEnabled())
 						bandwidthLoggerEvent.schedule(BandwidthLoggerEventDELTA);
 				}
 			}			
@@ -246,7 +242,7 @@ public class Network {
 					p.getDestination().scheduleRead(p);
 					queue.remove(0);
 					current_bandwidth += p.getSize();
-					if ( bandwidth_log_enabled )
+					if (logger.isInfoEnabled())
 						bandwidth_log += p.getSize();
 				}
 			}
@@ -263,18 +259,15 @@ public class Network {
 	private long bandwidth_log = 0;
 	private final long BandwidthLoggerEventDELTA = 1000000000;
 	private BandwidthLoggerEvent bandwidthLoggerEvent;
-	private boolean bandwidth_log_enabled = false;
 		
 	private class BandwidthLoggerEvent extends Event {
-		private Logger logger;
 
 		public BandwidthLoggerEvent() {
 			super(timeline);
-			this.logger = new SimpleLoggerLog4j("log/network.log");
 		}
 
 		public void run() {
-			logger.debug(this.getTimeline().getTime()+" "+bandwidth_log);
+			logger.info("net usage:{}:{}", getTimeline().getTime(),bandwidth_log);
 			bandwidth_log = 0;
 			
 			// schedule next run

@@ -22,9 +22,8 @@ package pt.minha.kernel.simulation;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
 
-import pt.minha.kernel.log.Logger;
-import pt.minha.kernel.log.SimpleLoggerLog4j;
-import pt.minha.kernel.util.PropertiesLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Resource extends Event {
 	private String name;
@@ -32,29 +31,17 @@ public class Resource extends Event {
 	private LinkedList<Event> queue;
 	private Event wakeup;
 
-	private static final long GRANULARITY = 1000000000;
+	private static final long GRANULARITY = 100000000;
 	private long free_since;
 	private long ti, tu;
 	
-	private Logger logger;
-	private static boolean cpu_log_enabled = false;
-	static {
-		try {
-			PropertiesLoader conf = new PropertiesLoader(Logger.LOG_CONF_FILENAME);
-			cpu_log_enabled = Boolean.parseBoolean(conf.getProperty("resource.cpu.log"));
-		} catch (Exception e) {
-			// log will be disabled
-		}
-	}
+	private Logger logger = LoggerFactory.getLogger(Resource.class);
 	
 	public Resource(Timeline timeline, String host) throws UnknownHostException {
 		super(timeline);
 		
 		this.queue = new LinkedList<Event>();
 		this.name = host;
-		
-		if ( cpu_log_enabled )
-			this.logger = new SimpleLoggerLog4j("log/cpu-"+host+".log");
 	}
 		
 	public synchronized void run() {
@@ -62,10 +49,10 @@ public class Resource extends Event {
 		wakeup = null;
 		busy = false;
 		
-		if ( cpu_log_enabled ) {
+		if (logger.isInfoEnabled()) {
 			free_since = getTimeline().getTime();
-			if (tu + ti > GRANULARITY) {
-				this.logger.debug(name+" "+getTimeline().getTime()+" "+tu+" "+ti);
+			if (tu > 0 && tu + ti > GRANULARITY) {
+				logger.info("cpu usage @ {}:{}:{}:{}",name,getTimeline().getTime(),tu,ti);
 				tu=0;
 				ti=0;
 			}
@@ -83,7 +70,7 @@ public class Resource extends Event {
 		
 		busy = true;
 		
-		if ( cpu_log_enabled )
+		if (logger.isInfoEnabled())
 			ti += getTimeline().getTime() - free_since;
 		
 		Event event = queue.removeFirst();
@@ -99,7 +86,7 @@ public class Resource extends Event {
 	}
 
 	public synchronized void release(long delta, Event wakeup) {
-		if ( cpu_log_enabled )
+		if (logger.isInfoEnabled())
 			tu += delta;
 		
 		this.wakeup = wakeup;
