@@ -38,6 +38,7 @@ public class HostImpl implements HostInterface {
 	// CPU
 	private Resource cpu;
 	private Set<SimulationThread> threads = new HashSet<SimulationThread>();
+	private long threadId = -2; // -1 is "main" thread, 0 is the first user thread
 	
 	// Networking
 	private NetworkStack network;
@@ -57,6 +58,11 @@ public class HostImpl implements HostInterface {
 	
 	public NetworkStack getNetwork() {
 		return network;
+	}
+
+	public long getNextThreadId() {
+		threadId++;
+		return threadId;
 	}
 	
 	/* The following methods are supposed to be called outside simulation events,

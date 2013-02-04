@@ -46,24 +46,30 @@ public class Thread extends Object implements Runnable {
 		this(null, runnable, name);
 	}
 
+	public Thread(ThreadGroup group, Runnable runnable, String name, long stackSize) {
+		this(group, runnable, name);
+	}
+
 	public Thread(ThreadGroup group, Runnable runnable, String name) {
 		checkSimulation(true);
-		if (name!=null)
-			this.setName(name);
+		
 		if (group==null)
 			this.group = Thread.currentThread().getThreadGroup();
 		if (runnable==null)
 			runnable = this;
-		this.simulationThread = new SimulationThread(true, null, runnable, this);		
-	}
-	
-	public Thread(ThreadGroup group, Runnable runnable, String name, long stackSize) {
-		this(group, runnable, name);
+		
+		this.simulationThread = new SimulationThread(true, null, runnable, this);
+		
+		if (name!=null)
+			this.setName(name);
+		else
+			this.setName("Thread-"+simulationThread.fake_getId());
 	}
 	
 	public Thread(HostImpl host, Runnable runnable) {
 		checkSimulation(false);
 		this.simulationThread = new SimulationThread(true, host, runnable, this);
+		this.setName("main");
 	}
 
 	public final static int MIN_PRIORITY = java.lang.Thread.MIN_PRIORITY;
@@ -118,7 +124,7 @@ public class Thread extends Object implements Runnable {
     }
     
     public long getId() {
-    	return SimulationThread.currentThread().getId();
+    	return SimulationThread.currentSimulationThread().fake_getId();
     }
     
     public java.lang.Thread.State getState() {
@@ -127,6 +133,7 @@ public class Thread extends Object implements Runnable {
     
     public final void setName(String name) {
     	this.name = name;
+		simulationThread.setName(name+"@"+simulationThread.getHost().getNetwork().getLocalAddress().getHostAddress());
     }
     
     public final String getName() {
@@ -151,7 +158,7 @@ public class Thread extends Object implements Runnable {
     }
     
     public String toString() {
-    	return name+"-"+simulationThread.toString();
+    	return "Thread["+name+"]";
     }
     
     public void run() {}

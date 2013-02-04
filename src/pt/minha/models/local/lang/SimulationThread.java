@@ -32,6 +32,7 @@ public class SimulationThread extends Thread {
 	private static IntervalTimer timer = TimerProvider.open();
 	
 	private pt.minha.models.fake.java.lang.Thread fakeThread;
+	private long id;
 	private HostImpl host;
 	private long time = -1;
 	private boolean blocked, rt, dead, started;
@@ -58,6 +59,7 @@ public class SimulationThread extends Thread {
 		this.host = host;
 		this.runnable = runnable;
 		this.fakeThread = fakeThread;
+		this.id=host.getNextThreadId();
 		
 		this.wakeup = new WakeUpEvent();
 		this.lock = new ReentrantLock();
@@ -249,14 +251,18 @@ public class SimulationThread extends Thread {
 		}
 	}
 	
-	public String toString() {
-		return "Simulation"+super.toString()+"@"+host.getNetwork().getLocalAddress();
-	}
-
 	public boolean fake_isAlive() {
 		return started && !dead;
 	}
+
+	public long fake_getId() {
+		return id;
+	}
 	
+	public String toString() {
+		return "SimulationThread@"+host.getNetwork().getLocalAddress().getHostAddress()+"["+fakeThread.getName()+"]";
+	}
+
 	/*
 	 public void m() {
 	 	realCode();
