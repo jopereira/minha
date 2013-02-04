@@ -34,14 +34,15 @@ public interface Trampoline {
 	void invoke(long time, Method method, Object[] args);
 
 	public static class Impl implements Trampoline, Runnable {		
-		private Object impl;
+		private String implName;
 		private pt.minha.models.fake.java.lang.Thread thread;
 		private List<Invocation> queue = new ArrayList<Trampoline.Impl.Invocation>();
 		private Event wakeup;
 		private HostImpl host;
+		private Exception exception;
 		
-		public Impl(HostInterface host, String impl) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-			this.impl = Class.forName(impl).newInstance();
+		public Impl(HostInterface host, String implName) {
+			this.implName = implName;
 			this.host = (HostImpl) host;
 			this.thread = new pt.minha.models.fake.java.lang.Thread((HostImpl)host, this);
 			thread.simulationStart(0);
@@ -49,6 +50,8 @@ public interface Trampoline {
 		
 		@Override
 		public void invoke(long time, Method method, Object[] args) {
+			if (exception!=null)
+				throw new RuntimeException("simulation exception found", exception);
 			new Invocation(host.getTimeline(), method, args).schedule(time);
 		}
 	
@@ -73,23 +76,23 @@ public interface Trampoline {
 		}
 		
 		public void run() {
-			SimulationThread.stopTime(0);
-			while(true) {
-				if (queue.isEmpty()) {
-					wakeup = SimulationThread.currentSimulationThread().getWakeup();
-					SimulationThread.currentSimulationThread().pause();
-				}
-				
-				Invocation i = queue.remove(0);
-				
-				try {
+			try {
+				SimulationThread.stopTime(0);
+				Object impl = Class.forName(implName).newInstance();
+				while(true) {
+					if (queue.isEmpty()) {
+						wakeup = SimulationThread.currentSimulationThread().getWakeup();
+						SimulationThread.currentSimulationThread().pause();
+					}
+					
+					Invocation i = queue.remove(0);
+					
 					SimulationThread.startTime(0);
 					i.method.invoke(impl, i.args);
 					SimulationThread.stopTime(0);
-				} catch (Exception e) {
-					// FIXME: should stop simulation?
-					e.printStackTrace();
-				}			
+				}
+			} catch (Exception e) {
+				this.exception = e;
 			}
 		}
 	}
