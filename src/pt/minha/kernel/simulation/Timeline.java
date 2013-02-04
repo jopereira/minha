@@ -36,7 +36,7 @@ public class Timeline implements Runnable {
 
 	public Timeline(long simulationTime) {
 		this.simulationTime = simulationTime*1000000000;
-		usage = new Usage(this, 1000000000, "simulation", 1, "events/s"); 
+		usage = new Usage(this, 1000000000, "simulation", 1, "events/s", 1); 
 	}
 	
 	public void schedule(Event e) {

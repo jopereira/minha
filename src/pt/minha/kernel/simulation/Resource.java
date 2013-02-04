@@ -35,7 +35,7 @@ public class Resource extends Event {
 		
 		this.queue = new LinkedList<Event>();
 		
-		usage = new Usage(timeline, 1000000000, "cpu."+host, 1e-7, "%"); 
+		usage = new Usage(timeline, 1000000000, "cpu."+host, 1e-7, "%", 0); 
 	}
 		
 	public synchronized void run() {

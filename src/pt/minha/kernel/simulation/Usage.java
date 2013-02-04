@@ -28,25 +28,29 @@ public class Usage extends Event {
 	private Logger logger;
 	private String units;
 	private double factor;
+	private int threshold;
 
 	/**
 	 * @param timeline reference timeline, used to schdule periodic logging
 	 * @param interval logging interval
 	 * @param id resource identifier
 	 * @param factor multiplicative factor 
+	 * @param threshold minimum events that cause reporting
 	 */
-	public Usage(Timeline timeline, long interval, String id, double factor, String units) {
+	public Usage(Timeline timeline, long interval, String id, double factor, String units, int threshold) {
 		super(timeline);
 		this.interval = interval;
 		this.base = -1;
 		this.logger = LoggerFactory.getLogger("pt.minha.Usage."+id);
 		this.factor = factor;
 		this.units = units;
+		this.threshold = threshold;
 	}
 
 	public void run() {
-		if (acum == 0) {
+		if (acum <= threshold) {
 			base = -1;
+			acum = 0;
 			return;
 		}
 		
@@ -62,10 +66,10 @@ public class Usage extends Event {
 	}
 	
 	public void using(long used) {
-		if (base<0) {
+		acum += used;
+		if (base<0 && acum > threshold) {
 			schedule(interval);
 			base = getTimeline().getTime();
 		}
-		acum += used;
 	}
 }

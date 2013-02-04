@@ -61,7 +61,7 @@ public class Network {
 	public Network(Timeline timeline, NetworkConfig config) {
 		this.timeline = timeline;
 		this.wakeEvent = new WakeEvent();
-		usage = new Usage(timeline, 1000000000, "network", 1, "bytes/s");
+		usage = new Usage(timeline, 1000000000, "network", 1, "bytes/s", 0);
 		this.config = config;
 		
 		BANDWIDTH = config.networkBandwidth/8; // bytes
