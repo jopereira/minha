@@ -334,9 +334,9 @@ public class ClientTCPSocket extends AbstractSocket {
 	private static Logger logger = LoggerFactory.getLogger("pt.minha.TCP");
 
 	public void readAt(long l) {
-		logger.info("[ {} s ] {}:{}-{}:{} recv to {} bytes", Timeline.toSeconds(l), getLocalAddress().getAddress().getHostAddress(), getLocalAddress().getPort(), getRemoteAddress().getAddress().getHostAddress(), getRemoteAddress().getPort(), seqIn+in.getUsed());		
+		logger.info("[ {} s ] {}:{}-{}:{} recv to {} bytes", Timeline.toSeconds(l), getLocalAddress().getAddress().getHostAddress(), getLocalAddress().getPort(), getRemoteAddress().getAddress().getHostAddress(), getRemoteAddress().getPort(), seqIn-in.getUsed());		
 	}
 	public void writeAt(long l) {
-		logger.info("[ {} s ] {}:{}-{}:{} sent to {} bytes", Timeline.toSeconds(l), getLocalAddress().getAddress().getHostAddress(), getLocalAddress().getPort(), getRemoteAddress().getAddress().getHostAddress(), getRemoteAddress().getPort(), seqIn+in.getUsed());
+		logger.info("[ {} s ] {}:{}-{}:{} sent to {} bytes", Timeline.toSeconds(l), getLocalAddress().getAddress().getHostAddress(), getLocalAddress().getPort(), getRemoteAddress().getAddress().getHostAddress(), getRemoteAddress().getPort(), seqOut+out.getUsed());
 	}
 }

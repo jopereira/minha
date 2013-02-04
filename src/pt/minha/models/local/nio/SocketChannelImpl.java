@@ -107,7 +107,8 @@ public class SocketChannelImpl extends SocketChannel {
 			throw new SocketException("socket closed");
 
 		long cost = 0;
-		
+		int res = 0;
+
 		long time = SimulationThread.stopTime(0);
 		try {
 
@@ -116,7 +117,7 @@ public class SocketChannelImpl extends SocketChannel {
 				SimulationThread.currentSimulationThread().pause();
 			}
 			
-			int res = tcp.read(b.array(), b.position(), b.remaining());
+			res = tcp.read(b.array(), b.position(), b.remaining());
 			
 			b.position(b.position()+res);
 
@@ -124,7 +125,7 @@ public class SocketChannelImpl extends SocketChannel {
 			
 			return res;
 		} finally {
-			tcp.readAt(time+cost);
+			if (res>0) tcp.readAt(time+cost);
 			SimulationThread.startTime(cost);					
 		}
 	}
@@ -135,10 +136,11 @@ public class SocketChannelImpl extends SocketChannel {
 			throw new SocketException("socket closed");
 
 		long cost = 0;
+		int total = 0;
 		
 		long time = SimulationThread.stopTime(0);
 		try {
-			int total = 0, res = 0;
+			int res = 0;
 			
 			while(b.hasRemaining()) {
 				while (isBlocking() && !tcp.writers.isReady()) {
@@ -163,7 +165,7 @@ public class SocketChannelImpl extends SocketChannel {
 				
 			return total;
 		} finally {
-			tcp.writeAt(time);
+			if (total>0) tcp.writeAt(time);
 			SimulationThread.startTime(cost);					
 		}
 	}
@@ -179,11 +181,12 @@ public class SocketChannelImpl extends SocketChannel {
 			throw new SocketException("socket closed");
 
 		long cost = 0;
+		int total = 0;
 			
 		long time = SimulationThread.stopTime(0);
 		try {
 
-			int total = 0, res = 0;
+			int res = 0;
 			
 			for(int i=0;i<len;) {
 				while (isBlocking() && !tcp.writers.isReady()) {
@@ -210,7 +213,7 @@ public class SocketChannelImpl extends SocketChannel {
 				
 			return total;
 		} finally {
-			tcp.writeAt(time);
+			if (total>0) tcp.writeAt(time);
 			SimulationThread.startTime(cost);					
 		}
 	}
