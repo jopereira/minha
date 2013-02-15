@@ -1,54 +1,68 @@
 <project xmlns:ivy="antlib:org.apache.ivy.ant" name="minha" default="build" basedir=".">
 	<!-- set global properties for this build -->
-	<property name="src"		value="src*"/>
-	<property name="lib" 	 	value="lib"/>
-	<property name="csrc"		value="csrc"/>
-	<property name="build-root"	value="build"/>
-	<property name="build"		value="${build-root}/classes"/>
-	<property name="jars"		value="${build-root}/lib"/>
-	<property name="compile-debug"	value="on"/>
-	<property name="compile-target"	value="1.6"/>
+	<property name="src" value="src"/>
+	<property name="lib" value="lib"/>
+	<property name="csrc" value="csrc"/>
+	<property name="build"	value="build"/>
+	<property name="build-classes" value="${build}/classes"/>
+	<property name="build-lib" value="${build}/lib"/>
+	<property name="build-api" value="${build}/api"/>
+	<property name="compile-debug" value="on"/>
+	<property name="compile-target" value="1.6"/>
+
+	<path id="project.classpath">
+    	<fileset dir="${lib}">
+    		<include name="*"/>
+    	</fileset>
+    </path>
 
 	<target name="build" depends="package,native" description="build everything"/>
 
-	<target name="resolve" description="fetch dependencies with Ivy">
+	<target name="init" description="fetch dependencies with Ivy">
 		<ivy:retrieve />
+		<mkdir dir="${build}"/>
+		<mkdir dir="${build-classes}"/>
+		<mkdir dir="${build-lib}"/>
+		<mkdir dir="${build-api}"/>
 	</target>
 
-	<target name="compile" description="compile Java source files">
-		<mkdir dir="${build}"/>
-		<javac destdir="${build}" debug="${compile-debug}" source="${compile-target}" target="${compile-target}" includeantruntime="false">
-			<src>
-				<dirset dir=".">
-					<include name="${src}"/>
-				</dirset>
-			</src>
-			<classpath>
-				<fileset dir="${lib}">
-					<include name="*.jar"/>
-				</fileset>
-			</classpath>
+	<target name="install" depends="init,package" description="install artifacts in local Ivy repo">
+		<ivy:publish resolver="local" overwrite="true">
+			<artifacts pattern="build/lib/[artifact](-[classifier]).[ext]"/>
+		</ivy:publish>
+	</target>
+
+	<target name="compile" depends="init" description="compile Java source files">
+		<javac destdir="${build-classes}" debug="${compile-debug}" source="${compile-target}" target="${compile-target}" includeantruntime="false">
+			<src path="${src}"/>
+			<classpath refid="project.classpath"/>
 		</javac>
 	</target>
 
-	<target name="package" depends="compile" description="package into jar file">
-		<jar destfile="${jars}/minha.jar" basedir="${build}" includes="**/*.class"/>
+    <target name="doc" depends="init">
+        <javadoc sourcepath="${src}" destdir="${build-api}" packagenames="pt.minha.api.*" classpathref="project.classpath"/>
+    </target>
+
+	<target name="package" depends="compile,doc" description="package into jar file">
+		<jar destfile="${build-lib}/minha.jar" basedir="${build-classes}" includes="**/*.class"/>
+        <jar destfile="${build-lib}/minha-javadoc.jar" basedir="${build-api}"/>
+        <jar destfile="${build-lib}/minha-sources.jar" basedir="${src}"/>
 	</target>
 
 	<target name="native" depends="compile" description="build native timer">
-		<mkdir dir="${build-root}/${csrc}"/>
-		<copy todir="${build-root}/${csrc}">
+		<mkdir dir="${build}/${csrc}"/>
+		<copy todir="${build}/${csrc}">
 			<fileset dir="${csrc}">
 				<include name="*"/>
 			</fileset>
 		</copy>
 		<exec executable="make">
 			<arg value="-C"/>
-			<arg value="${build-root}/${csrc}"/>
+			<arg value="${build}/${csrc}"/>
 		</exec>
 	</target>
 
 	<target name="clean" description="clean up" >
-		<delete dir="${build-root}"/>
+		<delete dir="${build}"/>
 	</target>
 </project>
