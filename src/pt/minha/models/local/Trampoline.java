@@ -19,6 +19,7 @@
 
 package pt.minha.models.local;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,6 @@ public interface Trampoline {
 		private List<Invocation> queue = new ArrayList<Trampoline.Impl.Invocation>();
 		private Event wakeup;
 		private HostImpl host;
-		private Exception exception;
 		
 		public Impl(HostInterface host, String implName) {
 			this.implName = implName;
@@ -50,8 +50,6 @@ public interface Trampoline {
 		
 		@Override
 		public void invoke(long time, Method method, Object[] args) {
-			if (exception!=null)
-				throw new RuntimeException("simulation exception found", exception);
 			new Invocation(host.getTimeline(), method, args).schedule(time);
 		}
 	
@@ -91,8 +89,10 @@ public interface Trampoline {
 					i.method.invoke(impl, i.args);
 					SimulationThread.stopTime(0);
 				}
+			} catch (InvocationTargetException ite) {
+				throw new RuntimeException("simulation exception found in target invocation", ite.getTargetException());
 			} catch (Exception e) {
-				this.exception = e;
+				throw new RuntimeException("exception entering simulation", e);
 			}
 		}
 	}
