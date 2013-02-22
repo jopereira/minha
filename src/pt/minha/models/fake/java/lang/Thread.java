@@ -100,7 +100,7 @@ public class Thread extends Object implements Runnable {
     }
     
     public void interrupt() {
-    	this.simulationThread.interrupt();
+    	this.simulationThread.fake_interrupt();
     }
     
     public void join() throws InterruptedException {

@@ -26,6 +26,7 @@ import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.kernel.timer.IntervalTimer;
 import pt.minha.kernel.timer.TimerProvider;
+import pt.minha.models.global.Debug;
 import pt.minha.models.local.HostImpl;
 
 public class SimulationThread extends Thread {
@@ -91,9 +92,12 @@ public class SimulationThread extends Thread {
 		getWakeup().schedule(delay);
 	}
 	
-	@Override
-	public void interrupt() {
-		// FIXME: Use wakeup
+	public void fake_interrupt() {	
+		Debug.println("-8<---------- Trying to interrupt thread at: -------------");
+		StackTraceElement[] stack = getStackTrace();
+		for(StackTraceElement ste: stack)
+			Debug.println(ste.toString());
+		Debug.println("-8<-----------------------------------------..............");
 		throw new RuntimeException();
 	}
 
