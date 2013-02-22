@@ -87,8 +87,37 @@ public class ReentrantLock implements Lock {
 
 	@Override
 	public void lockInterruptibly() throws InterruptedException {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("Not supported method");
+		if (busy!=0) {
+			SimulationThread current = SimulationThread.currentSimulationThread(); 
+
+			if (holder == current) {
+				busy++;
+				return;
+			}
+			
+			try {
+				SimulationThread.stopTime(0);
+			
+				boolean interrupted = current.fake_isInterrupted();
+				while(!interrupted && holder!=null) {
+					waitingOnLock.add(current.getWakeup());
+					interrupted = current.pauseInterruptibly();
+				}
+				if (interrupted) {
+					waitingOnLock.remove(current.getWakeup());
+					throw new InterruptedException();
+				}
+				
+				holder=current;
+				busy++;
+	
+			} finally {
+				SimulationThread.startTime(0);
+			}
+		} else {
+			holder=SimulationThread.currentSimulationThread();
+			busy++;			
+		}
 	}
 
 	@Override
@@ -197,8 +226,52 @@ public class ReentrantLock implements Lock {
 		
 		@Override
 		public long awaitNanos(long nanosTimeout) throws InterruptedException {
-			// FIXME: this should be interruptible
-			return awaitNanosUnint(nanosTimeout);
+			long before=0, after=0;
+			
+			try {
+				SimulationThread.stopTime(0);
+				
+				SimulationThread current = SimulationThread.currentSimulationThread(); 
+				int storedBusy = busy;
+	
+				before = current.getTimeline().getTime();
+				
+				if (current.fake_isInterrupted())
+					throw new InterruptedException();
+				
+				// unlock
+				holder=null;
+				busy=0;
+				if (!waitingOnLock.isEmpty())
+					waitingOnLock.remove(0).schedule(0);
+	
+				// sleep
+				waitingOnCond.add(current.getWakeup());
+				if (nanosTimeout>0) current.getWakeup().schedule(nanosTimeout);
+				current.pauseInterruptibly();
+				
+				// cleanup
+				waitingOnCond.remove(current.getWakeup());
+	
+				//  lock
+				while(holder!=null) {
+					waitingOnLock.add(current.getWakeup());
+					current.pause();
+				}
+				
+				// wakeup
+				holder=current;
+				busy=storedBusy;
+	
+				after = current.getTimeline().getTime();
+				
+				if (current.fake_isInterrupted())
+					throw new InterruptedException();
+				
+			} finally {
+				SimulationThread.startTime(0);
+			}			
+			return nanosTimeout-(after-before);
 		}
 
 		@Override

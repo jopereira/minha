@@ -102,6 +102,14 @@ public class Thread extends Object implements Runnable {
     public void interrupt() {
     	this.simulationThread.fake_interrupt();
     }
+
+    public boolean isInterrupted() {
+    	return this.simulationThread.fake_isInterrupted();    	
+    }
+    
+    public static boolean interrupted() {
+		return SimulationThread.currentSimulationThread().fake_isInterrupted();    	
+    }
     
     public void join() throws InterruptedException {
     	this.simulationThread.fake_join();
@@ -151,12 +159,7 @@ public class Thread extends Object implements Runnable {
     public final boolean isAlive() {
     	return this.simulationThread.fake_isAlive();
     }
-    
-    public static final boolean interrupted() {
-    	// FIXME Implement thread interruption
-    	return false;
-    }
-    
+        
     public String toString() {
     	return "Thread["+name+"]";
     }

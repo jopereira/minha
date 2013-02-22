@@ -26,7 +26,6 @@ import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.kernel.timer.IntervalTimer;
 import pt.minha.kernel.timer.TimerProvider;
-import pt.minha.models.global.Debug;
 import pt.minha.models.local.HostImpl;
 
 public class SimulationThread extends Thread {
@@ -36,7 +35,7 @@ public class SimulationThread extends Thread {
 	private long id;
 	private HostImpl host;
 	private long time = -1;
-	private boolean blocked, rt, dead, started;
+	private boolean blocked, rt, dead, started, interruptible, interrupted;
 	
 	private WakeUpEvent wakeup;
 	private Condition wakeupCond;
@@ -92,15 +91,6 @@ public class SimulationThread extends Thread {
 		getWakeup().schedule(delay);
 	}
 	
-	public void fake_interrupt() {	
-		Debug.println("-8<---------- Trying to interrupt thread at: -------------");
-		StackTraceElement[] stack = getStackTrace();
-		for(StackTraceElement ste: stack)
-			Debug.println(ste.toString());
-		Debug.println("-8<-----------------------------------------..............");
-		throw new RuntimeException();
-	}
-
 	public static SimulationThread currentSimulationThread() {
 		return (SimulationThread)Thread.currentThread();
 	}
@@ -149,11 +139,14 @@ public class SimulationThread extends Thread {
 		}
 	}
 	
-	public void fake_join() {
-		joinLock.lock();
-		while(!joinDead)
-			joinCond.awaitUninterruptibly();
-		joinLock.unlock();
+	public void fake_join() throws InterruptedException {
+		try {
+			joinLock.lock();
+			while(!joinDead)
+				joinCond.await();
+		} finally {
+			joinLock.unlock();
+		}
 	}
 	
 	/**
@@ -167,6 +160,7 @@ public class SimulationThread extends Thread {
 			throw new RuntimeException("Dead thread waking up. They live!");
 		
 		blocked = false;
+		interruptible = false;
 		wakeupCond.signal();
 		
 		while(!blocked)
@@ -174,8 +168,8 @@ public class SimulationThread extends Thread {
 		
 		lock.unlock();
 	}
-	
-	public void pause() {
+
+	private void timePause() {
 		lock.lock();
 		
 		blocked = true;
@@ -185,6 +179,48 @@ public class SimulationThread extends Thread {
 			wakeupCond.awaitUninterruptibly();
 		
 		lock.unlock();
+	}
+
+	public void pause() {
+		if (interrupted)
+			throw new RuntimeException("sleeping uninterruptibly on interrupted thread");
+		
+		lock.lock();
+		
+		blocked = true;
+		wakeupCond.signal();
+
+		while(blocked)
+			wakeupCond.awaitUninterruptibly();
+		
+		lock.unlock();
+	}
+	
+	public void fake_interrupt() {
+		interrupted = true;
+		lock.lock();
+		if (interruptible)
+			wakeup();
+		lock.unlock();
+	}
+
+	public boolean fake_isInterrupted() {
+		return interrupted;
+	}
+
+	public boolean pauseInterruptibly() {
+		lock.lock();
+		
+		blocked = true;
+		interruptible = true;
+		wakeupCond.signal();
+
+		while(blocked)
+			wakeupCond.awaitUninterruptibly();
+
+		lock.unlock();
+		
+		return interrupted;
 	}
 	
 	public Event getWakeup() {		
@@ -205,7 +241,7 @@ public class SimulationThread extends Thread {
 			throw new RuntimeException("restarting time");
 		
 		host.getCPU().acquire(getWakeup());
-		pause();
+		timePause();
 		
 		time = timer.getTime() - overhead;
 	}
@@ -228,7 +264,7 @@ public class SimulationThread extends Thread {
 		time = -1;
 		
 		host.getCPU().release(delta+overhead, getWakeup());
-		pause();
+		timePause();
 		
 		return getTimeline().getTime();
 	}
