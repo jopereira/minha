@@ -44,7 +44,10 @@
     </target>
 
 	<target name="package" depends="compile,doc" description="package into jar file">
-		<jar destfile="${build-lib}/minha.jar" basedir="${build-classes}" includes="**/*.class"/>
+		<jar destfile="${build-lib}/minha.jar">
+			<fileset dir="${build-classes}"/>
+			<fileset dir="${src}" includes="**.properties"/>
+		</jar>
         <jar destfile="${build-lib}/minha-javadoc.jar" basedir="${build-api}"/>
         <jar destfile="${build-lib}/minha-sources.jar" basedir="${src}"/>
 	</target>
