@@ -26,6 +26,7 @@ import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.kernel.timer.IntervalTimer;
 import pt.minha.kernel.timer.TimerProvider;
+import pt.minha.models.global.Debug;
 import pt.minha.models.local.HostImpl;
 
 public class SimulationThread extends Thread {
@@ -36,6 +37,7 @@ public class SimulationThread extends Thread {
 	private HostImpl host;
 	private long time = -1;
 	private boolean blocked, rt, dead, started, interruptible, interrupted;
+	private boolean uninterruptible;
 	
 	private WakeUpEvent wakeup;
 	private Condition wakeupCond;
@@ -161,6 +163,7 @@ public class SimulationThread extends Thread {
 		
 		blocked = false;
 		interruptible = false;
+		uninterruptible = false;
 		wakeupCond.signal();
 		
 		while(!blocked)
@@ -188,6 +191,7 @@ public class SimulationThread extends Thread {
 		lock.lock();
 		
 		blocked = true;
+		uninterruptible = true;
 		wakeupCond.signal();
 
 		while(blocked)
@@ -198,10 +202,21 @@ public class SimulationThread extends Thread {
 	
 	public void fake_interrupt() {
 		interrupted = true;
-		lock.lock();
-		if (interruptible)
-			wakeup();
-		lock.unlock();
+		try {
+			lock.lock();
+			if (interruptible)
+				wakeup();
+			if (uninterruptible) {
+				Debug.println("-8<---------- Trying to interrupt thread at: -------------");
+				StackTraceElement[] stack = getStackTrace();
+				for (StackTraceElement ste : stack)
+					Debug.println(ste.toString());
+				Debug.println("-8<-----------------------------------------..............");
+				throw new RuntimeException();
+			}
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	public boolean fake_isInterrupted() {
