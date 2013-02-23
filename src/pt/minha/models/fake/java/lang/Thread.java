@@ -85,9 +85,13 @@ public class Thread extends Object implements Runnable {
 	}
 
 	public static void sleep(long millis, int nanos) throws InterruptedException {
-		SimulationThread.stopTime(0);
-		SimulationThread.currentSimulationThread().idle(millis*1000000+nanos);
-		SimulationThread.startTime(0);
+		try {
+			SimulationThread.stopTime(0);
+			if (SimulationThread.currentSimulationThread().idle(millis*1000000+nanos, true, true))
+				throw new InterruptedException();
+		} finally {
+			SimulationThread.startTime(0);
+		}
     }
     
     protected Object clone() throws CloneNotSupportedException {

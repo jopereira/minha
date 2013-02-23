@@ -226,11 +226,11 @@ public class SimulationThread extends Thread {
 		return r;
 	}
 
-	public boolean pauseInterruptibly(boolean clear) {
+	public boolean pauseInterruptibly(boolean interruptible, boolean clear) {
 		lock.lock();
 		
 		blocked = true;
-		interruptible = true;
+		this.interruptible = interruptible;
 		wakeupCond.signal();
 
 		while(blocked)
@@ -287,12 +287,12 @@ public class SimulationThread extends Thread {
 		return getTimeline().getTime();
 	}
 	
-	public void idle(long delta) {
+	public boolean idle(long delta, boolean interruptible, boolean clear) {
 		if (time>=0)
 			throw new RuntimeException("time not stopped");
 		
 		getWakeup().schedule(delta);
-		pause();
+		return pauseInterruptibly(interruptible, clear);
 	}
 	
 	private class WakeUpEvent extends Event {

@@ -101,7 +101,7 @@ public class ReentrantLock implements Lock {
 				boolean interrupted = current.getInterruptedStatus(true);
 				while(!interrupted && holder!=null) {
 					waitingOnLock.add(current.getWakeup());
-					interrupted = current.pauseInterruptibly(true);
+					interrupted = current.pauseInterruptibly(true,true);
 				}
 				if (interrupted) {
 					waitingOnLock.remove(current.getWakeup());
@@ -248,7 +248,7 @@ public class ReentrantLock implements Lock {
 				// sleep
 				waitingOnCond.add(current.getWakeup());
 				if (nanosTimeout>0) current.getWakeup().schedule(nanosTimeout);
-				current.pauseInterruptibly(false);
+				current.pauseInterruptibly(true,false);
 				
 				// cleanup
 				waitingOnCond.remove(current.getWakeup());
