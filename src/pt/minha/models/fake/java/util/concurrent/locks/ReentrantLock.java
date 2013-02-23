@@ -265,8 +265,15 @@ public class ReentrantLock implements Lock {
 	
 				after = current.getTimeline().getTime();
 				
-				if (current.getInterruptedStatus(true))
+				if (current.getInterruptedStatus(true)) {
+					/* Make sure signal is not lost, if done concurrently 
+					 * with the interrupt. This may result in a spurious
+					 * wakeup, but that is ok too.
+					 */
+					if (!waitingOnCond.isEmpty())
+						waitingOnCond.remove(0).schedule(0);
 					throw new InterruptedException();
+				}
 				
 			} finally {
 				SimulationThread.startTime(0);
