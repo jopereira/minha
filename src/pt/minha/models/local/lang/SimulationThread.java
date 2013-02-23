@@ -219,11 +219,14 @@ public class SimulationThread extends Thread {
 		}
 	}
 
-	public boolean fake_isInterrupted() {
-		return interrupted;
+	public boolean getInterruptedStatus(boolean clear) {
+		boolean r = interrupted;
+		if (clear)
+			interrupted = false;
+		return r;
 	}
 
-	public boolean pauseInterruptibly() {
+	public boolean pauseInterruptibly(boolean clear) {
 		lock.lock();
 		
 		blocked = true;
@@ -235,7 +238,7 @@ public class SimulationThread extends Thread {
 
 		lock.unlock();
 		
-		return interrupted;
+		return getInterruptedStatus(clear);
 	}
 	
 	public Event getWakeup() {		

@@ -98,10 +98,10 @@ public class ReentrantLock implements Lock {
 			try {
 				SimulationThread.stopTime(0);
 			
-				boolean interrupted = current.fake_isInterrupted();
+				boolean interrupted = current.getInterruptedStatus(true);
 				while(!interrupted && holder!=null) {
 					waitingOnLock.add(current.getWakeup());
-					interrupted = current.pauseInterruptibly();
+					interrupted = current.pauseInterruptibly(true);
 				}
 				if (interrupted) {
 					waitingOnLock.remove(current.getWakeup());
@@ -236,7 +236,7 @@ public class ReentrantLock implements Lock {
 	
 				before = current.getTimeline().getTime();
 				
-				if (current.fake_isInterrupted())
+				if (current.getInterruptedStatus(true))
 					throw new InterruptedException();
 				
 				// unlock
@@ -248,7 +248,7 @@ public class ReentrantLock implements Lock {
 				// sleep
 				waitingOnCond.add(current.getWakeup());
 				if (nanosTimeout>0) current.getWakeup().schedule(nanosTimeout);
-				current.pauseInterruptibly();
+				current.pauseInterruptibly(false);
 				
 				// cleanup
 				waitingOnCond.remove(current.getWakeup());
@@ -265,7 +265,7 @@ public class ReentrantLock implements Lock {
 	
 				after = current.getTimeline().getTime();
 				
-				if (current.fake_isInterrupted())
+				if (current.getInterruptedStatus(true))
 					throw new InterruptedException();
 				
 			} finally {

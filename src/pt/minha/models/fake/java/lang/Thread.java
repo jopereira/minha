@@ -104,11 +104,11 @@ public class Thread extends Object implements Runnable {
     }
 
     public boolean isInterrupted() {
-    	return this.simulationThread.fake_isInterrupted();    	
+    	return this.simulationThread.getInterruptedStatus(false);    	
     }
     
     public static boolean interrupted() {
-		return SimulationThread.currentSimulationThread().fake_isInterrupted();    	
+		return SimulationThread.currentSimulationThread().getInterruptedStatus(true);    	
     }
     
     public void join() throws InterruptedException {
