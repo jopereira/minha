@@ -24,6 +24,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.NoConnectionPendingException;
 import java.nio.channels.SelectionKey;
 
@@ -76,10 +77,18 @@ public class SocketChannelImpl extends SocketChannel {
 			
 			if (!isBlocking())
 				return false;
+
+			SimulationThread current = SimulationThread.currentSimulationThread();
+			boolean interrupted = current.getInterruptedStatus(false);
+
+			if (!tcp.connectors.isReady() && !interrupted) {
+				tcp.connectors.queue(current.getWakeup());
+				interrupted = current.pauseInterruptibly(true, false);
+			}
 			
-			if (!tcp.connectors.isReady()) {
-				tcp.connectors.queue(SimulationThread.currentSimulationThread().getWakeup());
-				SimulationThread.currentSimulationThread().pause();
+			if (interrupted) {
+				close();
+				throw new ClosedByInterruptException();
 			}
 			
 			if (!tcp.connectors.isReady())
@@ -111,10 +120,17 @@ public class SocketChannelImpl extends SocketChannel {
 
 		long time = SimulationThread.stopTime(0);
 		try {
+			SimulationThread current = SimulationThread.currentSimulationThread();
+			boolean interrupted = current.getInterruptedStatus(false) && isBlocking();
 
-			while (isBlocking() && !tcp.readers.isReady()) {
-				tcp.readers.queue(SimulationThread.currentSimulationThread().getWakeup());
-				SimulationThread.currentSimulationThread().pause();
+			while (isBlocking() && !tcp.readers.isReady() && !interrupted) {
+				tcp.readers.queue(current.getWakeup());
+				interrupted = current.pauseInterruptibly(true, false);
+			}
+			
+			if (interrupted) {
+				close();
+				throw new ClosedByInterruptException();
 			}
 			
 			res = tcp.read(b.array(), b.position(), b.remaining());
@@ -141,28 +157,37 @@ public class SocketChannelImpl extends SocketChannel {
 		long time = SimulationThread.stopTime(0);
 		try {
 			int res = 0;
-			
-			while(b.hasRemaining()) {
-				while (isBlocking() && !tcp.writers.isReady()) {
+
+			SimulationThread current = SimulationThread.currentSimulationThread();
+			boolean interrupted = current.getInterruptedStatus(false) && isBlocking();
+
+			while(b.hasRemaining() && !interrupted) {
+				while (isBlocking() && !tcp.writers.isReady() && !interrupted) {
 					if (res > 0) {
 						total += res;
 						res = 0;
 						cost = tcp.getNetwork().getConfig().writeCost*total;
 						tcp.uncork();
 					}
-					tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
-					SimulationThread.currentSimulationThread().pause();
+					tcp.writers.queue(current.getWakeup());
+					interrupted = current.pauseInterruptibly(true, false);
 				}
-
+				
 				res += tcp.write(b);
 				if (!isBlocking())
 					break;
 			}
+
 			total += res;			
 			tcp.uncork();
 		
 			cost = tcp.getNetwork().getConfig().writeCost*total;
-				
+
+			if (interrupted) {
+				close();
+				throw new ClosedByInterruptException();
+			}
+
 			return total;
 		} finally {
 			if (total>0) tcp.writeAt(time);
@@ -185,19 +210,21 @@ public class SocketChannelImpl extends SocketChannel {
 			
 		long time = SimulationThread.stopTime(0);
 		try {
+			SimulationThread current = SimulationThread.currentSimulationThread();
+			boolean interrupted = current.getInterruptedStatus(false) && isBlocking();
 
 			int res = 0;
 			
-			for(int i=0;i<len;) {
-				while (isBlocking() && !tcp.writers.isReady()) {
+			for(int i=0;i<len && !interrupted;) {
+				while (isBlocking() && !tcp.writers.isReady() && !interrupted) {
 					if (res > 0) {
 						total += res;
 						res = 0;
 						cost = tcp.getNetwork().getConfig().writeCost*total;
 						tcp.uncork();
 					}
-					tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
-					SimulationThread.currentSimulationThread().pause();
+					tcp.writers.queue(current.getWakeup());
+					interrupted = current.pauseInterruptibly(true, false);
 				}
 
 				res += tcp.write(b[offset+i]);
@@ -211,6 +238,11 @@ public class SocketChannelImpl extends SocketChannel {
 		
 			cost = tcp.getNetwork().getConfig().writeCost*total;
 				
+			if (interrupted) {
+				close();
+				throw new ClosedByInterruptException();
+			}
+
 			return total;
 		} finally {
 			if (total>0) tcp.writeAt(time);

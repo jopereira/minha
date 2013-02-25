@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.SelectionKey;
 
@@ -57,9 +58,17 @@ public class DatagramChannelImpl extends DatagramChannel {
 		try {
 			SimulationThread.stopTime(0);
 
-			while (isBlocking() && !udp.readers.isReady()) {
-				udp.readers.queue(SimulationThread.currentSimulationThread().getWakeup());
-				SimulationThread.currentSimulationThread().pause();
+			SimulationThread current = SimulationThread.currentSimulationThread();
+			boolean interrupted = current.getInterruptedStatus(false) && isBlocking();
+			
+			while (isBlocking() && !udp.readers.isReady() && !interrupted) {
+				udp.readers.queue(current.getWakeup());
+				interrupted = current.pauseInterruptibly(true, false);
+			}
+
+			if (interrupted) {
+				close();
+				throw new ClosedByInterruptException();
 			}
 			
 			DatagramPacket p = udp.receive();
@@ -94,8 +103,16 @@ public class DatagramChannelImpl extends DatagramChannel {
 		try {
 			SimulationThread.stopTime(0);
 			
+			SimulationThread current = SimulationThread.currentSimulationThread();
+			boolean interrupted = current.getInterruptedStatus(false) && isBlocking();
+
 			/* Never blocks. */
 			
+			if (interrupted) {
+				close();
+				throw new ClosedByInterruptException();
+			}
+
 			byte[] data = new byte[src.remaining()];
 			
 			udp.send(new DatagramPacket(data, data.length, udp.getRemoteAddress()));

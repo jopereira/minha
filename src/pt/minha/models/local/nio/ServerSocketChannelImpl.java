@@ -21,6 +21,7 @@ package pt.minha.models.local.nio;
 
 import java.io.IOException;
 import java.net.SocketException;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.SelectionKey;
 
 import pt.minha.models.fake.java.net.ServerSocket;
@@ -55,11 +56,19 @@ class ServerSocketChannelImpl extends ServerSocketChannel {
 		try {
 			SimulationThread.stopTime(0);
 			
-			while (isBlocking() && !tcp.acceptors.isReady()) {
-				tcp.acceptors.queue(SimulationThread.currentSimulationThread().getWakeup());
-				SimulationThread.currentSimulationThread().pause();
+			SimulationThread current = SimulationThread.currentSimulationThread();
+			boolean interrupted = current.getInterruptedStatus(false) && isBlocking();
+			
+			while (isBlocking() && !tcp.acceptors.isReady() && !interrupted) {
+				tcp.acceptors.queue(current.getWakeup());
+				interrupted = current.pauseInterruptibly(true, false);
 			}
 	
+			if (interrupted) {
+				close();
+				throw new ClosedByInterruptException();
+			}
+			
 			ClientTCPSocket ctcp = tcp.accept();
 			if (ctcp == null)
 				return null;
