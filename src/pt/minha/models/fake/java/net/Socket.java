@@ -81,7 +81,7 @@ public class Socket {
 					
 					while (!tcp.readers.isReady()) {
 						tcp.readers.queue(SimulationThread.currentSimulationThread().getWakeup());
-						SimulationThread.currentSimulationThread().pause();
+						SimulationThread.currentSimulationThread().pause(false, false);
 					}
 					
 					int res = tcp.read(b, off, len); 
@@ -131,7 +131,7 @@ public class Socket {
 								tcp.uncork();
 							}
 							tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
-							SimulationThread.currentSimulationThread().pause();
+							SimulationThread.currentSimulationThread().pause(false, false);
 						}
 						
 						res += tcp.write(b, off+res, len-res);
@@ -175,7 +175,7 @@ public class Socket {
 			
 			if (!tcp.connectors.isReady()) {
 				tcp.connectors.queue(SimulationThread.currentSimulationThread().getWakeup());
-				SimulationThread.currentSimulationThread().pause();
+				SimulationThread.currentSimulationThread().pause(false, false);
 			}
 			
 			if (!tcp.connectors.isReady())

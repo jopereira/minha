@@ -26,7 +26,6 @@ import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.kernel.timer.IntervalTimer;
 import pt.minha.kernel.timer.TimerProvider;
-import pt.minha.models.global.Debug;
 import pt.minha.models.local.HostImpl;
 
 public class SimulationThread extends Thread {
@@ -172,48 +171,12 @@ public class SimulationThread extends Thread {
 		lock.unlock();
 	}
 
-	private void timePause() {
-		lock.lock();
-		
-		blocked = true;
-		wakeupCond.signal();
-
-		while(blocked)
-			wakeupCond.awaitUninterruptibly();
-		
-		lock.unlock();
-	}
-
-	public void pause() {
-		if (interrupted)
-			throw new RuntimeException("sleeping uninterruptibly on interrupted thread");
-		
-		lock.lock();
-		
-		blocked = true;
-		uninterruptible = true;
-		wakeupCond.signal();
-
-		while(blocked)
-			wakeupCond.awaitUninterruptibly();
-		
-		lock.unlock();
-	}
-	
 	public void fake_interrupt() {
 		interrupted = true;
 		try {
 			lock.lock();
 			if (interruptible)
 				wakeup();
-			if (uninterruptible) {
-				Debug.println("-8<---------- Trying to interrupt thread at: -------------");
-				StackTraceElement[] stack = getStackTrace();
-				for (StackTraceElement ste : stack)
-					Debug.println(ste.toString());
-				Debug.println("-8<-----------------------------------------..............");
-				throw new RuntimeException();
-			}
 		} finally {
 			lock.unlock();
 		}
@@ -226,7 +189,22 @@ public class SimulationThread extends Thread {
 		return r;
 	}
 
-	public boolean pauseInterruptibly(boolean interruptible, boolean clear) {
+	/**
+	 * Generic method to suspend the thread. Typically, the threads
+	 * wake-up event will have been scheduled in the future or have
+	 * been placed in some queue from where it will be scheduled.
+	 * 
+	 * This method also provides support for thread interruption.
+	 * Note however that it doesn't check, on entry, whether the
+	 * thread is already interrupted. If no blocking is desired
+	 * in such situation, it should be checked before entering
+	 * pause.
+	 * 
+	 * @param interruptible makes the thread wake-up on interrupt
+	 * @param clear if true, will clear interrupted state on exit
+	 * @return interrupted state
+	 */
+	public boolean pause(boolean interruptible, boolean clear) {
 		lock.lock();
 		
 		blocked = true;
@@ -245,6 +223,18 @@ public class SimulationThread extends Thread {
 		return wakeup;
 	}
 	
+	private void resync() {
+		lock.lock();
+		
+		blocked = true;
+		wakeupCond.signal();
+
+		while(blocked)
+			wakeupCond.awaitUninterruptibly();
+		
+		lock.unlock();
+	}
+
 	/**
 	 * Acquire CPU resource and start executing real code. Acquiring the CPU
 	 * might advance the simulation time, thus blocking the calling thread.
@@ -259,7 +249,7 @@ public class SimulationThread extends Thread {
 			throw new RuntimeException("restarting time");
 		
 		host.getCPU().acquire(getWakeup());
-		timePause();
+		resync();
 		
 		time = timer.getTime() - overhead;
 	}
@@ -282,7 +272,7 @@ public class SimulationThread extends Thread {
 		time = -1;
 		
 		host.getCPU().release(delta+overhead, getWakeup());
-		timePause();
+		resync();
 		
 		return getTimeline().getTime();
 	}
@@ -292,7 +282,7 @@ public class SimulationThread extends Thread {
 			throw new RuntimeException("time not stopped");
 		
 		getWakeup().schedule(delta);
-		return pauseInterruptibly(interruptible, clear);
+		return pause(interruptible, clear);
 	}
 	
 	private class WakeUpEvent extends Event {

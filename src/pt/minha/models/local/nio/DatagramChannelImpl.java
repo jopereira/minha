@@ -63,7 +63,7 @@ public class DatagramChannelImpl extends DatagramChannel {
 			
 			while (isBlocking() && !udp.readers.isReady() && !interrupted) {
 				udp.readers.queue(current.getWakeup());
-				interrupted = current.pauseInterruptibly(true, false);
+				interrupted = current.pause(true, false);
 			}
 
 			if (interrupted) {

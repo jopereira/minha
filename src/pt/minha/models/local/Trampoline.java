@@ -80,7 +80,7 @@ public interface Trampoline {
 				while(true) {
 					if (queue.isEmpty()) {
 						wakeup = SimulationThread.currentSimulationThread().getWakeup();
-						SimulationThread.currentSimulationThread().pause();
+						SimulationThread.currentSimulationThread().pause(false, false);
 					}
 					
 					Invocation i = queue.remove(0);

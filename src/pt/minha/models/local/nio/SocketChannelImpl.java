@@ -83,7 +83,7 @@ public class SocketChannelImpl extends SocketChannel {
 
 			if (!tcp.connectors.isReady() && !interrupted) {
 				tcp.connectors.queue(current.getWakeup());
-				interrupted = current.pauseInterruptibly(true, false);
+				interrupted = current.pause(true, false);
 			}
 			
 			if (interrupted) {
@@ -125,7 +125,7 @@ public class SocketChannelImpl extends SocketChannel {
 
 			while (isBlocking() && !tcp.readers.isReady() && !interrupted) {
 				tcp.readers.queue(current.getWakeup());
-				interrupted = current.pauseInterruptibly(true, false);
+				interrupted = current.pause(true, false);
 			}
 			
 			if (interrupted) {
@@ -170,7 +170,7 @@ public class SocketChannelImpl extends SocketChannel {
 						tcp.uncork();
 					}
 					tcp.writers.queue(current.getWakeup());
-					interrupted = current.pauseInterruptibly(true, false);
+					interrupted = current.pause(true, false);
 				}
 				
 				res += tcp.write(b);
@@ -224,7 +224,7 @@ public class SocketChannelImpl extends SocketChannel {
 						tcp.uncork();
 					}
 					tcp.writers.queue(current.getWakeup());
-					interrupted = current.pauseInterruptibly(true, false);
+					interrupted = current.pause(true, false);
 				}
 
 				res += tcp.write(b[offset+i]);

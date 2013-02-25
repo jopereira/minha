@@ -49,7 +49,7 @@ public class ReentrantLock implements Lock {
 			
 				while(holder!=null) {
 					waitingOnLock.add(current.getWakeup());
-					current.pause();
+					current.pause(false, false);
 				}
 				holder=current;
 				busy++;
@@ -101,7 +101,7 @@ public class ReentrantLock implements Lock {
 				boolean interrupted = current.getInterruptedStatus(true);
 				while(!interrupted && holder!=null) {
 					waitingOnLock.add(current.getWakeup());
-					interrupted = current.pauseInterruptibly(true,true);
+					interrupted = current.pause(true,true);
 				}
 				if (interrupted) {
 					waitingOnLock.remove(current.getWakeup());
@@ -173,7 +173,7 @@ public class ReentrantLock implements Lock {
 				// sleep
 				waitingOnCond.add(current.getWakeup());
 				if (nanosTimeout>0) current.getWakeup().schedule(nanosTimeout);
-				current.pause();
+				current.pause(false, false);
 				
 				// cleanup
 				waitingOnCond.remove(current.getWakeup());
@@ -181,7 +181,7 @@ public class ReentrantLock implements Lock {
 				//  lock
 				while(holder!=null) {
 					waitingOnLock.add(current.getWakeup());
-					current.pause();
+					current.pause(false, false);
 				}
 				
 				// wakeup
@@ -248,7 +248,7 @@ public class ReentrantLock implements Lock {
 				// sleep
 				waitingOnCond.add(current.getWakeup());
 				if (nanosTimeout>0) current.getWakeup().schedule(nanosTimeout);
-				current.pauseInterruptibly(true,false);
+				current.pause(true,false);
 				
 				// cleanup
 				waitingOnCond.remove(current.getWakeup());
@@ -256,7 +256,7 @@ public class ReentrantLock implements Lock {
 				//  lock
 				while(holder!=null) {
 					waitingOnLock.add(current.getWakeup());
-					current.pause();
+					current.pause(false, false);
 				}
 				
 				// wakeup

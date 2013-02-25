@@ -61,7 +61,7 @@ class ServerSocketChannelImpl extends ServerSocketChannel {
 			
 			while (isBlocking() && !tcp.acceptors.isReady() && !interrupted) {
 				tcp.acceptors.queue(current.getWakeup());
-				interrupted = current.pauseInterruptibly(true, false);
+				interrupted = current.pause(true, false);
 			}
 	
 			if (interrupted) {

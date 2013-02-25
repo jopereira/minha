@@ -87,7 +87,7 @@ public class DatagramSocket {
 			
 			while(!udp.readers.isReady() && !closed) {
 				udp.readers.queue(SimulationThread.currentSimulationThread().getWakeup());
-				SimulationThread.currentSimulationThread().pause();
+				SimulationThread.currentSimulationThread().pause(false, false);
 			}
 			
 			if (closed)

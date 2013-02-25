@@ -83,7 +83,7 @@ public class ServerSocket {
 		
 		while (!tcp.acceptors.isReady()) {
 			tcp.acceptors.queue(SimulationThread.currentSimulationThread().getWakeup());
-			SimulationThread.currentSimulationThread().pause();
+			SimulationThread.currentSimulationThread().pause(false, false);
 		}
 
 		Socket socket = new Socket(null, tcp.accept());
