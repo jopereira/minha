@@ -20,6 +20,7 @@
 package pt.minha.api;
 
 import java.lang.reflect.InvocationTargetException;
+import java.net.InetAddress;
 
 import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.instrument.InstrumentationLoader;
@@ -75,5 +76,15 @@ public class Host {
 	 */
 	public <T> Entry<T> createEntry(Class<T> intf, String impl) throws IllegalArgumentException, SecurityException, ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		return new Entry<T>(this, intf, impl);
+	}
+	
+	/**
+	 * Get simulated host address. This is the address that the simulated
+	 * host will use in the container, when networking with other simulated
+	 * hosts.
+	 * @return host address
+	 */
+	public InetAddress getAddress() {
+		return impl.getAddress();
 	}
 }

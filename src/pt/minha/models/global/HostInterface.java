@@ -19,8 +19,12 @@
 
 package pt.minha.models.global;
 
+import java.net.InetAddress;
+
 import pt.minha.api.SimulationException;
 
 public interface HostInterface {
-	void launch(long delay, String main, String[] args) throws SimulationException;
+	public void launch(long delay, String main, String[] args) throws SimulationException;
+
+	public InetAddress getAddress();
 }

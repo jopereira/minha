@@ -21,6 +21,7 @@ package pt.minha.models.local;
 
 import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
@@ -111,5 +112,10 @@ public class HostImpl implements HostInterface {
 			}
 		}).simulationStart(delay*1000000000);
 		
+	}
+
+	@Override
+	public InetAddress getAddress() {
+		return network.getLocalAddress();
 	}	
 }
