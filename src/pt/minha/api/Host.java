@@ -32,10 +32,12 @@ import pt.minha.models.global.net.Network;
  * A host running within the Minha simulated world. 
  */
 public class Host {
+	private World world;
 	InstrumentationLoader loader;
 	HostInterface impl;
 
-	Host(ClassConfig cc, Timeline timeline, String ip, Network network) throws SimulationException {
+	Host(World w, ClassConfig cc, Timeline timeline, String ip, Network network) throws SimulationException {
+		world = w;
 
 		loader=new InstrumentationLoader(cc);
 		
@@ -62,10 +64,8 @@ public class Host {
 	 * Create an entry point to inject arbitrary invocations within a host.
 	 * This avoids the main method and can be used for multiple invocations.
 	 * 
-	 * @param host an host instance
 	 * @param clz the interface (global) of the class to be created
 	 * @param impl the name of the class (translated) to be created within the host
-	 * @param time true if the invocation is done in real-time
 	 * @throws ClassNotFoundException 
 	 * @throws IllegalAccessException 
 	 * @throws InstantiationException 
@@ -86,5 +86,13 @@ public class Host {
 	 */
 	public InetAddress getAddress() {
 		return impl.getAddress();
+	}
+	
+	/**
+	 * Gets the simulated world container.
+	 * @return the simulation world for this host
+	 */
+	public World getContainer() {
+		return world;
 	}
 }

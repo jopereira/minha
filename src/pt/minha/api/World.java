@@ -20,6 +20,11 @@
 package pt.minha.api;
 
 import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 import pt.minha.kernel.instrument.ClassConfig;
@@ -36,6 +41,10 @@ public class World {
 	private NetworkConfig nc;
 	private Timeline timeline;
 	private Network network;
+	private List<Host> hosts = new ArrayList<Host>();
+	private List<Invocation> queue = new ArrayList<Invocation>();
+	private boolean closed;
+	private Thread thread;
 	
 	public World(long simulationTime) throws Exception {		
 		
@@ -69,7 +78,7 @@ public class World {
 	 * @throws SimulationException
 	 */
 	public Host createHost(String ip) throws SimulationException {
-		return new Host(cc, timeline, ip, network);
+		return new Host(this, cc, timeline, ip, network);
 	}
 
 	/**
@@ -82,8 +91,93 @@ public class World {
 		return createHost(null);
 	}
 	
-	public long run() {
+	/**
+	 * Get hosts in this simulation container.
+	 * @return host collection
+	 */
+	public Collection<Host> getHosts() {
+		return Collections.unmodifiableCollection(hosts);
+	}
+	
+	/**
+	 * Run the simulation until all events are processed or maximum set time
+	 * is reached. This method waits for all outstanding callback events to
+	 * be processed.
+	 * 
+	 * @return time of latest event processed
+	 * @throws InterruptedException
+	 */
+	public long run() throws InterruptedException {
 		timeline.run();
+		synchronized(this) {
+			closed = true;
+			notifyAll();			
+		}
+		thread.join();
+		thread = null;
 		return timeline.getTime();
+	}
+	
+	/** 
+	 * Create a proxy to receive callbacks form the simulation.
+	 * 
+	 * @param clz the interface (global) of the class to be created
+	 * @param impl the object implementing the interface handling invocations
+	 * @returns an exit proxy
+	 */
+	public <T> Exit<T> createExit(Class<T> intf, T impl) {
+		return new Exit<T>(this, intf, impl);
+	}
+	
+	private static class Invocation {
+		public Object target;
+		public Method method;
+		public Object[] args;
+		
+		public Invocation(Object target, Method method, Object[] args) {
+			this.target = target;
+			this.method = method;
+			this.args = args;
+		}		
+	};
+	
+	synchronized void handleInvoke(Object target, Method method, Object[] args) {
+		if (thread == null) {
+			closed = false;
+			thread = new Thread() {
+				public void run() {
+					globalThread();
+				}
+			};
+			thread.start();
+		}
+
+		queue.add(new Invocation(target, method, args));
+		notifyAll();		
+	}
+	
+	private synchronized Invocation next() throws InterruptedException {
+		while(!closed && queue.isEmpty())
+			wait();
+		if (queue.isEmpty())
+			return null;
+		return queue.remove(0);
+	}
+
+	private void globalThread() {
+		while(true) {
+			try {
+				Invocation i = next();
+			
+				if (i == null)
+					return;
+				
+				i.method.invoke(i.target, i.args);
+				
+			} catch (Exception e) {
+				// FIXME: should stop simulation?
+				e.printStackTrace();
+			}
+		}
 	}
 }
