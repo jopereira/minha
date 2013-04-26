@@ -99,6 +99,7 @@ public class DatagramSocket {
 			packet.setAddress(p.getAddress());
 			packet.setPort(p.getPort());
 			cost = p.getLength();
+			packet.setLength(cost);
 		
 		} finally {
 			SimulationThread.startTime(udp.getNetwork().getConfig().readCost*cost);
