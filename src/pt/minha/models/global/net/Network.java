@@ -170,12 +170,20 @@ public class Network {
 					return;
 				
 				// drop packet
-				if  ( (current_bandwidth+p.getLength()) > BUFFER )
+				if  ((current_bandwidth+p.getLength()) > BUFFER)
 					return;
 				
-				NetworkStack stack = hosts.get(destination.getAddress());
-				if (stack!=null)
-					stack.handleDatagram(destination, p);
+				if (destination.getAddress().isMulticastAddress()) {
+					List<NetworkStack> stacks = multicastSockets.get(destination.getAddress());
+					if (stacks != null)
+						for (NetworkStack stack: stacks)
+							stack.handleDatagram(destination, p);
+				
+				} else {
+					NetworkStack stack = hosts.get(destination.getAddress());
+					if (stack!=null)
+						stack.handleDatagram(destination, p);
+				}
 				
 				current_bandwidth += p.getLength();
 				usage.using(p.getLength());
@@ -183,35 +191,6 @@ public class Network {
 				if ( !wakeEventEnabled ) {
 					wakeEventEnabled = true;
 					wakeEvent.schedule(RESOLUTION);
-				}
-			}			
-		}.schedule(0);
-	}
-
-	public void relayMulticast(final InetSocketAddress source, final DatagramPacket packet) throws SocketException {
-		new Event(timeline) {
-			public void run() {
-				List<NetworkStack> targets = multicastSockets.get(packet.getSocketAddress());
-				if ( null == targets )
-					return;
-				
-				// Lost in sender
-				if ( config.isLostPacket() )
-					return;
-						
-				for (NetworkStack target : targets) {
-					// Lost in receiver
-					if ( config.isLostPacket() )
-						continue;
-					
-					byte[] data = new byte[packet.getLength()];
-					System.arraycopy(packet.getData(), packet.getOffset(), data, 0, data.length);
-					try {
-						DatagramPacket dp = new DatagramPacket(data, data.length, source);
-						target.handleDatagram((InetSocketAddress)dp.getSocketAddress(), dp);
-					} catch (SocketException e) {
-						// drop packet
-					}
 				}
 			}			
 		}.schedule(0);

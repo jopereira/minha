@@ -77,15 +77,11 @@ public class UDPSocket extends AbstractSocket {
     }
     
 	public void send(DatagramPacket packet) throws SocketException {
-		if (packet.getAddress().isMulticastAddress())
-			stack.getNetwork().relayMulticast((InetSocketAddress)getLocalAddress(), packet);
-		else {
-			InetSocketAddress destination = new InetSocketAddress(packet.getAddress(),packet.getPort());
-			byte[] data = new byte[packet.getLength()];
-			System.arraycopy(packet.getData(), packet.getOffset(), data, 0, data.length);
-			DatagramPacket dp = new DatagramPacket(data, data.length, getLocalAddress());
-			stack.getNetwork().relayUDP(destination, dp);
-		}
+		byte[] data = new byte[packet.getLength()];
+		System.arraycopy(packet.getData(), packet.getOffset(), data, 0, data.length);
+		DatagramPacket dp = new DatagramPacket(data, data.length, getLocalAddress());
+		InetSocketAddress destination = new InetSocketAddress(packet.getAddress(), packet.getPort());
+		stack.getNetwork().relayUDP(destination, dp);
 	}
 
 	public DatagramPacket receive() {
