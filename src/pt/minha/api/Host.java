@@ -32,7 +32,7 @@ import pt.minha.models.global.net.Network;
  * A host running within the Minha simulated world. 
  */
 public class Host {
-	private World world;
+	World world;
 	InstrumentationLoader loader;
 	HostInterface impl;
 
@@ -77,7 +77,19 @@ public class Host {
 	public <T> Entry<T> createEntry(Class<T> intf, String impl) throws IllegalArgumentException, SecurityException, ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		return new Entry<T>(this, intf, impl);
 	}
-	
+
+	/** 
+	 * Create a proxy to receive callbacks from this simulation host. This proxy
+	 * is to be handled to simulation code as a parameter to an entry method.
+	 * 
+	 * @param clz the interface (global) of the class to be created
+	 * @param impl the object implementing the interface handling invocations
+	 * @returns an exit proxy
+	 */
+	public <T> Exit<T> createExit(Class<T> intf, T impl) {
+		return new Exit<T>(this, intf, impl);
+	}
+
 	/**
 	 * Get simulated host address. This is the address that the simulated
 	 * host will use in the container, when networking with other simulated

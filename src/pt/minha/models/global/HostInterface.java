@@ -19,12 +19,18 @@
 
 package pt.minha.models.global;
 
+import java.lang.reflect.InvocationHandler;
 import java.net.InetAddress;
 
 import pt.minha.api.SimulationException;
+import pt.minha.models.local.Trampoline;
 
 public interface HostInterface {
 	public void launch(long delay, String main, String[] args) throws SimulationException;
+
+	public Trampoline createEntry(String impl);
+
+	public <T> T createExit(Class<T> intf, InvocationHandler target);
 
 	public InetAddress getAddress();
 }

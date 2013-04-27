@@ -20,7 +20,10 @@
 package pt.minha.models.local;
 
 import java.io.FileNotFoundException;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashSet;
@@ -117,5 +120,28 @@ public class HostImpl implements HostInterface {
 	@Override
 	public InetAddress getAddress() {
 		return network.getLocalAddress();
+	}
+
+	@Override
+	public Trampoline createEntry(String impl) {
+		return new Trampoline.Impl(this, impl);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T createExit(Class<T> intf, final InvocationHandler target) {
+		return (T) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class<?>[]{ intf }, new InvocationHandler() {
+			@Override
+			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+				
+				SimulationThread.stopTime(0);
+				
+				target.invoke(proxy, method, args);
+				
+				SimulationThread.startTime(0);
+				
+				return null;
+			}
+		});
 	}	
 }

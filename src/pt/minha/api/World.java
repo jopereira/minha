@@ -114,19 +114,10 @@ public class World {
 			notifyAll();			
 		}
 		thread.join();
+		/* No synchronization needed, as we know that the simulation is stopped
+		 * and the thread is dead too. */
 		thread = null;
 		return timeline.getTime();
-	}
-	
-	/** 
-	 * Create a proxy to receive callbacks form the simulation.
-	 * 
-	 * @param clz the interface (global) of the class to be created
-	 * @param impl the object implementing the interface handling invocations
-	 * @returns an exit proxy
-	 */
-	public <T> Exit<T> createExit(Class<T> intf, T impl) {
-		return new Exit<T>(this, intf, impl);
 	}
 	
 	private static class Invocation {
@@ -156,22 +147,18 @@ public class World {
 		notifyAll();		
 	}
 	
-	private synchronized Invocation next() throws InterruptedException {
-		while(!closed && queue.isEmpty())
-			wait();
-		if (queue.isEmpty())
-			return null;
-		return queue.remove(0);
-	}
-
 	private void globalThread() {
 		while(true) {
 			try {
-				Invocation i = next();
-			
-				if (i == null)
-					return;
-				
+				Invocation i = null;
+				synchronized(this) {
+					while(!closed && queue.isEmpty())
+						wait();
+					if (queue.isEmpty())
+						return;
+					i = queue.remove(0);
+				}
+
 				i.method.invoke(i.target, i.args);
 				
 			} catch (Exception e) {

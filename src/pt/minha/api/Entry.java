@@ -24,7 +24,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-import pt.minha.models.global.HostInterface;
 import pt.minha.models.local.Trampoline;
 
 /**
@@ -34,7 +33,6 @@ import pt.minha.models.local.Trampoline;
  */
 public class Entry<T> {
 	private T proxy;
-	private Class<?> claz; 
 	private Trampoline target;
 	private long time;
 	
@@ -67,8 +65,7 @@ public class Entry<T> {
 			}
 		});
 		
-		this.claz = host.loader.loadClass(Trampoline.Impl.class.getName());
-		this.target = (Trampoline)claz.getDeclaredConstructor(HostInterface.class, String.class).newInstance(host.impl, impl);
+		this.target = host.impl.createEntry(impl);
 	}
 	
 	/**

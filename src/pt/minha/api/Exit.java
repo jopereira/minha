@@ -21,7 +21,6 @@ package pt.minha.api;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 
 /**
  * Provides an exit out of a simulated host. This is the only
@@ -32,15 +31,15 @@ import java.lang.reflect.Proxy;
 public class Exit<T> {
 	private T proxy;
 	
-	@SuppressWarnings("unchecked")
-	Exit(final World w, Class<T> intf, final T impl) {
-		this.proxy = (T) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class<?>[]{ intf }, new InvocationHandler() {
+	Exit(final Host host, Class<T> intf, final T impl) {
+				
+		this.proxy = host.impl.createExit(intf, new InvocationHandler() {
 			@Override
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 				if (!method.getReturnType().equals(Void.TYPE))
 					throw new IllegalArgumentException("method with non-void return type: "+method.getName());
 
-				w.handleInvoke(impl, method, args);
+				host.world.handleInvoke(impl, method, args);
 				return null;
 			}
 		});
