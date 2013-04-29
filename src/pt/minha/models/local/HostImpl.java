@@ -21,7 +21,6 @@ package pt.minha.models.local;
 
 import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetAddress;
@@ -29,7 +28,6 @@ import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 
-import pt.minha.api.SimulationException;
 import pt.minha.kernel.simulation.Resource;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.EntryHandler;
@@ -94,30 +92,6 @@ public class HostImpl implements HostInterface {
 			t.fake_join();
 		}
 		cpu.stop();
-	}
-
-	@Override
-	public void launch(long delay, final String main, final String[] args) throws SimulationException {
-		new pt.minha.models.fake.java.lang.Thread(this, new Runnable() {
-			public void run() {
-				try {
-					// Run main
-					Class<?> claz=Class.forName(main);
-					claz.getMethod("main", new String[0].getClass()).invoke(claz, (Object)args);
-					
-					// For for all remaining non-daemon threads to stop
-					pt.minha.models.fake.java.lang.Thread.currentThread().setDaemon(true);
-					stop();
-            	} catch (InvocationTargetException e) {
-        			e.getTargetException().printStackTrace();
-                    System.exit(1);
-            	} catch (Exception e) {
-            		e.printStackTrace();
-            		System.exit(1);
-            	}
-			}
-		}).simulationStart(delay*1000000000);
-		
 	}
 
 	@Override

@@ -27,6 +27,7 @@ import pt.minha.kernel.instrument.InstrumentationLoader;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.HostInterface;
 import pt.minha.models.global.net.Network;
+import pt.minha.models.local.MainEntry;
 
 /**
  * A host running within the Minha simulated world. 
@@ -50,17 +51,6 @@ public class Host {
 	}
 	
 	/** 
-	 * Run an application in this simulated host.
-	 * 
-	 * @param main name of class with main method
-	 * @param args arguments to main method
-	 * @throws SimulationException cannot find or launch desired class 
-	 */
-	public void launch(long delay, String main, String[] args) throws SimulationException {
-		impl.launch(delay, main, args);
-	}
-	
-	/** 
 	 * Create an entry point to inject arbitrary invocations within a host.
 	 * This avoids the main method and can be used for multiple invocations.
 	 * 
@@ -78,6 +68,22 @@ public class Host {
 		return new Entry<T>(this, intf, impl);
 	}
 
+	/** 
+	 * Create an entry point start a program within a host.
+	 * 
+	 * @param impl the name of the class (translated) to be created within the host
+	 * @throws ClassNotFoundException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 * @throws NoSuchMethodException 
+	 * @throws InvocationTargetException 
+	 * @throws SecurityException 
+	 * @throws IllegalArgumentException 
+	 */
+	public Entry<Main> createEntry() throws IllegalArgumentException, SecurityException, ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		return new Entry<Main>(this, Main.class, MainEntry.class.getName());
+	}
+	
 	/** 
 	 * Create a proxy to receive callbacks from this simulation host. This proxy
 	 * is to be handled to simulation code as a parameter to an entry method.

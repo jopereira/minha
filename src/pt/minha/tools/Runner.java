@@ -25,7 +25,9 @@
 
 package pt.minha.tools;
 
+import pt.minha.api.Entry;
 import pt.minha.api.Host;
+import pt.minha.api.Main;
 import pt.minha.api.World;
 
 public class Runner {
@@ -49,7 +51,8 @@ public class Runner {
 			for (final InstanceArguments argsInstance : cla) {
 				for (int i=1; i<=argsInstance.getN(); i++) {
 					Host host = hv.createHost(argsInstance.getIP());
-					host.launch(argsInstance.getDelay(), argsInstance.getMain(), argsInstance.getArgs());
+					Entry<Main> main = host.createEntry();
+					main.at(argsInstance.getDelay()).main(argsInstance.getMain(), argsInstance.getArgs());
 				}
 			}
 			

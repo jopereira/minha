@@ -17,14 +17,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.global;
+package pt.minha.models.local;
 
-import java.net.InetAddress;
+import java.lang.reflect.Method;
 
-public interface HostInterface {
-	public EntryHandler createEntry(String impl);
+import pt.minha.api.Main;
+import pt.minha.models.local.lang.SimulationThread;
 
-	public <T> T createExit(Class<T> intf, ExitHandler target);
-
-	public InetAddress getAddress();
+public class MainEntry implements Main {
+	@Override
+	public void main(String impl, String[] args) throws Exception {
+		// Run main
+		Class<?> claz=Class.forName(impl);
+		Method m = claz.getMethod("main", new String[0].getClass());
+		
+		try {
+			m.invoke(claz, (Object)args);
+		} finally {
+			// For for all remaining non-daemon threads to stop
+			pt.minha.models.fake.java.lang.Thread.currentThread().setDaemon(true);
+			SimulationThread.currentSimulationThread().getHost().stop();
+		}
+	}
 }

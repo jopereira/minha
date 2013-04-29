@@ -17,14 +17,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.global;
+package pt.minha.api;
 
-import java.net.InetAddress;
-
-public interface HostInterface {
-	public EntryHandler createEntry(String impl);
-
-	public <T> T createExit(Class<T> intf, ExitHandler target);
-
-	public InetAddress getAddress();
+/**
+ * Interface for launching a executable in a simulated host.
+ */
+public interface Main {
+	/**
+	 * Start the given executable class.
+	 * 
+	 * @param impl executable class with a static main method
+	 * @param args arguments to the main class
+	 * @throws Exception
+	 */
+	public void main(String impl, String[] args) throws Exception;
 }
