@@ -24,76 +24,86 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import pt.minha.api.Global;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
+import pt.minha.models.global.EntryHandler;
 import pt.minha.models.global.HostInterface;
+import pt.minha.models.global.ResultHolder;
 import pt.minha.models.local.lang.SimulationThread;
 
-@Global
-public interface Trampoline {
-	void invoke(long time, Method method, Object[] args);
+public class Trampoline implements EntryHandler, Runnable {		
+	private String implName;
+	private pt.minha.models.fake.java.lang.Thread thread;
+	private List<Invocation> queue = new ArrayList<Trampoline.Invocation>();
+	private Event wakeup;
+	private HostImpl host;
+	
+	public Trampoline(HostInterface host, String implName) {
+		this.implName = implName;
+		this.host = (HostImpl) host;
+		this.thread = new pt.minha.models.fake.java.lang.Thread((HostImpl)host, this);
+		thread.simulationStart(0);
+	}
+	
+	@Override
+	public void invoke(long time, Method method, Object[] args, ResultHolder result) {
+		new Invocation(host.getTimeline(), method, args, result).schedule(time);
+	}
 
-	public static class Impl implements Trampoline, Runnable {		
-		private String implName;
-		private pt.minha.models.fake.java.lang.Thread thread;
-		private List<Invocation> queue = new ArrayList<Trampoline.Impl.Invocation>();
-		private Event wakeup;
-		private HostImpl host;
-		
-		public Impl(HostInterface host, String implName) {
-			this.implName = implName;
-			this.host = (HostImpl) host;
-			this.thread = new pt.minha.models.fake.java.lang.Thread((HostImpl)host, this);
-			thread.simulationStart(0);
+	public class Invocation extends Event {
+		public Method method;
+		public Object[] args;
+		private ResultHolder result;
+
+		public Invocation(Timeline timeline, Method method, Object[] args, ResultHolder result) {
+			super(timeline);
+			this.method = method;
+			this.args = args;
+			this.result = result;
 		}
-		
+
 		@Override
-		public void invoke(long time, Method method, Object[] args) {
-			new Invocation(host.getTimeline(), method, args).schedule(time);
-		}
-	
-		public class Invocation extends Event {
-			public Method method;
-			public Object[] args;
-	
-			public Invocation(Timeline timeline, Method method, Object[] args) {
-				super(timeline);
-				this.method = method;
-				this.args = args;
-			}
-	
-			@Override
-			public void run() {
-				queue.add(this);
-				if (wakeup!=null) {
-					wakeup.schedule(0);
-					wakeup = null;
-				}
-			}
-		}
-		
 		public void run() {
-			try {
-				SimulationThread.stopTime(0);
-				Object impl = Class.forName(implName).newInstance();
-				while(true) {
-					if (queue.isEmpty()) {
-						wakeup = SimulationThread.currentSimulationThread().getWakeup();
-						SimulationThread.currentSimulationThread().pause(false, false);
-					}
-					
-					Invocation i = queue.remove(0);
-					
-					SimulationThread.startTime(0);
-					i.method.invoke(impl, i.args);
-					SimulationThread.stopTime(0);
-				}
-			} catch (InvocationTargetException ite) {
-				throw new RuntimeException("simulation exception found in target invocation", ite.getTargetException());
-			} catch (Exception e) {
-				throw new RuntimeException("exception entering simulation", e);
+			queue.add(this);
+			if (wakeup!=null) {
+				wakeup.schedule(0);
+				wakeup = null;
 			}
+		}
+	}
+	
+	public void run() {
+		try {
+			SimulationThread.stopTime(0);
+			Object impl = Class.forName(implName).newInstance();
+			while(true) {
+				if (queue.isEmpty()) {
+					wakeup = SimulationThread.currentSimulationThread().getWakeup();
+					SimulationThread.currentSimulationThread().pause(false, false);
+				}
+				
+				Invocation i = queue.remove(0);
+				
+				try {
+					SimulationThread.startTime(0);
+					Object result = i.method.invoke(impl, i.args);
+					SimulationThread.stopTime(0);
+					
+					i.result.reportReturn(result);
+					
+				} catch(InvocationTargetException ite) {
+					SimulationThread.stopTime(0);
+					i.result.reportException(ite.getTargetException());
+				}
+				
+				/*
+				 * Stop timeline if this was the invocation that owned the simulation
+				if (!i.result.isIgnored())
+					host.getTimeline().stop();
+				*/
+			}
+		} catch (Exception e) {
+			throw new RuntimeException("exception entering simulation", e);
 		}
 	}
 }

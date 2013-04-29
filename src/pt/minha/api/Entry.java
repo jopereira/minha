@@ -24,7 +24,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-import pt.minha.models.local.Trampoline;
+import pt.minha.models.global.EntryHandler;
+import pt.minha.models.global.ResultHolder;
 
 /**
  * Provides an entry into a simulated host. It creates an instance
@@ -33,8 +34,10 @@ import pt.minha.models.local.Trampoline;
  */
 public class Entry<T> {
 	private T proxy;
-	private Trampoline target;
+	private EntryHandler target;
+	
 	private long time;
+	private boolean async;
 	
 	/** 
 	 * Create a proxy to inject arbitrary invocations within a host.
@@ -52,28 +55,56 @@ public class Entry<T> {
 	 * @throws IllegalArgumentException 
 	 */
 	@SuppressWarnings("unchecked")
-	Entry(Host host, Class<T> intf, String impl) throws ClassNotFoundException, IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	Entry(final Host host, Class<T> intf, String impl) throws ClassNotFoundException, IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		this.proxy = (T) Proxy.newProxyInstance(host.loader, new Class<?>[]{ intf }, new InvocationHandler() {
 			@Override
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-				if (!method.getReturnType().equals(Void.TYPE))
-					throw new IllegalArgumentException("method with non-void return type: "+method.getName());
-
-				target.invoke(time, method, args);
 				
-				return null;
+				host.world.acquire(!async);
+				
+				// Queue invocation
+				ResultHolder result = new ResultHolder();
+					
+				target.invoke(time, method, args, result);
+					
+				if (async) {
+					host.world.release(false);
+					
+					return result.getFakeResult(method.getReturnType());
+				}
+				host.world.runSimulation();
+				
+				host.world.release(true);
+
+				return result.getResult();
 			}
+
 		});
 		
 		this.target = host.impl.createEntry(impl);
 	}
-	
+
 	/**
-	 * Return the proxy to performa an invocation at the desired time.
+	 * Return the proxy to perform an asynchronous invocation at the desired
+	 * time. This can only be used on methods returning void and corresponds
+	 * to scheduling a simulation event at the specified time.
 	 *  
+	 * @param time
 	 * @return the proxy
 	 */
 	public T at(long time) {
+		this.async = true;
+		this.time = time;
+		return proxy;
+	}
+
+	/**
+	 * Return the proxy to perform a symchronous call at the desired time.
+	 *  
+	 * @return the proxy
+	 */
+	public T call(long time) {
+		this.async = false;
 		this.time = time;
 		return proxy;
 	}

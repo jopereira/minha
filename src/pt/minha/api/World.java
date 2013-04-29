@@ -20,15 +20,23 @@
 package pt.minha.api;
 
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.simulation.Timeline;
+import pt.minha.models.global.ResultHolder;
 import pt.minha.models.global.net.Network;
 import pt.minha.models.global.net.NetworkConfig;
 
@@ -37,6 +45,8 @@ import pt.minha.models.global.net.NetworkConfig;
  * simulated hosts and interact with the simulated world as whole.
  */
 public class World {
+	private static Logger logger = LoggerFactory.getLogger("pt.minha.API");
+	
 	private ClassConfig cc;
 	private NetworkConfig nc;
 	private Timeline timeline;
@@ -44,8 +54,11 @@ public class World {
 	private List<Host> hosts = new ArrayList<Host>();
 	private List<Invocation> queue = new ArrayList<Invocation>();
 	private boolean closed;
-	private Thread thread;
-	
+	private Thread exitThread;
+	private boolean running, blocked;
+	private ReentrantLock lock = new ReentrantLock();
+	private Condition cond = lock.newCondition();
+		
 	public World(long simulationTime) throws Exception {		
 		
 		// load network calibration values
@@ -107,64 +120,106 @@ public class World {
 	 * @return time of latest event processed
 	 * @throws InterruptedException
 	 */
-	public long run() throws InterruptedException {
+	public long run() {
+		acquire(true);
+		runSimulation();
+		long time = timeline.getTime();
+		release(true);
+		return time;
+	}
+	
+	void runSimulation() {
 		timeline.run();
-		synchronized(this) {
-			closed = true;
-			notifyAll();			
+		
+		lock.lock();
+		closed = true;
+		cond.signalAll();
+		while(exitThread != null)
+			cond.awaitUninterruptibly();
+		lock.unlock();
+	}
+	
+	void acquire(boolean runner) {
+		lock.lock();
+		if (running && (!blocked || runner))
+			throw new ConcurrentModificationException("reentering simulation");
+		if (runner) {
+			running = true;
+			lock.unlock();
 		}
-		thread.join();
-		/* No synchronization needed, as we know that the simulation is stopped
-		 * and the thread is dead too. */
-		thread = null;
-		return timeline.getTime();
+	}
+	
+	void setBlocked(boolean blocked) {
+		this.blocked = blocked; 
+	}
+	
+	void release(boolean runner) {
+		if (runner) {
+			lock.lock();
+			running = false;
+		}
+			
+		lock.unlock();
 	}
 	
 	private static class Invocation {
 		public Object target;
 		public Method method;
 		public Object[] args;
+		private ResultHolder result;
 		
-		public Invocation(Object target, Method method, Object[] args) {
+		public Invocation(Object target, Method method, Object[] args, ResultHolder result) {
 			this.target = target;
 			this.method = method;
 			this.args = args;
+			this.result = result;
 		}		
 	};
 	
-	synchronized void handleInvoke(Object target, Method method, Object[] args) {
-		if (thread == null) {
+	void handleInvoke(Object target, Method method, Object[] args, ResultHolder result) {
+		lock.lock();
+		if (exitThread == null) {
 			closed = false;
-			thread = new Thread() {
+			exitThread = new Thread() {
 				public void run() {
-					globalThread();
+					exitThread();
 				}
 			};
-			thread.start();
+			exitThread.start();
 		}
 
-		queue.add(new Invocation(target, method, args));
-		notifyAll();		
+		queue.add(new Invocation(target, method, args, result));
+		cond.signalAll();
+		lock.unlock();
 	}
 	
-	private void globalThread() {
-		while(true) {
-			try {
+	private void exitThread() {
+		lock.lock();
+		try {
+			while(true) {
 				Invocation i = null;
-				synchronized(this) {
-					while(!closed && queue.isEmpty())
-						wait();
-					if (queue.isEmpty())
-						return;
-					i = queue.remove(0);
-				}
+				while(!closed && queue.isEmpty())
+					cond.awaitUninterruptibly();
+				if (queue.isEmpty())
+					return;
+				i = queue.remove(0);
 
-				i.method.invoke(i.target, i.args);
-				
-			} catch (Exception e) {
-				// FIXME: should stop simulation?
-				e.printStackTrace();
+				setBlocked(true);
+				lock.unlock();
+				try {
+					i.result.reportReturn(i.method.invoke(i.target, i.args));
+				} catch(InvocationTargetException ite) {
+					i.result.reportException(ite.getTargetException());
+				}
+				lock.lock();
+				setBlocked(false);					
 			}
+		} catch (Exception e) {
+			logger.error("unexpected exception on exit", e);
+		} finally {
+			exitThread = null;
+			cond.signalAll();
+			lock.unlock();
 		}
 	}
 }

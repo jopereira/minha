@@ -19,16 +19,8 @@
 
 package pt.minha.models.global;
 
-import java.net.InetAddress;
+import java.lang.reflect.Method;
 
-import pt.minha.api.SimulationException;
-
-public interface HostInterface {
-	public void launch(long delay, String main, String[] args) throws SimulationException;
-
-	public EntryHandler createEntry(String impl);
-
-	public <T> T createExit(Class<T> intf, ExitHandler target);
-
-	public InetAddress getAddress();
+public interface ExitHandler {
+	boolean invoke(Method method, Object[] args, ResultHolder result);
 }

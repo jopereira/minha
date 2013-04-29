@@ -19,8 +19,10 @@
 
 package pt.minha.api;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+
+import pt.minha.models.global.ExitHandler;
+import pt.minha.models.global.ResultHolder;
 
 /**
  * Provides an exit out of a simulated host. This is the only
@@ -30,27 +32,37 @@ import java.lang.reflect.Method;
 @Global
 public class Exit<T> {
 	private T proxy;
+	private boolean async;
 	
 	Exit(final Host host, Class<T> intf, final T impl) {
 				
-		this.proxy = host.impl.createExit(intf, new InvocationHandler() {
+		this.proxy = host.impl.createExit(intf, new ExitHandler() {
+			
 			@Override
-			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-				if (!method.getReturnType().equals(Void.TYPE))
-					throw new IllegalArgumentException("method with non-void return type: "+method.getName());
-
-				host.world.handleInvoke(impl, method, args);
-				return null;
+			public boolean invoke(Method method, Object[] args, ResultHolder wakeup) {
+				host.world.handleInvoke(impl, method, args, wakeup);
+				return !async;
 			}
 		});
 	}
 
 	/**
 	 * Return the proxy.
+	 * 
+	 * @return the proxy
+	 */
+	public T report() {
+		async = true;
+		return proxy;
+	}
+	
+	/**
+	 * Return the proxy.
 	 *  
 	 * @return the proxy
 	 */
-	public T getProxy() {
+	public T callback() {
+		async = false;
 		return proxy;
 	}
 }

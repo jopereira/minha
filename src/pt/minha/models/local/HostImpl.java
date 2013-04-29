@@ -32,7 +32,10 @@ import java.util.Set;
 import pt.minha.api.SimulationException;
 import pt.minha.kernel.simulation.Resource;
 import pt.minha.kernel.simulation.Timeline;
+import pt.minha.models.global.EntryHandler;
+import pt.minha.models.global.ExitHandler;
 import pt.minha.models.global.HostInterface;
+import pt.minha.models.global.ResultHolder;
 import pt.minha.models.global.net.Network;
 import pt.minha.models.global.net.NetworkStack;
 import pt.minha.models.local.lang.SimulationThread;
@@ -123,24 +126,27 @@ public class HostImpl implements HostInterface {
 	}
 
 	@Override
-	public Trampoline createEntry(String impl) {
-		return new Trampoline.Impl(this, impl);
+	public EntryHandler createEntry(String impl) {
+		return new Trampoline(this, impl);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T createExit(Class<T> intf, final InvocationHandler target) {
+	public <T> T createExit(Class<T> intf, final ExitHandler target) {
 		return (T) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class<?>[]{ intf }, new InvocationHandler() {
 			@Override
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 				
 				SimulationThread.stopTime(0);
 				
-				target.invoke(proxy, method, args);
-				
-				SimulationThread.startTime(0);
-				
-				return null;
+				ResultHolder result = new ResultHolder();
+				try {
+					if (target.invoke(method, args, result))
+						return result.getResult();
+					return result.getFakeResult(method.getReturnType());
+				} finally {
+					SimulationThread.startTime(0);
+				}
 			}
 		});
 	}	
