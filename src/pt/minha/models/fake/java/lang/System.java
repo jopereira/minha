@@ -51,7 +51,9 @@ public class System {
 	
 	public static void exit(int status) {
 		pt.minha.models.global.Debug.println("Stopping simulation through java.lang.System.exit() whit status "+status);
-		SimulationThread.currentSimulationThread().getTimeline().exit(status);
+		// FIXME: This is a workaround.
+		while(true)
+			SimulationThread.currentSimulationThread().pause(false, false);
 	}
 	
 	public static SecurityManager getSecurityManager() {

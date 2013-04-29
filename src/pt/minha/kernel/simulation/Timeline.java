@@ -22,7 +22,7 @@ package pt.minha.kernel.simulation;
 import java.util.PriorityQueue;
 
 
-public class Timeline implements Runnable {
+public class Timeline {
 	private Usage usage;
 	
 	private long now = 0;
@@ -34,18 +34,17 @@ public class Timeline implements Runnable {
 	
 	private long simulationTime;
 
-	public Timeline(long simulationTime) {
-		this.simulationTime = simulationTime*1000000000;
+	public Timeline() {
 		usage = new Usage(this, 1000000000, "simulation", 1, "events/s", 1); 
 	}
 	
-	public void schedule(Event e) {
+	public synchronized void schedule(Event e) {
 		if (e.time < now)
 			throw new RuntimeException("scheduling backwards");
 		events.add(e);
 	}
 
-	public long getTime() {
+	public synchronized long getTime() {
 		return now;
 	}
 
@@ -57,25 +56,32 @@ public class Timeline implements Runnable {
 		events.remove(event);
 	}
 	
-	public void exit(int status) {
+	public synchronized void returnFromRun() {
 		this.simulationTime = 1;
 	}
 
-	@Override
-	public void run() {
+	public void run(long limit) {
+		synchronized(this) {
+			this.simulationTime = limit;
+		}
+		
 		while(!events.isEmpty()) {
-			if (simulationTime>0 && now>simulationTime)
-				break;
+			Event next = null;
 			
-			Event next = events.poll();
+			synchronized(this) {
+				if (simulationTime>0 && now>simulationTime)
+					break;
+				
+				next = events.poll();			
 			
-			if (next == null)
-				break;
-			
-			if (next.time < now)
-				throw new RuntimeException("FATAL: Time going backwards");
-			
-			now = next.time;			
+				if (next == null)
+					break;
+				
+				if (next.time < now)
+					throw new RuntimeException("FATAL: Time going backwards");
+				
+				now = next.time;			
+			}
 			next.execute();
 			usage.using(1);
 		}

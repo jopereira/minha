@@ -72,11 +72,16 @@ public class Entry<T> {
 					
 					return result.getFakeResult(method.getReturnType());
 				}
-				host.world.runSimulation();
+				host.world.runSimulation(0);
 				
 				host.world.release(true);
-
-				return result.getResult();
+				
+				if (result.isComplete())
+					return result.getResult();
+				else {
+					result.getFakeResult(method.getReturnType());
+					throw new InterruptedException();
+				}
 			}
 
 		});

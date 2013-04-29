@@ -42,7 +42,7 @@ public class Runner {
 			System.err.println("====================================================================================");
 			System.err.println("running for: " + simulationTime + " simulated seconds");
 
-			World hv = new World(simulationTime);
+			World hv = new World();
 			
 			CommandLineArgumentsParser cla = new CommandLineArgumentsParser(args);
 			
@@ -56,7 +56,7 @@ public class Runner {
 			System.err.println("====================================================================================");
 			
 			long time=System.nanoTime();
-			long stime=hv.run();
+			long stime=hv.run(simulationTime*1000000000);
 			
 			System.err.println("====================================================================================");
 			System.err.println("simulation finished: "+((double)(System.nanoTime()-time)/1e9)+"s real time / "+(((double)stime)/1e9)+"s simulation time");

@@ -96,11 +96,8 @@ public class Trampoline implements EntryHandler, Runnable {
 					i.result.reportException(ite.getTargetException());
 				}
 				
-				/*
-				 * Stop timeline if this was the invocation that owned the simulation
 				if (!i.result.isIgnored())
-					host.getTimeline().stop();
-				*/
+					host.getTimeline().returnFromRun();
 			}
 		} catch (Exception e) {
 			throw new RuntimeException("exception entering simulation", e);

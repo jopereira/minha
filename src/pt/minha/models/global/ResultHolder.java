@@ -65,4 +65,8 @@ public class ResultHolder {
 	public synchronized boolean isIgnored() {
 		return async;
 	}
+	
+	public synchronized boolean isComplete() {
+		return done;
+	}
 }	

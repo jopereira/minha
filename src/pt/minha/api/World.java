@@ -59,7 +59,7 @@ public class World {
 	private ReentrantLock lock = new ReentrantLock();
 	private Condition cond = lock.newCondition();
 		
-	public World(long simulationTime) throws Exception {		
+	public World() throws Exception {		
 		
 		// load network calibration values
 		Properties props = new Properties();
@@ -78,7 +78,7 @@ public class World {
 		if (is!=null)
 			props.load(is);
 		cc = new ClassConfig(props);
-		timeline = new Timeline(simulationTime);
+		timeline = new Timeline();
 		
 		network = new Network(timeline, nc);
 	}
@@ -111,25 +111,37 @@ public class World {
 	public Collection<Host> getHosts() {
 		return Collections.unmodifiableCollection(hosts);
 	}
-	
+
 	/**
-	 * Run the simulation until all events are processed or maximum set time
-	 * is reached. This method waits for all outstanding callback events to
-	 * be processed.
+	 * Run the simulation until all events are processed.
 	 * 
 	 * @return time of latest event processed
 	 * @throws InterruptedException
 	 */
 	public long run() {
+		return run(0);
+	}
+
+	
+	/**
+	 * Run the simulation until all events are processed or the time limit
+	 * is reached. This method waits for all outstanding callback events to
+	 * be processed.
+	 * 
+	 * @param limit run only to the specified time limit
+	 * @return time of latest event processed
+	 * @throws InterruptedException
+	 */
+	public long run(long limit) {
 		acquire(true);
-		runSimulation();
+		runSimulation(limit);
 		long time = timeline.getTime();
 		release(true);
 		return time;
 	}
 	
-	void runSimulation() {
-		timeline.run();
+	void runSimulation(long limit) {
+		timeline.run(limit);
 		
 		lock.lock();
 		closed = true;
