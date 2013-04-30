@@ -34,6 +34,14 @@ public class ReentrantLock implements Lock {
 	private int busy;
 	private SimulationThread holder;
 
+	public ReentrantLock() {
+		
+	}
+	
+	public ReentrantLock(boolean fair) {
+		// currently ignored
+	}
+
 	@Override
 	public void lock() {
 		if (busy!=0) {

@@ -45,6 +45,10 @@ public class System {
 		return java.lang.System.getProperty(prop);
 	}
 	
+	public static String getProperty(String prop, String value) {
+		return java.lang.System.getProperty(prop, value);
+	}
+					
 	public static void arraycopy(java.lang.Object a, int b, java.lang.Object c, int d, int e) {
 		java.lang.System.arraycopy(a, b, c, d, e);
 	}
