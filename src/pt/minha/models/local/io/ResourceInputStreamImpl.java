@@ -22,15 +22,21 @@ package pt.minha.models.local.io;
 import java.io.IOException;
 import java.io.InputStream;
 
+import pt.minha.models.global.Debug;
+
 public class ResourceInputStreamImpl {
 	private InputStream is;
 	
 	public ResourceInputStreamImpl(Class clz, String name) {
 		is = clz.getResourceAsStream(name);
+		if (is==null)
+			throw new NullPointerException();
 	}
 	
 	public ResourceInputStreamImpl(ClassLoader cl, String name) {
 		is = cl.getResourceAsStream(name);
+		if (is==null)
+			throw new NullPointerException();
 	}
 	
 	public int read() throws IOException {
