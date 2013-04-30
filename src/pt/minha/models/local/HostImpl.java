@@ -113,11 +113,11 @@ public class HostImpl implements HostInterface {
 				
 				SimulationThread.stopTime(0);
 				
-				ResultHolder result = new ResultHolder();
+				ResultHolder result = new ResultHolder(method);
 				try {
 					if (target.invoke(method, args, result))
 						return result.getResult();
-					return result.getFakeResult(method.getReturnType());
+					return result.getFakeResult();
 				} finally {
 					SimulationThread.startTime(0);
 				}

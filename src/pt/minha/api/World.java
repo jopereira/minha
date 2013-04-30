@@ -150,11 +150,31 @@ public class World {
 	 * 
 	 * @param nanosTimeout run only to the specified time limit
 	 * @return time of latest event processed
-	 * @throws InterruptedException
 	 */
 	public long runNanos(long nanosTimeout) {
 		acquire(true);
 		runSimulation(nanosTimeout);
+		long time = timeline.getTime();
+		release(true);
+		return time;
+	}
+	
+	/**
+	 * Run the simulation until the last asynchronous invocation queued
+	 * for each entry proxy has completed. It is mandatory that each
+	 * proxy has one pending invocation. This is ensured by not having
+	 * run the simulation since such invocations have been queued.
+	 * 
+	 * @param entries entry proxies with one pending invocation
+	 */
+	public long runAll(Entry<?>... entries) {
+		acquire(true);
+		for(Entry<?> e: entries)
+			e.last.setSync();
+		for(Entry<?> e: entries) {
+			if (!e.last.isComplete())
+				runSimulation(0);
+		}
 		long time = timeline.getTime();
 		release(true);
 		return time;

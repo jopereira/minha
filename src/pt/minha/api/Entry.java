@@ -31,11 +31,13 @@ import pt.minha.models.global.ResultHolder;
 /**
  * Provides an entry into a simulated host. It creates an instance
  * of the desired type within the host and then handles invocations
- * in a simulated thread.  
+ * in a simulated thread. This class is not thread-safe and should
+ * not ever be reentered.
  */
 public class Entry<T> {
 	private T proxy;
 	private EntryHandler target;
+	ResultHolder last;
 	
 	private long time;
 	private boolean async, relative;
@@ -64,14 +66,19 @@ public class Entry<T> {
 				host.world.acquire(!async);
 				
 				// Queue invocation
-				ResultHolder result = new ResultHolder();
+				ResultHolder result = new ResultHolder(method);
 					
 				target.invoke(time, relative, method, args, result);
 					
 				if (async) {
+					if (last != null)
+						last.setIgnored();
+					
+					last = result;
+					
 					host.world.release(false);
 					
-					return result.getFakeResult(method.getReturnType());
+					return result.getFakeResult();
 				}
 				host.world.runSimulation(0);
 				
@@ -80,7 +87,7 @@ public class Entry<T> {
 				if (result.isComplete())
 					return result.getResult();
 				else {
-					result.getFakeResult(method.getReturnType());
+					result.getFakeResult();
 					throw new InterruptedException();
 				}
 			}
@@ -170,5 +177,17 @@ public class Entry<T> {
 	public T call() {
 		this.async = false;
 		return proxy;
+	}
+	
+	/**
+	 * Retrieves result from the last asynchronous invocation, if any.
+	 * 
+	 * @return result from the last queued invocation
+	 * @throws Throwable exception from the last queued invocation
+	 */
+	public Object getResult() throws Throwable {
+		ResultHolder r = last;
+		last = null;
+		return r.getResult();
 	}
 }

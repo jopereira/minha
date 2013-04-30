@@ -1,5 +1,7 @@
 package pt.minha.models.global;
 
+import java.lang.reflect.Method;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -7,23 +9,31 @@ public class ResultHolder {
 	
 	private static Logger logger = LoggerFactory.getLogger("pt.minha.API");
 
+	private Method method;
 	private Object result;
 	private Throwable exception;
-	private boolean done;
-	private boolean async;
+	private boolean done, async, ignored;
+	
+	public ResultHolder(Method method) {
+		this.method = method;
+	}
 	
 	public synchronized void reportReturn(Object result) {
 		this.result = result;
 		done = true;
 		notifyAll();
-		if (async) ignore();
+		if (ignored) setIgnored();
 	}
 
 	public synchronized void reportException(Throwable exception) {
 		this.exception = exception;
 		done = true;
 		notifyAll();
-		if (async) ignore();
+		if (ignored) setIgnored();
+	}
+	
+	public synchronized boolean isComplete() {
+		return done;
 	}
 	
 	public synchronized Object getResult() throws Throwable {
@@ -34,8 +44,10 @@ public class ResultHolder {
 		return result;
 	}
 	
-	public Object getFakeResult(Class<?> type) throws Throwable {
-		ignore();
+	public synchronized Object getFakeResult() throws Throwable {
+		Class<?> type = method.getReturnType();
+		
+		async = true;
 		
 		if (!type.isPrimitive() || type.equals(Void.TYPE))
 			return null;
@@ -53,20 +65,22 @@ public class ResultHolder {
 			return Byte.valueOf((byte)0);
 		return null;
 	}
-
-	private synchronized void ignore() {
-		async = true;
-		if (exception != null)
-			logger.error("uncaught exception on entry/exit", exception);
-		else if (done && result != null)
-			logger.warn("ignored result on entry/exit", result);
-	}
 	
+	public synchronized void setSync() {
+		if (done)
+			throw new IllegalArgumentException("cannot wait on finished invocation");
+		async = false;
+	}
+
+	public synchronized void setIgnored() {
+		ignored = true;
+		if (exception != null)
+			logger.error("uncaught exception on entry/exit {}", method, exception);
+		else if (done && result != null)
+			logger.warn("ignored result on entry/exit to {}", method);
+	}
+		
 	public synchronized boolean isIgnored() {
 		return async;
-	}
-	
-	public synchronized boolean isComplete() {
-		return done;
-	}
-}	
+	}	
+}
