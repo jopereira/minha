@@ -125,4 +125,8 @@ public class ServerSocket {
 	public int getLocalPort() {
 		return tcp.getLocalAddress().getPort();
 	}
+	
+	public InetAddress getInetAddress() {
+		return tcp.getLocalAddress().getAddress();
+	}
 }

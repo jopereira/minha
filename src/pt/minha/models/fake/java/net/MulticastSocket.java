@@ -21,6 +21,9 @@ package pt.minha.models.fake.java.net;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.SocketException;
 
 public class MulticastSocket extends DatagramSocket {
 	
@@ -31,12 +34,32 @@ public class MulticastSocket extends DatagramSocket {
     public MulticastSocket(int port) throws IOException {
         super(port);
     }
+    
+    public MulticastSocket(SocketAddress address) throws SocketException {
+    	super(address);
+    }
 
     public void joinGroup(InetAddress addr) throws IOException {
     	udp.joinGroup(addr);
     }
 
+    public void joinGroup(SocketAddress addr, NetworkInterface intf) throws IOException {
+    	joinGroup(((InetSocketAddress)addr).getAddress());
+    }
+
     public void leaveGroup(InetAddress addr) throws IOException {
     	udp.leaveGroup(addr);
+    }
+    
+    public void setTimeToLive(int ttl) throws IOException {
+    	// not implemented
+    }
+    
+    public void setInterface(InetAddress addr) throws IOException {
+    	// not implemented
+    }
+
+    public InetAddress getInterface() throws IOException {
+    	return udp.getNetwork().getLocalAddress();
     }
 }

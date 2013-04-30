@@ -130,4 +130,24 @@ public class DatagramSocket {
 	public boolean isClosed() {
 		return closed;
 	}
+
+	public void setTrafficClass(int vaulue) throws SocketException {
+		// not implemented
+	}
+
+	public int getReceiveBufferSize() throws SocketException {
+		return 65535;
+	}
+
+	public void setReceiveBufferSize(int size) throws SocketException {
+		// not implemented
+	}
+
+	public int getSendBufferSize() throws SocketException {
+		return 65535;
+	}
+
+	public void setSendBufferSize(int size) throws SocketException {
+		// not implemented
+	}
 }

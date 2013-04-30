@@ -20,7 +20,9 @@
 package pt.minha.models.fake.java.net;
 
 import java.net.InetAddress;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Vector;
 
 import pt.minha.models.global.net.NetworkStack;
@@ -47,6 +49,16 @@ public class NetworkInterface {
 		NetworkStack net = SimulationThread.currentSimulationThread().getHost().getNetwork(); 
 		aux.add(new NetworkInterface(net.getMACAddress(), net.getLocalAddress()));
 		return aux.elements();
+	}
+
+	public List<InterfaceAddress> getInterfaceAddresses() {
+		NetworkStack net = SimulationThread.currentSimulationThread().getHost().getNetwork();
+		return Collections.singletonList(new InterfaceAddress(net));
+	}
+	
+	public static NetworkInterface getByInetAddress(InetAddress addr) {
+		NetworkStack net = SimulationThread.currentSimulationThread().getHost().getNetwork();
+		return new NetworkInterface(net.getMACAddress(), net.getLocalAddress());
 	}
 	
 	public String getName() {
