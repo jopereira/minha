@@ -140,11 +140,11 @@ public class SimulationThread extends Thread {
 		}
 	}
 	
-	public void fake_join() throws InterruptedException {
+	public void fake_join(long timeout) throws InterruptedException {
 		try {
 			joinLock.lock();
 			while(!joinDead)
-				joinCond.await();
+				joinCond.awaitNanos(timeout);
 		} finally {
 			joinLock.unlock();
 		}

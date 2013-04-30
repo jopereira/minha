@@ -89,7 +89,7 @@ public class HostImpl implements HostInterface {
 					break;
 				t = threads.iterator().next();
 			}
-			t.fake_join();
+			t.fake_join(0);
 		}
 		cpu.stop();
 	}

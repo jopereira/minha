@@ -116,9 +116,17 @@ public class Thread extends Object implements Runnable {
     }
     
     public void join() throws InterruptedException {
-    	this.simulationThread.fake_join();
+    	this.simulationThread.fake_join(0);
     }
-    
+
+    public void join(long timeout) throws InterruptedException {
+    	this.simulationThread.fake_join(0*1000000);
+    }
+
+    public void join(long millis, long nanos) throws InterruptedException {
+    	this.simulationThread.fake_join(0*1000000+nanos);
+    }
+
     public final void setDaemon(boolean on) {
     	daemon = on;
     	if (on)
