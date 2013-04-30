@@ -37,9 +37,7 @@ public class Object {
 			Field f = clz.getField("_fake_class");
 			return (Object) f.get(clz);
 		} catch (Exception e) {
-			if (obj.getClass().isArray())
-				return stub(obj);
-			throw new RuntimeException("Trying to synchronize on a native class "+obj.getClass());
+			return stub(obj);
 		}
 	}
 	
@@ -48,7 +46,7 @@ public class Object {
 	 * This currently leaks references. It can be solved by reference counting
 	 * and keeping references only through waits and synchronized. 
 	 */
-	private static java.util.Map<java.lang.Object, Object> stubmap = new java.util.HashMap<java.lang.Object, Object>();
+	private static java.util.Map<java.lang.Object, Object> stubmap = new java.util.IdentityHashMap<java.lang.Object, Object>();
 	private static Object stub(java.lang.Object obj) {
 		Object stub = stubmap.get(obj);
 		if (stub==null) {
