@@ -19,6 +19,7 @@
 
 package pt.minha.api;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -59,6 +61,10 @@ public class World {
 	private ReentrantLock lock = new ReentrantLock();
 	private Condition cond = lock.newCondition();
 		
+	/**
+	 * Create a new simulation container.
+	 * @throws Exception
+	 */
 	public World() throws Exception {		
 		
 		// load network calibration values
@@ -95,7 +101,7 @@ public class World {
 	}
 
 	/**
-	 * Create a host.
+	 * Create a host with automatically assigned IP address.
 	 * 
 	 * @return a host instance
 	 * @throws SimulationException
@@ -119,7 +125,21 @@ public class World {
 	 * @throws InterruptedException
 	 */
 	public long run() {
-		return run(0);
+		return runNanos(0);
+	}
+
+	/**
+	 * Run the simulation until all events are processed or the time limit
+	 * is reached. This method waits for all outstanding callback events to
+	 * be processed.
+	 * 
+	 * @param timeout run only to the specified time limit
+	 * @param unit time units for timeout parameter
+	 * @return time of latest event processed
+	 * @throws InterruptedException
+	 */
+	public long run(long timeout, TimeUnit unit) {
+		return runNanos(unit.toNanos(timeout));
 	}
 
 	
@@ -128,13 +148,13 @@ public class World {
 	 * is reached. This method waits for all outstanding callback events to
 	 * be processed.
 	 * 
-	 * @param limit run only to the specified time limit
+	 * @param nanosTimeout run only to the specified time limit
 	 * @return time of latest event processed
 	 * @throws InterruptedException
 	 */
-	public long run(long limit) {
+	public long runNanos(long nanosTimeout) {
 		acquire(true);
-		runSimulation(limit);
+		runSimulation(nanosTimeout);
 		long time = timeline.getTime();
 		release(true);
 		return time;

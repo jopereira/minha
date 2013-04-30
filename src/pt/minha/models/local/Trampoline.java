@@ -46,7 +46,12 @@ public class Trampoline implements EntryHandler, Runnable {
 	}
 	
 	@Override
-	public void invoke(long time, Method method, Object[] args, ResultHolder result) {
+	public void invoke(long time, boolean relative, Method method, Object[] args, ResultHolder result) {
+		Timeline timeline = host.getTimeline();
+		if (!relative)
+			time -= timeline.getTime();
+		if (time < 0)
+			time = 0;
 		new Invocation(host.getTimeline(), method, args, result).schedule(time);
 	}
 

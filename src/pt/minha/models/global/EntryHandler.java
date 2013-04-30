@@ -22,5 +22,5 @@ package pt.minha.models.global;
 import java.lang.reflect.Method;
 
 public interface EntryHandler {
-	void invoke(long time, Method method, Object[] args, ResultHolder result);
+	void invoke(long time, boolean relative, Method method, Object[] args, ResultHolder result);
 }

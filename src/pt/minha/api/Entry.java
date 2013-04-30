@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.concurrent.TimeUnit;
 
 import pt.minha.models.global.EntryHandler;
 import pt.minha.models.global.ResultHolder;
@@ -37,7 +38,7 @@ public class Entry<T> {
 	private EntryHandler target;
 	
 	private long time;
-	private boolean async;
+	private boolean async, relative;
 	
 	/** 
 	 * Create a proxy to inject arbitrary invocations within a host.
@@ -65,7 +66,7 @@ public class Entry<T> {
 				// Queue invocation
 				ResultHolder result = new ResultHolder();
 					
-				target.invoke(time, method, args, result);
+				target.invoke(time, relative, method, args, result);
 					
 				if (async) {
 					host.world.release(false);
@@ -88,29 +89,86 @@ public class Entry<T> {
 		
 		this.target = host.impl.createEntry(impl);
 	}
-
+	
 	/**
-	 * Return the proxy to perform an asynchronous invocation at the desired
-	 * time. This can only be used on methods returning void and corresponds
-	 * to scheduling a simulation event at the specified time.
-	 *  
-	 * @param time
-	 * @return the proxy
+	 * Set proxy for invocations to be scheduled right away, as
+	 * soon as possible.
+	 * 
+	 * @return the entry itself, for chaining invocations
 	 */
-	public T at(long time) {
-		this.async = true;
-		this.time = time;
-		return proxy;
+	public Entry<T> asap() {
+		return afterNanos(0l);
 	}
 
 	/**
-	 * Return the proxy to perform a symchronous call at the desired time.
+	 * Set proxy for invocations to be scheduled after a delay.
+	 *
+	 * @param timeout simulation delay before scheduling
+	 * @param unit time unit for simulation delay
+	 * @return the entry itself, for chaining invocations
+	 */
+	public Entry<T> after(long timeout, TimeUnit unit) {
+		return afterNanos(unit.toNanos(timeout));
+	}
+	
+	/**
+	 * Set proxy for invocations to be scheduled after a delay.
+	 *
+	 * @param nanosTimeout simulation delay before scheduling
+	 * @return the entry itself, for chaining invocations
+	 */
+	public Entry<T> afterNanos(long nanosTimeout) {
+		this.relative = true;
+		this.time = nanosTimeout;
+		return this;
+	}
+
+	/**
+	 * Set proxy for invocations to be scheduled at a specific
+	 * instant in simulation time. This defaults to asap(), if
+	 * the instant is in the past.
+	 *
+	 * @param schedule simulation delay before scheduling
+	 * @param unit time unit for simulation delay
+	 * @return the entry itself, for chaining invocations
+	 */
+	public Entry<T> at(long schedule, TimeUnit unit) {
+		return atNanos(unit.toNanos(schedule));
+	}
+	
+	/**
+	 * Set proxy for invocations to be scheduled at a specific
+	 * instant in simulation time. This defaults to asap(), if
+	 * the instant is in the past.
+	 *
+	 * @param nanosSchedule simulation delay before scheduling
+	 * @return the entry itself, for chaining invocations
+	 */
+	public Entry<T> atNanos(long nanosSchedule) {
+		this.relative = false;
+		this.time = nanosSchedule;
+		return this;
+	}
+
+	/**
+	 * Return the proxy to perform an asynchronous invocation at the desired
+	 * time. This corresponds to scheduling a simulation event at the specified
+	 * time. Return values will be discarded.
 	 *  
 	 * @return the proxy
 	 */
-	public T call(long time) {
+	public T queue() {
+		this.async = true;
+		return proxy;
+	}
+	
+	/**
+	 * Return the proxy to perform a synchronous call at the desired time.
+	 *  
+	 * @return the proxy
+	 */
+	public T call() {
 		this.async = false;
-		this.time = time;
 		return proxy;
 	}
 }

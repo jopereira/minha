@@ -25,6 +25,8 @@
 
 package pt.minha.tools;
 
+import java.util.concurrent.TimeUnit;
+
 import pt.minha.api.Entry;
 import pt.minha.api.Host;
 import pt.minha.api.Main;
@@ -52,14 +54,14 @@ public class Runner {
 				for (int i=1; i<=argsInstance.getN(); i++) {
 					Host host = hv.createHost(argsInstance.getIP());
 					Entry<Main> main = host.createEntry();
-					main.at(argsInstance.getDelay()).main(argsInstance.getMain(), argsInstance.getArgs());
+					main.at(argsInstance.getDelay(), TimeUnit.SECONDS).queue().main(argsInstance.getMain(), argsInstance.getArgs());
 				}
 			}
 			
 			System.err.println("====================================================================================");
 			
 			long time=System.nanoTime();
-			long stime=hv.run(simulationTime*1000000000);
+			long stime=hv.run(simulationTime, TimeUnit.SECONDS);
 			
 			System.err.println("====================================================================================");
 			System.err.println("simulation finished: "+((double)(System.nanoTime()-time)/1e9)+"s real time / "+(((double)stime)/1e9)+"s simulation time");
