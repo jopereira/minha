@@ -247,7 +247,7 @@ public class SimulationThread extends Thread {
 	private void doStartTime(long overhead) {
 		if (time>=0)
 			throw new RuntimeException("restarting time");
-		
+
 		host.getCPU().acquire(getWakeup());
 		resync();
 		

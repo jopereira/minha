@@ -111,15 +111,19 @@ public class HostImpl implements HostInterface {
 			@Override
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 				
-				SimulationThread.stopTime(0);
+				SimulationThread.stopTime(target.getOverheadBefore());
 				
 				ResultHolder result = new ResultHolder(method);
 				try {
-					if (target.invoke(method, args, result))
+					if (target.invoke(method, args, result)) {
+						if (target.getDelay()>0)
+							SimulationThread.currentSimulationThread().idle(target.getDelay(), false, false);
+
 						return result.getResult();
+					}
 					return result.getFakeResult();
-				} finally {
-					SimulationThread.startTime(0);
+				} finally {					
+					SimulationThread.startTime(target.getOverheadAfter());
 				}
 			}
 		});

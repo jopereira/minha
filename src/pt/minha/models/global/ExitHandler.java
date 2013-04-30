@@ -23,4 +23,10 @@ import java.lang.reflect.Method;
 
 public interface ExitHandler {
 	boolean invoke(Method method, Object[] args, ResultHolder result);
+
+	long getOverheadBefore();
+
+	long getOverheadAfter();
+
+	long getDelay();
 }

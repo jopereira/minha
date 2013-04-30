@@ -33,6 +33,7 @@ import pt.minha.models.global.ResultHolder;
 public class Exit<T> {
 	private T proxy;
 	private boolean async;
+	private long before, after, delay;
 	
 	Exit(final Host host, Class<T> intf, final T impl) {
 				
@@ -43,11 +44,56 @@ public class Exit<T> {
 				host.world.handleInvoke(impl, method, args, wakeup);
 				return !async;
 			}
+
+			@Override
+			public long getOverheadBefore() {
+				return before;
+			}
+
+			@Override
+			public long getOverheadAfter() {
+				return after;
+			}
+
+			@Override
+			public long getDelay() {
+				return delay;
+			}
 		});
+	}
+	
+	/**
+	 * Set CPU overhead before and after invocation. This can be invoked
+	 * from outside or from inside the simulation. The value persists for
+	 * all subsequent invocations. This is used for all invocations. The 
+	 * callee can within the invocation override only the second value,
+	 * to be incurred after the invocation.
+	 * 
+	 * @param before simulated CPU overhead in nanoseconds
+	 * @param after simulated CPU overhead in nanoseconds
+	 * @return the object itself for chaining invocations
+	 */
+	public Exit<T> overhead(long before, long after) {
+		this.before = before;
+		this.after = after;
+		return this;
 	}
 
 	/**
-	 * Return the proxy.
+	 * Set simulated delay that is incurred by the simulation with the
+	 * invocation. This is imposed only on synchronous invocations. The
+	 * callee can override this delay within the invocation.
+	 * 
+	 * @param before simulated delay in nanoseconds
+	 * @return the object itself for chaining invocations
+	 */
+	public Exit<T> delay(long delay) {
+		this.delay = delay;
+		return this;
+	}
+
+	/**
+	 * Set invocation mode to asynchronous and return the proxy.
 	 * 
 	 * @return the proxy
 	 */
@@ -57,7 +103,7 @@ public class Exit<T> {
 	}
 	
 	/**
-	 * Return the proxy.
+	 * Set the invocation mode to synchronous and return the proxy.
 	 *  
 	 * @return the proxy
 	 */
