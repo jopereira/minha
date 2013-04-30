@@ -34,4 +34,8 @@ public class Runtime {
 	public long freeMemory() {
 		return 1024;
 	}
+	
+	public int availableProcessors() {
+		return 1;
+	}
 }
