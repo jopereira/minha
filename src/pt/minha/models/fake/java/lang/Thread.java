@@ -186,6 +186,10 @@ public class Thread extends Object implements Runnable {
     	return group;
     }
 
+    public SimulationThread getSimulationThread() {
+    	return simulationThread;
+    }
+    
     public void simulationStart() {
     	this.simulationStart(0);
     }

@@ -36,7 +36,7 @@ public class SimulationThread extends Thread {
 	private HostImpl host;
 	private long time = -1;
 	private boolean blocked, rt, dead, started, interruptible, interrupted;
-	private boolean uninterruptible;
+	private boolean parked, permit;
 	
 	private WakeUpEvent wakeup;
 	private Condition wakeupCond;
@@ -162,7 +162,6 @@ public class SimulationThread extends Thread {
 		
 		blocked = false;
 		interruptible = false;
-		uninterruptible = false;
 		wakeupCond.signal();
 		
 		while(!blocked)
@@ -305,6 +304,30 @@ public class SimulationThread extends Thread {
 
 	public long fake_getId() {
 		return id;
+	}
+	
+	public void park(long nanos) {
+		if (permit)
+			permit = false;
+		else {
+			stopTime(0);
+			if (nanos>0)
+				getWakeup().schedule(nanos);
+			parked = true;
+			pause(true, false);
+			parked = false;
+			startTime(0);
+		}
+	}
+	
+	public void unpark(pt.minha.models.fake.java.lang.Thread target) {
+		SimulationThread st = target.getSimulationThread();
+		if (st.parked) {
+			stopTime(0);
+			st.getWakeup().schedule(0);
+			startTime(0);
+		} else
+			st.permit = true;
 	}
 	
 	public String toString() {
