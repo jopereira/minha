@@ -130,9 +130,10 @@ public class ReentrantLock implements Lock {
 
 	@Override
 	public boolean tryLock() {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("Not supported method");
-		//return false;
+		if (busy!=0)
+			return false;
+		lock();
+		return true;
 	}
 
 	@Override
@@ -141,6 +142,10 @@ public class ReentrantLock implements Lock {
 		// TODO Auto-generated method stub
 		throw new RuntimeException("Not supported method");
 		//return false;
+	}
+	
+	public boolean isHeldByCurrentThread() {
+		return holder == SimulationThread.currentSimulationThread();
 	}
 
 	@Override
