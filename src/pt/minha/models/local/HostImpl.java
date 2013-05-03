@@ -115,6 +115,10 @@ public class HostImpl implements HostInterface {
 				
 				ResultHolder result = new ResultHolder(method);
 				try {
+					
+					if (target.isMilestone())
+						SimulationThread.currentSimulationThread().getTimeline().returnFromRun();
+
 					if (target.invoke(method, args, result)) {
 						if (target.getDelay()>0)
 							SimulationThread.currentSimulationThread().idle(target.getDelay(), false, false);

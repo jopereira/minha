@@ -34,10 +34,10 @@ import pt.minha.models.global.ResultHolder;
  * in a simulated thread. This class is not thread-safe and should
  * not ever be reentered.
  */
-public class Entry<T> {
+public class Entry<T> extends Milestone {
 	private T proxy;
 	private EntryHandler target;
-	ResultHolder last;
+	private ResultHolder last;
 	
 	private long time;
 	private boolean async, relative;
@@ -189,5 +189,15 @@ public class Entry<T> {
 		ResultHolder r = last;
 		last = null;
 		return r.getResult();
+	}
+
+	@Override
+	void setWaited() {
+		last.setSync();
+	}
+
+	@Override
+	public boolean isComplete() {
+		return last.isComplete();
 	}
 }

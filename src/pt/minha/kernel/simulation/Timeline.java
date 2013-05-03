@@ -60,7 +60,7 @@ public class Timeline {
 		this.simulationTime = 1;
 	}
 
-	public void run(long limit) {
+	public boolean run(long limit) {
 		synchronized(this) {
 			this.simulationTime = limit;
 		}
@@ -85,5 +85,7 @@ public class Timeline {
 			next.execute();
 			usage.using(1);
 		}
+		
+		return !events.isEmpty();
 	}
 }

@@ -30,9 +30,9 @@ import pt.minha.models.global.ResultHolder;
  * communicate with a global overseer.
  */
 @Global
-public class Exit<T> {
+public class Exit<T> extends Milestone {
 	private T proxy;
-	private boolean async;
+	private boolean async, waited, done;
 	private long before, after, delay;
 	
 	Exit(final Host host, Class<T> intf, final T impl) {
@@ -44,7 +44,7 @@ public class Exit<T> {
 				host.world.handleInvoke(impl, method, args, wakeup);
 				return !async;
 			}
-
+			
 			@Override
 			public long getOverheadBefore() {
 				return before;
@@ -58,6 +58,15 @@ public class Exit<T> {
 			@Override
 			public long getDelay() {
 				return delay;
+			}
+
+			@Override
+			public boolean isMilestone() {
+				if (waited) {
+					done = true;
+					return true;
+				}
+				return false;
 			}
 		});
 	}
@@ -110,5 +119,15 @@ public class Exit<T> {
 	public T callback() {
 		async = false;
 		return proxy;
+	}
+
+	@Override
+	void setWaited() {
+		waited = true;
+	}
+
+	@Override
+	public boolean isComplete() {
+		return done;
 	}
 }

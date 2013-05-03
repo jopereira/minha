@@ -17,18 +17,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.global;
+package pt.minha.api;
 
-import java.lang.reflect.Method;
+/**
+ * A simulation milestone that can be waited on. The simulation is run
+ * until a set of milestones is achieved. Milestones are situations in
+ * which simulation returns control to the driver code: Either the 
+ * return from entry invocations or the invocation of exit objects.
+ */
+public abstract class Milestone {
+	Milestone() {}
+	
+	abstract void setWaited();
 
-public interface ExitHandler {
-	boolean invoke(Method method, Object[] args, ResultHolder result);
-
-	long getOverheadBefore();
-
-	long getOverheadAfter();
-
-	long getDelay();
-
-	boolean isMilestone();
+	/**
+	 * Tests if the milestone has been completed.
+	 * 
+	 * @return true if complete
+	 */
+	public abstract boolean isComplete();
 }

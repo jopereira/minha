@@ -19,7 +19,6 @@
 
 package pt.minha.api;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -119,7 +118,10 @@ public class World {
 	}
 
 	/**
-	 * Run the simulation until all events are processed.
+	 * Run the simulation until all events are processed. Warning: If
+	 * the simulation has some activity hat never
+	 * terminates, this method will never return. The safe way to run a
+	 * simulation is to use a timeout or a set of milestones.
 	 * 
 	 * @return time of latest event processed
 	 * @throws InterruptedException
@@ -160,28 +162,28 @@ public class World {
 	}
 	
 	/**
-	 * Run the simulation until the last asynchronous invocation queued
-	 * for each entry proxy has completed. It is mandatory that each
-	 * proxy has one pending invocation. This is ensured by not having
-	 * run the simulation since such invocations have been queued.
+	 * Run the simulation until all events are processed or all milestones
+	 * achieved. This method waits for all outstanding callback events to
+	 * be processed.
 	 * 
-	 * @param entries entry proxies with one pending invocation
+	 * @param milestones goals to be met
+	 * @return time of latest event processed
 	 */
-	public long runAll(Entry<?>... entries) {
+	public long runAll(Milestone... milestones) {
 		acquire(true);
-		for(Entry<?> e: entries)
-			e.last.setSync();
-		for(Entry<?> e: entries) {
-			if (!e.last.isComplete())
-				runSimulation(0);
+		for(Milestone m: milestones)
+			m.setWaited();
+		for(Milestone m: milestones) { 
+			while(!m.isComplete() && runSimulation(0))
+				;
 		}
 		long time = timeline.getTime();
 		release(true);
 		return time;
 	}
 	
-	void runSimulation(long limit) {
-		timeline.run(limit);
+	boolean runSimulation(long limit) {
+		boolean empty = timeline.run(limit);
 		
 		lock.lock();
 		closed = true;
@@ -189,6 +191,8 @@ public class World {
 		while(exitThread != null)
 			cond.awaitUninterruptibly();
 		lock.unlock();
+		
+		return empty;
 	}
 	
 	void acquire(boolean runner) {
