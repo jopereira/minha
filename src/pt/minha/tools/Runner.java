@@ -28,7 +28,7 @@ package pt.minha.tools;
 import java.util.concurrent.TimeUnit;
 
 import pt.minha.api.Entry;
-import pt.minha.api.Host;
+import pt.minha.api.Process;
 import pt.minha.api.Main;
 import pt.minha.api.World;
 
@@ -52,7 +52,7 @@ public class Runner {
 			
 			for (final InstanceArguments argsInstance : cla) {
 				for (int i=1; i<=argsInstance.getN(); i++) {
-					Host host = hv.createHost(argsInstance.getIP());
+					Process host = hv.createHost(argsInstance.getIP());
 					Entry<Main> main = host.createEntry();
 					main.at(argsInstance.getDelay(), TimeUnit.SECONDS).queue().main(argsInstance.getMain(), argsInstance.getArgs());
 				}

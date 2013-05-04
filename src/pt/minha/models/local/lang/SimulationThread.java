@@ -26,14 +26,14 @@ import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.kernel.timer.IntervalTimer;
 import pt.minha.kernel.timer.TimerProvider;
-import pt.minha.models.local.HostImpl;
+import pt.minha.models.local.SimulationProcess;
 
 public class SimulationThread extends Thread {
 	private static IntervalTimer timer = TimerProvider.open();
 	
 	private pt.minha.models.fake.java.lang.Thread fakeThread;
 	private long id;
-	private HostImpl host;
+	private SimulationProcess host;
 	private long time = -1;
 	private boolean blocked, rt, dead, started, interruptible, interrupted;
 	private boolean parked, permit;
@@ -49,7 +49,7 @@ public class SimulationThread extends Thread {
 	private Condition joinCond = joinLock.newCondition();
 	private boolean joinDead = false;
 		
-	public SimulationThread(boolean rt, HostImpl host, Runnable runnable, pt.minha.models.fake.java.lang.Thread fakeThread) {
+	public SimulationThread(boolean rt, SimulationProcess host, Runnable runnable, pt.minha.models.fake.java.lang.Thread fakeThread) {
 
 		if (host==null)
 			host = ((SimulationThread) Thread.currentThread()).host;
@@ -100,7 +100,7 @@ public class SimulationThread extends Thread {
 		return this.fakeThread;
 	}
 	
-	public HostImpl getHost() {
+	public SimulationProcess getHost() {
 		return host;
 	}
 	

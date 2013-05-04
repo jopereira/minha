@@ -25,7 +25,7 @@ import pt.minha.models.global.ExitHandler;
 import pt.minha.models.global.ResultHolder;
 
 /**
- * Provides an exit out of a simulated host. This is the only
+ * Provides an exit out of a simulated process. This is the only
  * safe way to invoke methods outside the simulation, e.g. to
  * communicate with a global overseer. Note that the proxy 
  * is single threaded and at any given time will be in a single
@@ -37,13 +37,13 @@ public class Exit<T> extends Milestone {
 	private boolean async, waited, done;
 	private long before, after, delay;
 	
-	Exit(final Host host, Class<T> intf, final T impl) {
+	Exit(final Process proc, Class<T> intf, final T impl) {
 				
-		this.proxy = host.impl.createExit(intf, new ExitHandler() {
+		this.proxy = proc.impl.createExit(intf, new ExitHandler() {
 			
 			@Override
 			public boolean invoke(Method method, Object[] args, ResultHolder wakeup) {
-				host.world.handleInvoke(impl, method, args, wakeup);
+				proc.world.handleInvoke(impl, method, args, wakeup);
 				return !async;
 			}
 			

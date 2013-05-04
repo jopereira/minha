@@ -59,7 +59,7 @@ public class Entry<T> extends Milestone {
 	 * @throws IllegalArgumentException 
 	 */
 	@SuppressWarnings("unchecked")
-	Entry(final Host host, Class<T> intf, String impl) throws ClassNotFoundException, IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	Entry(final Process host, Class<T> intf, String impl) throws ClassNotFoundException, IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		this.proxy = (T) Proxy.newProxyInstance(host.loader, new Class<?>[]{ intf }, new InvocationHandler() {
 			@Override
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {

@@ -25,26 +25,26 @@ import java.net.InetAddress;
 import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.instrument.InstrumentationLoader;
 import pt.minha.kernel.simulation.Timeline;
-import pt.minha.models.global.HostInterface;
+import pt.minha.models.global.EntryInterface;
 import pt.minha.models.global.net.Network;
 import pt.minha.models.local.MainEntry;
 
 /**
- * A host running within the Minha simulated world. 
+ * A process running within a simulated host. 
  */
-public class Host {
+public class Process {
 	World world;
 	InstrumentationLoader loader;
-	HostInterface impl;
+	EntryInterface impl;
 
-	Host(World w, ClassConfig cc, Timeline timeline, String ip, Network network) throws SimulationException {
+	Process(World w, ClassConfig cc, Timeline timeline, String ip, Network network) throws SimulationException {
 		world = w;
 
 		loader=new InstrumentationLoader(cc);
 		
 		try {
 			Class<?> clz = loader.loadClass("pt.minha.models.local.HostImpl");
-			impl = (HostInterface)clz.getDeclaredConstructor(timeline.getClass(), String.class, Network.class).newInstance(timeline, ip, network);
+			impl = (EntryInterface)clz.getDeclaredConstructor(timeline.getClass(), String.class, Network.class).newInstance(timeline, ip, network);
 		} catch(Exception e) {
 			throw new SimulationException(e);
 		}
@@ -95,6 +95,8 @@ public class Host {
 	public <T> Exit<T> createExit(Class<T> intf, T impl) {
 		return new Exit<T>(this, intf, impl);
 	}
+	
+	// FIXME: the following belong to host, not process
 
 	/**
 	 * Get simulated host address. This is the address that the simulated

@@ -27,7 +27,7 @@ import java.util.List;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.EntryHandler;
-import pt.minha.models.global.HostInterface;
+import pt.minha.models.global.EntryInterface;
 import pt.minha.models.global.ResultHolder;
 import pt.minha.models.local.lang.SimulationThread;
 
@@ -36,12 +36,12 @@ public class Trampoline implements EntryHandler, Runnable {
 	private pt.minha.models.fake.java.lang.Thread thread;
 	private List<Invocation> queue = new ArrayList<Trampoline.Invocation>();
 	private Event wakeup;
-	private HostImpl host;
+	private SimulationProcess host;
 	
-	public Trampoline(HostInterface host, String implName) {
+	public Trampoline(EntryInterface host, String implName) {
 		this.implName = implName;
-		this.host = (HostImpl) host;
-		this.thread = new pt.minha.models.fake.java.lang.Thread((HostImpl)host, this);
+		this.host = (SimulationProcess) host;
+		this.thread = new pt.minha.models.fake.java.lang.Thread((SimulationProcess)host, this);
 		thread.simulationStart(0);
 	}
 	

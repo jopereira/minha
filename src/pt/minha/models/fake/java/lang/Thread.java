@@ -19,7 +19,7 @@
 
 package pt.minha.models.fake.java.lang;
 
-import pt.minha.models.local.HostImpl;
+import pt.minha.models.local.SimulationProcess;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class Thread extends Object implements Runnable {
@@ -66,7 +66,7 @@ public class Thread extends Object implements Runnable {
 			this.setName("Thread-"+simulationThread.fake_getId());
 	}
 	
-	public Thread(HostImpl host, Runnable runnable) {
+	public Thread(SimulationProcess host, Runnable runnable) {
 		checkSimulation(false);
 		this.simulationThread = new SimulationThread(true, host, runnable, this);
 		this.setName("main");

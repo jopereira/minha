@@ -32,23 +32,22 @@ import pt.minha.kernel.simulation.Resource;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.EntryHandler;
 import pt.minha.models.global.ExitHandler;
-import pt.minha.models.global.HostInterface;
+import pt.minha.models.global.EntryInterface;
 import pt.minha.models.global.ResultHolder;
 import pt.minha.models.global.net.Network;
 import pt.minha.models.global.net.NetworkStack;
 import pt.minha.models.local.lang.SimulationThread;
 
-
-public class HostImpl implements HostInterface {
-	// CPU
-	private Resource cpu;
+public class SimulationProcess implements EntryInterface {
+	// Process state
 	private Set<SimulationThread> threads = new HashSet<SimulationThread>();
 	private long threadId = -2; // -1 is "main" thread, 0 is the first user thread
 	
-	// Networking
+	// Host state
+	private Resource cpu;
 	private NetworkStack network;
 		
-	public HostImpl(Timeline timeline, String host, Network network) throws UnknownHostException, FileNotFoundException {
+	public SimulationProcess(Timeline timeline, String host, Network network) throws UnknownHostException, FileNotFoundException {
 		this.network = new NetworkStack(timeline, host, network);
 		this.cpu = new Resource(timeline, this.network.getLocalAddress().getHostAddress());
 	}
