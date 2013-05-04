@@ -32,7 +32,8 @@ import pt.minha.models.global.ResultHolder;
  * Provides an entry into a simulated host. It creates an instance
  * of the desired type within the host and then handles invocations
  * in a simulated thread. This class is not thread-safe and should
- * not ever be reentered.
+ * not ever be reentered.  At any given time will be in a single
+ * timing and mode.
  */
 public class Entry<T> extends Milestone {
 	private T proxy;
@@ -159,8 +160,11 @@ public class Entry<T> extends Milestone {
 
 	/**
 	 * Return the proxy to perform an asynchronous invocation at the desired
-	 * time. This corresponds to scheduling a simulation event at the specified
-	 * time. Return values will be discarded.
+	 * time. The result, as well as an exception, can be retrieved using
+	 * {@link Entry#getResult()}. Note that this method should always be
+	 * executed, even if the application doesn't care about the result or
+	 * even if the method is void, otherwise, exceptions in simulation code
+	 * might be hidden. 
 	 *  
 	 * @return the proxy
 	 */
@@ -180,7 +184,8 @@ public class Entry<T> extends Milestone {
 	}
 	
 	/**
-	 * Retrieves result from the last asynchronous invocation, if any.
+	 * Retrieves result from the last asynchronous invocation, if any. This should
+	 * always be invoked, in order not to hide exceptions.
 	 * 
 	 * @return result from the last queued invocation
 	 * @throws Throwable exception from the last queued invocation

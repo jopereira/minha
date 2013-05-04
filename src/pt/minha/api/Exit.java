@@ -27,7 +27,9 @@ import pt.minha.models.global.ResultHolder;
 /**
  * Provides an exit out of a simulated host. This is the only
  * safe way to invoke methods outside the simulation, e.g. to
- * communicate with a global overseer.
+ * communicate with a global overseer. Note that the proxy 
+ * is single threaded and at any given time will be in a single
+ * timing and mode. 
  */
 @Global
 public class Exit<T> extends Milestone {
@@ -102,9 +104,11 @@ public class Exit<T> extends Milestone {
 	}
 
 	/**
-	 * Set invocation mode to asynchronous and return the proxy.
+	 * Set invocation mode to asynchronous and return the proxy. The returned
+	 * result and possible exceptions will be discarded. Driver code should
+	 * thus carefully catch all exceptions, otherwise they will be hidden.
 	 * 
-	 * @return the proxy
+	 * @return the proxy set for asynchronous invocations
 	 */
 	public T report() {
 		async = true;
@@ -113,8 +117,11 @@ public class Exit<T> extends Milestone {
 	
 	/**
 	 * Set the invocation mode to synchronous and return the proxy.
+	 * The simulation will be stopped while the invocation lasts and
+	 * the external driver code is free to schedule further asynchronous
+	 * entries. Synchronous entries are however not allowed.
 	 *  
-	 * @return the proxy
+	 * @return the proxy set for synchronous invocations
 	 */
 	public T callback() {
 		async = false;
