@@ -98,7 +98,7 @@ public class Process {
 	 * Gets the simulated host container.
 	 * @return the simulation world for this host
 	 */
-	public Host getContainer() {
+	public Host getHost() {
 		return host;
 	}
 }

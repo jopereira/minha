@@ -120,6 +120,56 @@ public class World {
 	}
 
 	/**
+	 * Utility method to quickly initialize a distributed system simulation.
+	 * This creates several hosts, each with a single process, each with 
+	 * a single entry for a main method.
+	 *  
+	 * @param n number of hosts/processes to create.
+	 * @return entry objects that can invoke main methods
+	 */
+	public Entry<Main>[] createEntries(int n) throws IllegalArgumentException, SecurityException, ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, SimulationException {
+		@SuppressWarnings("unchecked")
+		Entry<Main>[] entries = new Entry[n];
+		for(int i = 0; i<n; i++)
+			entries[i] = createHost().createProcess().createEntry();
+		return entries;
+	}
+	
+	/**
+	 * Utility method to quickly initialize a distributed system simulation.
+	 * This creates several hosts, each with a single process, each with 
+	 * a single entry for a user defined interface and implementation.
+	 *  
+	 * @param n number of hosts/processes to create.
+	 * @return entry objects that can invoke the given interface
+	 */
+	public <T> Entry<T>[] createEntries(int n, Class<T> intf, String impl) throws IllegalArgumentException, SecurityException, ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, SimulationException {
+		@SuppressWarnings("unchecked")
+		Entry<T>[] entries = new Entry[n];
+		for(int i = 0; i<n; i++)
+			entries[i] = createHost().createProcess().createEntry(intf, impl);
+		return entries;
+	}	
+	
+	/**
+	 * Utility method to quickly initialize exit proxies for a distributed system 
+	 * simulation. An exit proxy will be created for each process, all pointing
+	 * to the same implementation.
+	 * 
+	 * @param entries entries in the processes where exits will be created
+	 * @param intf interface for the proxy
+	 * @param impl implementation object outside the simulation
+	 * @return exit objects that can invoke the given interface
+	 */
+	public <T1,T2> Exit<T1>[] createExits(Entry<T2>[] entries, Class<T1> intf, T1 impl) {
+		@SuppressWarnings("unchecked")
+		Exit<T1>[] exits = new Exit[entries.length];
+		for(int i = 0; i<entries.length; i++)
+			exits[i] = entries[i].getProcess().createExit(intf, impl);
+		return exits;
+	}
+	
+	/**
 	 * Run the simulation until all events are processed. Warning: If
 	 * the simulation has some activity hat never
 	 * terminates, this method will never return. The safe way to run a

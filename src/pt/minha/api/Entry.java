@@ -42,6 +42,7 @@ public class Entry<T> extends Milestone {
 	
 	private long time;
 	private boolean async, relative;
+	private Process proc;
 	
 	/** 
 	 * Create a proxy to inject arbitrary invocations within a host.
@@ -59,7 +60,8 @@ public class Entry<T> extends Milestone {
 	 * @throws IllegalArgumentException 
 	 */
 	@SuppressWarnings("unchecked")
-	Entry(final Process proc, Class<T> intf, String impl) throws ClassNotFoundException, IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	Entry(Process process, Class<T> intf, String impl) throws ClassNotFoundException, IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		this.proc = process;
 		this.proxy = (T) Proxy.newProxyInstance(proc.loader, new Class<?>[]{ intf }, new InvocationHandler() {
 			@Override
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -194,6 +196,14 @@ public class Entry<T> extends Milestone {
 		ResultHolder r = last;
 		last = null;
 		return r.getResult();
+	}
+	
+	/**
+	 * Gets the containing simulation process.
+	 * @return a reference to the simulation process
+	 */
+	public Process getProcess() {
+		return proc;
 	}
 
 	@Override
