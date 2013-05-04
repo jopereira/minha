@@ -52,7 +52,7 @@ public class World {
 	private NetworkConfig nc;
 	private Timeline timeline;
 	private Network network;
-	private List<Process> hosts = new ArrayList<Process>();
+	private List<Host> hosts = new ArrayList<Host>();
 	private List<Invocation> queue = new ArrayList<Invocation>();
 	private boolean closed;
 	private Thread exitThread;
@@ -95,8 +95,10 @@ public class World {
 	 * @return a host instance
 	 * @throws SimulationException
 	 */
-	public Process createHost(String ip) throws SimulationException {
-		return new Process(this, cc, timeline, ip, network);
+	public Host createHost(String ip) throws SimulationException {
+		Host host = new Host(this, cc, timeline, ip, network);
+		hosts.add(host);
+		return host;
 	}
 
 	/**
@@ -105,7 +107,7 @@ public class World {
 	 * @return a host instance
 	 * @throws SimulationException
 	 */
-	public Process createHost() throws SimulationException {
+	public Host createHost() throws SimulationException {
 		return createHost(null);
 	}
 	
@@ -113,7 +115,7 @@ public class World {
 	 * Get processes in this simulation container.
 	 * @return host collection
 	 */
-	public Collection<Process> getHosts() {
+	public Collection<Host> getHosts() {
 		return Collections.unmodifiableCollection(hosts);
 	}
 

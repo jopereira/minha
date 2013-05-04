@@ -43,7 +43,7 @@ public class Exit<T> extends Milestone {
 			
 			@Override
 			public boolean invoke(Method method, Object[] args, ResultHolder wakeup) {
-				proc.world.handleInvoke(impl, method, args, wakeup);
+				proc.host.world.handleInvoke(impl, method, args, wakeup);
 				return !async;
 			}
 			

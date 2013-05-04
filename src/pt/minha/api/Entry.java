@@ -46,7 +46,7 @@ public class Entry<T> extends Milestone {
 	/** 
 	 * Create a proxy to inject arbitrary invocations within a host.
 	 * 
-	 * @param host an host instance
+	 * @param proc an host instance
 	 * @param clz the interface (global) of the class to be created
 	 * @param impl the name of the class (translated) to be created within the host
 	 * @param time true if the invocation is done in real-time
@@ -59,12 +59,12 @@ public class Entry<T> extends Milestone {
 	 * @throws IllegalArgumentException 
 	 */
 	@SuppressWarnings("unchecked")
-	Entry(final Process host, Class<T> intf, String impl) throws ClassNotFoundException, IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-		this.proxy = (T) Proxy.newProxyInstance(host.loader, new Class<?>[]{ intf }, new InvocationHandler() {
+	Entry(final Process proc, Class<T> intf, String impl) throws ClassNotFoundException, IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		this.proxy = (T) Proxy.newProxyInstance(proc.loader, new Class<?>[]{ intf }, new InvocationHandler() {
 			@Override
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 				
-				host.world.acquire(!async);
+				proc.host.world.acquire(!async);
 				
 				// Queue invocation
 				ResultHolder result = new ResultHolder(method);
@@ -77,13 +77,13 @@ public class Entry<T> extends Milestone {
 					
 					last = result;
 					
-					host.world.release(false);
+					proc.host.world.release(false);
 					
 					return result.getFakeResult();
 				}
-				host.world.runSimulation(0);
+				proc.host.world.runSimulation(0);
 				
-				host.world.release(true);
+				proc.host.world.release(true);
 				
 				if (result.isComplete())
 					return result.getResult();
@@ -95,7 +95,7 @@ public class Entry<T> extends Milestone {
 
 		});
 		
-		this.target = host.impl.createEntry(impl);
+		this.target = proc.impl.createEntry(impl);
 	}
 	
 	/**

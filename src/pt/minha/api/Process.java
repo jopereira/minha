@@ -20,42 +20,40 @@
 package pt.minha.api;
 
 import java.lang.reflect.InvocationTargetException;
-import java.net.InetAddress;
 
 import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.instrument.InstrumentationLoader;
-import pt.minha.kernel.simulation.Timeline;
+import pt.minha.kernel.simulation.Resource;
 import pt.minha.models.global.EntryInterface;
-import pt.minha.models.global.net.Network;
+import pt.minha.models.global.net.NetworkStack;
 import pt.minha.models.local.MainEntry;
 
 /**
  * A process running within a simulated host. 
  */
 public class Process {
-	World world;
+	Host host;
 	InstrumentationLoader loader;
 	EntryInterface impl;
 
-	Process(World w, ClassConfig cc, Timeline timeline, String ip, Network network) throws SimulationException {
-		world = w;
+	Process(Host h, ClassConfig cc, NetworkStack network, Resource cpu) throws SimulationException {
+		this.host = h;
 
 		loader=new InstrumentationLoader(cc);
-		
 		try {
-			Class<?> clz = loader.loadClass("pt.minha.models.local.HostImpl");
-			impl = (EntryInterface)clz.getDeclaredConstructor(timeline.getClass(), String.class, Network.class).newInstance(timeline, ip, network);
+			Class<?> clz = loader.loadClass("pt.minha.models.local.SimulationProcess");
+			impl = (EntryInterface) clz.getDeclaredConstructor(Resource.class, NetworkStack.class).newInstance(cpu, network);
 		} catch(Exception e) {
 			throw new SimulationException(e);
 		}
 	}
 	
 	/** 
-	 * Create an entry point to inject arbitrary invocations within a host.
+	 * Create an entry point to inject arbitrary invocations within a process.
 	 * This avoids the main method and can be used for multiple invocations.
 	 * 
 	 * @param clz the interface (global) of the class to be created
-	 * @param impl the name of the class (translated) to be created within the host
+	 * @param impl the name of the class (translated) to be created within the process
 	 * @throws ClassNotFoundException 
 	 * @throws IllegalAccessException 
 	 * @throws InstantiationException 
@@ -69,9 +67,9 @@ public class Process {
 	}
 
 	/** 
-	 * Create an entry point start a program within a host.
+	 * Create an entry point start a program within a process.
 	 * 
-	 * @param impl the name of the class (translated) to be created within the host
+	 * @param impl the name of the class (translated) to be created within the process
 	 * @throws ClassNotFoundException 
 	 * @throws IllegalAccessException 
 	 * @throws InstantiationException 
@@ -85,7 +83,7 @@ public class Process {
 	}
 	
 	/** 
-	 * Create a proxy to receive callbacks from this simulation host. This proxy
+	 * Create a proxy to receive callbacks from this simulation process. This proxy
 	 * is to be handled to simulation code as a parameter to an entry method.
 	 * 
 	 * @param clz the interface (global) of the class to be created
@@ -96,23 +94,11 @@ public class Process {
 		return new Exit<T>(this, intf, impl);
 	}
 	
-	// FIXME: the following belong to host, not process
-
 	/**
-	 * Get simulated host address. This is the address that the simulated
-	 * host will use in the container, when networking with other simulated
-	 * hosts.
-	 * @return host address
-	 */
-	public InetAddress getAddress() {
-		return impl.getAddress();
-	}
-	
-	/**
-	 * Gets the simulated world container.
+	 * Gets the simulated host container.
 	 * @return the simulation world for this host
 	 */
-	public World getContainer() {
-		return world;
+	public Host getContainer() {
+		return host;
 	}
 }

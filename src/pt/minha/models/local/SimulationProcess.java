@@ -19,37 +19,30 @@
 
 package pt.minha.models.local;
 
-import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 
 import pt.minha.kernel.simulation.Resource;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.EntryHandler;
-import pt.minha.models.global.ExitHandler;
 import pt.minha.models.global.EntryInterface;
+import pt.minha.models.global.ExitHandler;
 import pt.minha.models.global.ResultHolder;
-import pt.minha.models.global.net.Network;
 import pt.minha.models.global.net.NetworkStack;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class SimulationProcess implements EntryInterface {
-	// Process state
 	private Set<SimulationThread> threads = new HashSet<SimulationThread>();
-	private long threadId = -2; // -1 is "main" thread, 0 is the first user thread
-	
-	// Host state
+	private long threadId = -2; // -1 is "main" thread, 0 is the first user thread	
 	private Resource cpu;
 	private NetworkStack network;
 		
-	public SimulationProcess(Timeline timeline, String host, Network network) throws UnknownHostException, FileNotFoundException {
-		this.network = new NetworkStack(timeline, host, network);
-		this.cpu = new Resource(timeline, this.network.getLocalAddress().getHostAddress());
+	public SimulationProcess(Resource cpu, NetworkStack network) {
+		this.cpu = cpu;
+		this.network = network;
 	}
 	
 	public Resource getCPU() {
@@ -91,11 +84,6 @@ public class SimulationProcess implements EntryInterface {
 			t.fake_join(0);
 		}
 		cpu.stop();
-	}
-
-	@Override
-	public InetAddress getAddress() {
-		return network.getLocalAddress();
 	}
 
 	@Override

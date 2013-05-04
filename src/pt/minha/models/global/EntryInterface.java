@@ -19,12 +19,8 @@
 
 package pt.minha.models.global;
 
-import java.net.InetAddress;
-
 public interface EntryInterface {
 	public EntryHandler createEntry(String impl);
 
 	public <T> T createExit(Class<T> intf, ExitHandler target);
-
-	public InetAddress getAddress();
 }
