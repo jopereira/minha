@@ -32,7 +32,12 @@ import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.net.Network;
 import pt.minha.models.global.net.NetworkStack;
 
-public class Host {
+/**
+ * A simulated host running within the simulation container. A simulated
+ * host has a shared CPU and network stacks, with an unique IP, for all
+ * processes.
+ */
+public class Host implements Closeable {
 	private List<Process> procs = new ArrayList<Process>();
 	World world;
 	private NetworkStack network;

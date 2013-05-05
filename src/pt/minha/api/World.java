@@ -42,10 +42,11 @@ import pt.minha.models.global.net.Network;
 import pt.minha.models.global.net.NetworkConfig;
 
 /**
- * This is the main entry point for Minha. It provides a method to create
- * simulated hosts and interact with the simulated world as whole.
+ * The simulation container. This is the main entry point for Minha.
+ * It provides a method to create simulated hosts and interact with
+ * the simulated world as whole.
  */
-public class World {
+public class World implements Closeable {
 	private static Logger logger = LoggerFactory.getLogger("pt.minha.API");
 	
 	private ClassConfig cc;
