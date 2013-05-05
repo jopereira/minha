@@ -19,6 +19,8 @@
 
 package pt.minha.models.local.lang;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -26,9 +28,10 @@ import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.kernel.timer.IntervalTimer;
 import pt.minha.kernel.timer.TimerProvider;
+import pt.minha.models.global.SimulationThreadDeath;
 import pt.minha.models.local.SimulationProcess;
 
-public class SimulationThread extends Thread {
+public class SimulationThread extends Thread implements Closeable {
 	private static IntervalTimer timer = TimerProvider.open();
 	
 	private pt.minha.models.fake.java.lang.Thread fakeThread;
@@ -112,24 +115,31 @@ public class SimulationThread extends Thread {
 		host.addThread(this);
 		
 		lock.lock();
-		while(blocked)
+		while(blocked && !dead)
 			wakeupCond.awaitUninterruptibly();
 		lock.unlock();
-		
+
 		try {
+			if (dead)
+				return;
+
 			if (rt) startTime(0);
 			runnable.run();
+		} catch(SimulationThreadDeath d) {
+			// good! :-)
 		} catch (Throwable e) {
 			e.printStackTrace();
 			System.exit(1);
 		} finally {
-			joinLock.lock();
-			joinDead = true;
-			joinCond.signal();
-			joinLock.unlock();
-
-			if (rt) stopTime(0);
-
+			if (!dead) {
+				joinLock.lock();
+				joinDead = true;
+				joinCond.signal();
+				joinLock.unlock();
+	
+				if (rt) stopTime(0);
+			}
+			
 			lock.lock();
 			blocked = true;
 			wakeupCond.signal();
@@ -164,7 +174,7 @@ public class SimulationThread extends Thread {
 		interruptible = false;
 		wakeupCond.signal();
 		
-		while(!blocked)
+		while(!blocked && !dead)
 			wakeupCond.awaitUninterruptibly();
 		
 		lock.unlock();
@@ -210,10 +220,13 @@ public class SimulationThread extends Thread {
 		this.interruptible = interruptible;
 		wakeupCond.signal();
 
-		while(blocked)
+		while(blocked && !dead)
 			wakeupCond.awaitUninterruptibly();
-
+		
 		lock.unlock();
+
+		if (dead)
+			throw new SimulationThreadDeath();
 		
 		return getInterruptedStatus(clear);
 	}
@@ -228,10 +241,13 @@ public class SimulationThread extends Thread {
 		blocked = true;
 		wakeupCond.signal();
 
-		while(blocked)
+		while(blocked && !dead)
 			wakeupCond.awaitUninterruptibly();
 		
 		lock.unlock();
+
+		if (dead)
+			throw new SimulationThreadDeath();
 	}
 
 	/**
@@ -332,6 +348,14 @@ public class SimulationThread extends Thread {
 	
 	public String toString() {
 		return "SimulationThread@"+host.getNetwork().getLocalAddress().getHostAddress()+"["+fakeThread.getName()+"]";
+	}
+
+	@Override
+	public void close() throws IOException {
+		lock.lock();
+		dead = true;
+		wakeupCond.signalAll();
+		lock.unlock();
 	}
 
 	/*

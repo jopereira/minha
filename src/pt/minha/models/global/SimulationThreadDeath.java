@@ -19,10 +19,5 @@
 
 package pt.minha.models.global;
 
-import java.io.Closeable;
-
-public interface EntryInterface extends Closeable {
-	public EntryHandler createEntry(String impl);
-
-	public <T> T createExit(Class<T> intf, ExitHandler target);
+public class SimulationThreadDeath extends Error {
 }

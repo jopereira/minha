@@ -19,6 +19,8 @@
 
 package pt.minha.api;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -330,5 +332,11 @@ public class World implements Closeable {
 			cond.signalAll();
 			lock.unlock();
 		}
+	}
+
+	@Override
+	public void close() throws IOException {
+		for(Host h: hosts)
+			h.close();
 	}
 }

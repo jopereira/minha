@@ -19,6 +19,8 @@
 
 package pt.minha.api;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -91,5 +93,11 @@ public class Host implements Closeable {
 	 */
 	public World getContainer() {
 		return world;
+	}
+
+	@Override
+	public void close() throws IOException {
+		for(Process p: procs)
+			p.close();
 	}
 }

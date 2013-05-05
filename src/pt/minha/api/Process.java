@@ -19,6 +19,8 @@
 
 package pt.minha.api;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 import pt.minha.kernel.instrument.ClassConfig;
@@ -31,7 +33,7 @@ import pt.minha.models.local.MainEntry;
 /**
  * A process running within a simulated host. 
  */
-public class Process {
+public class Process implements Closeable {
 	Host host;
 	InstrumentationLoader loader;
 	EntryInterface impl;
@@ -100,5 +102,10 @@ public class Process {
 	 */
 	public Host getHost() {
 		return host;
+	}
+
+	@Override
+	public void close() throws IOException {
+		impl.close();
 	}
 }
