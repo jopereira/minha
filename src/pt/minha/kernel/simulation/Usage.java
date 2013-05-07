@@ -24,10 +24,10 @@ import org.slf4j.LoggerFactory;
 
 
 public class Usage extends Event {
-	private long interval, base, acum;
+	private long interval, base, acum, rtbase;
 	private Logger logger;
 	private String units;
-	private double factor;
+	private float factor;
 	private int threshold;
 
 	/**
@@ -37,7 +37,7 @@ public class Usage extends Event {
 	 * @param factor multiplicative factor 
 	 * @param threshold minimum events that cause reporting
 	 */
-	public Usage(Timeline timeline, long interval, String id, double factor, String units, int threshold) {
+	public Usage(Timeline timeline, long interval, String id, float factor, String units, int threshold) {
 		super(timeline);
 		this.interval = interval;
 		this.base = -1;
@@ -55,12 +55,17 @@ public class Usage extends Event {
 		}
 		
 		long now = getTimeline().getTime();
-		double delta = Timeline.toSeconds(now-base);
-		double usage = acum / delta * factor;
-		logger.info("[ {} s, +{} s ] {} {}", Timeline.toSeconds(base), delta, usage, units);
+		float delta = (float)Timeline.toSeconds(now-base);
+		float usage = acum / delta * factor;
+		long rtnow = System.nanoTime();
+		float rtdelta = (float)Timeline.toSeconds(rtnow-rtbase);
+		float rtusage = acum / rtdelta * factor;
+		int ratio = (int)(100*rtdelta/delta);
+		logger.info("[ {} s, +{} s ] {} {} (RT: {}% - {} {})", Timeline.toSeconds(base), delta, usage, units, ratio, rtusage, units);
 		
 		base = now;
 		acum = 0;
+		rtbase = rtnow;
 		
 		schedule(interval);
 	}
@@ -70,6 +75,7 @@ public class Usage extends Event {
 		if (base<0 && acum > threshold) {
 			schedule(interval);
 			base = getTimeline().getTime();
+			rtbase = System.nanoTime();
 		}
 	}
 }

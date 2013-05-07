@@ -19,7 +19,12 @@
 
 package pt.minha.kernel.timer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TimerProvider {
+	private static Logger logger = LoggerFactory.getLogger("pt.minha.Timer"); 
+	
 	private static Class<?> clz;
 	
 	static {
@@ -27,7 +32,7 @@ public class TimerProvider {
 			clz = Class.forName("pt.minha.kernel.timer.NativeTimer");
 			
 		} catch(Throwable e) {
-			System.err.println("WARNING! Cannot find native timer. Using unreliable timer.");
+			logger.warn("Cannot find native timer. Using unreliable timer.");
 		}
 	}
 	
@@ -37,7 +42,7 @@ public class TimerProvider {
 				return (IntervalTimer) clz.newInstance();
 		} catch(Exception e) {
 			clz = null;
-			System.err.println("WARNING! Cannot use native timer. Using unreliable timer.");
+			logger.warn("Cannot use native timer. Using unreliable timer.", e);
 		}
 		return new JavaTimer();
 	}
