@@ -38,7 +38,7 @@ public class Buffer {
 		int done = 0;
 				
 		while(len-done>0 && n<bufferSize) {
-			int op = len;
+			int op = len-done;
 			if (op > bufferSize-n)
 				op = bufferSize-n;
 			if (op > bufferSize-h)
@@ -59,7 +59,7 @@ public class Buffer {
 		int done = 0;
 
 		while(len-done>0 && n>0) {
-			int op = len;
+			int op = len-done;
 			if (op > n)
 				op = n;
 			if (op > bufferSize-t)
