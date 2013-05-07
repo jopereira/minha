@@ -92,6 +92,8 @@ public class SimulationThread extends Thread implements Closeable {
 	public void simulationStart(long delay) {		
 		super.start();
 
+		started = true;
+		
 		getWakeup().schedule(delay);
 	}
 	

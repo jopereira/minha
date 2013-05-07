@@ -97,6 +97,8 @@ public class Trampoline implements EntryHandler, Runnable {
 					i.result.reportReturn(result);
 					
 				} catch(InvocationTargetException ite) {
+					if (!SimulationThread.currentSimulationThread().fake_isAlive())
+						return;
 					SimulationThread.stopTime(0);
 					i.result.reportException(ite.getTargetException());
 				}
