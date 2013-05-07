@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -123,7 +124,8 @@ public class SimulationProcess implements EntryInterface {
 
 	@Override
 	public void close() throws IOException {
-		for(SimulationThread t: threads)
+		ArrayList<SimulationThread> l = new ArrayList<SimulationThread>(threads);
+		for(SimulationThread t: l)
 			t.close();
 	}	
 }

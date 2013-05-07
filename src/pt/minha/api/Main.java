@@ -30,5 +30,5 @@ public interface Main {
 	 * @param args arguments to the main class
 	 * @throws Exception
 	 */
-	public void main(String impl, String[] args) throws Exception;
+	public void main(String impl, String... args) throws Exception;
 }

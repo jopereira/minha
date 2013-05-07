@@ -57,7 +57,7 @@ public class World implements Closeable {
 	private Network network;
 	private List<Host> hosts = new ArrayList<Host>();
 	private List<Invocation> queue = new ArrayList<Invocation>();
-	private boolean closed;
+	private boolean stopping, closed;
 	private Thread exitThread;
 	private boolean running, blocked;
 	private ReentrantLock lock = new ReentrantLock();
@@ -238,10 +238,13 @@ public class World implements Closeable {
 	}
 	
 	boolean runSimulation(long limit) {
+		if (limit != 0)
+			limit += timeline.getTime();
+		
 		boolean empty = timeline.run(limit);
 		
 		lock.lock();
-		closed = true;
+		stopping = true;
 		cond.signalAll();
 		while(exitThread != null)
 			cond.awaitUninterruptibly();
@@ -290,7 +293,7 @@ public class World implements Closeable {
 	void handleInvoke(Object target, Method method, Object[] args, ResultHolder result) {
 		lock.lock();
 		if (exitThread == null) {
-			closed = false;
+			stopping = false;
 			exitThread = new Thread() {
 				public void run() {
 					exitThread();
@@ -309,7 +312,7 @@ public class World implements Closeable {
 		try {
 			while(true) {
 				Invocation i = null;
-				while(!closed && queue.isEmpty())
+				while(!stopping && queue.isEmpty())
 					cond.awaitUninterruptibly();
 				if (queue.isEmpty())
 					return;
@@ -336,7 +339,15 @@ public class World implements Closeable {
 
 	@Override
 	public void close() throws IOException {
-		for(Host h: hosts)
+		if (closed)
+			return;
+		closed = true;
+		ArrayList<Host> l = new ArrayList<Host>(hosts);
+		for(Host h: l)
 			h.close();
+	}
+
+	void removeHost(Host host) {
+		hosts.remove(host);
 	}
 }

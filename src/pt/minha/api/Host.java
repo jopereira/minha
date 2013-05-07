@@ -45,6 +45,7 @@ public class Host implements Closeable {
 	private NetworkStack network;
 	private Resource cpu;
 	private ClassConfig cc;
+	private boolean closed;
 	
 	Host(World world, ClassConfig cc, Timeline timeline, String ip, Network network) throws SimulationException{
 		this.world = world;
@@ -97,7 +98,16 @@ public class Host implements Closeable {
 
 	@Override
 	public void close() throws IOException {
-		for(Process p: procs)
+		if (closed)
+			return;
+		closed = true;
+		ArrayList<Process> l = new ArrayList<Process>(procs);
+		for(Process p: l)
 			p.close();
+		world.removeHost(this);
+	}
+
+	void removeProcess(Process process) {
+		procs.remove(process);
 	}
 }

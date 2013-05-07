@@ -106,6 +106,7 @@ public class Process implements Closeable {
 
 	@Override
 	public void close() throws IOException {
+		host.removeProcess(this);
 		impl.close();
 	}
 }
