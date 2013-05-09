@@ -127,26 +127,26 @@ public class NetworkStack {
 			socketsUDP.remove(isa);
 	}
 	
-	public void handleDatagram(final InetSocketAddress destination, final DatagramPacket packet) {
-		new Event(timeline) {
+	public Event handleDatagram(final InetSocketAddress destination, final DatagramPacket packet) {
+		return new Event(timeline) {
 			public void run() {
 				UDPSocket sgds = socketsUDP.get(destination);
 				if (sgds!=null)
 					sgds.queue(packet);
 			}			
-		}.schedule(0);
+		};
 	}
 	
-	public void handleConnect(final InetSocketAddress destination, final TCPPacket p) {
-		new Event(timeline) {
+	public Event handleConnect(final InetSocketAddress destination, final TCPPacket p) {
+		return new Event(timeline) {
 			public void run() {
 				ListeningTCPSocket ssi = socketsTCP.get(destination);
 				if (ssi==null)
 					ssi = socketsTCP.get(new InetSocketAddress(destination.getPort()));
 				if (ssi==null || !ssi.queueConnect(p)) // connection refused
-					network.relayTCPData(new TCPPacket(null, p.getSource(), 0, 0, new byte[0], TCPPacket.RST));
+					network.relayTCPData(new TCPPacket(null, p.getSource(), 0, 0, new byte[0], TCPPacket.RST)).scheduleFrom(timeline, 0);
 			}
-		}.schedule(0);
+		};
 	}
 	
 	public NetworkConfig getConfig() {

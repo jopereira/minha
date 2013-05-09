@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -134,15 +133,15 @@ public class Network {
 			public void run() {
 				NetworkStack target = hosts.get(serverAddr.getAddress());
 				if (target==null)
-					tcpPacket.getSource().scheduleRead(new TCPPacket(null, tcpPacket.getSource(), 0, 0, new byte[0], TCPPacket.RST));
+					tcpPacket.getSource().scheduleRead(new TCPPacket(null, tcpPacket.getSource(), 0, 0, new byte[0], TCPPacket.RST)).scheduleFrom(timeline, 0);
 				else
-					target.handleConnect(serverAddr, tcpPacket);				
+					target.handleConnect(serverAddr, tcpPacket).scheduleFrom(timeline, 0);				
 			}			
-		}.schedule(0);
+		}.scheduleFrom(tcpPacket.getSource().getNetwork().getTimeline(), 0);
 	}
 		
-	public void relayTCPData(final TCPPacket p) {
-		new Event(timeline) {
+	public Event relayTCPData(final TCPPacket p) {
+		return new Event(timeline) {
 			public void run() {
 				// delay send
 				if  ( (current_bandwidth+p.getSize())>BUFFER || !queue.isEmpty()) {
@@ -151,7 +150,7 @@ public class Network {
 					return;
 				}
 				
-				p.getDestination().scheduleRead(p);
+				p.getDestination().scheduleRead(p).scheduleFrom(timeline, config.getNetworkDelay(p.getSize()));
 				current_bandwidth += p.getSize();
 				usage.using(p.getSize());
 				
@@ -160,11 +159,11 @@ public class Network {
 					wakeEvent.schedule(RESOLUTION);
 				}
 			}			
-		}.schedule(0);
+		};
 	}
 
-	public void relayUDP(final InetSocketAddress destination, final DatagramPacket p) {
-		new Event(timeline) {
+	public Event relayUDP(final InetSocketAddress destination, final DatagramPacket p) {
+		return new Event(timeline) {
 			public void run() {
 				if ( config.isLostPacket() )
 					return;
@@ -177,12 +176,12 @@ public class Network {
 					List<NetworkStack> stacks = multicastSockets.get(destination.getAddress());
 					if (stacks != null)
 						for (NetworkStack stack: stacks)
-							stack.handleDatagram(destination, p);
+							stack.handleDatagram(destination, p).scheduleFrom(timeline, 0);
 				
 				} else {
 					NetworkStack stack = hosts.get(destination.getAddress());
 					if (stack!=null)
-						stack.handleDatagram(destination, p);
+						stack.handleDatagram(destination, p).scheduleFrom(timeline, 0);
 				}
 				
 				current_bandwidth += p.getLength();
@@ -193,7 +192,7 @@ public class Network {
 					wakeEvent.schedule(RESOLUTION);
 				}
 			}			
-		}.schedule(0);
+		};
 	}
 
 	private class WakeEvent extends Event {
@@ -214,7 +213,7 @@ public class Network {
 				if ( (current_bandwidth+p.getSize()) > BUFFER )
 					break;
 				else {
-					p.getDestination().scheduleRead(p);
+					p.getDestination().scheduleRead(p).scheduleFrom(timeline, config.getNetworkDelay(p.getSize()));
 					queue.remove(0);
 					current_bandwidth += p.getSize();
 					usage.using(p.getSize());

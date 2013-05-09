@@ -21,7 +21,6 @@ package pt.minha.kernel.simulation;
 
 import java.util.PriorityQueue;
 
-
 public class Timeline {
 	private Usage usage;
 	
@@ -38,21 +37,28 @@ public class Timeline {
 		usage = new Usage(this, 1000000000, "simulation", 1, "events/s", 1); 
 	}
 	
-	public synchronized void schedule(Event e) {
-		if (e.time < now)
-			throw new RuntimeException("scheduling backwards");
-		events.add(e);
+	/**
+	 * Schedule an event. The event time is computed using this timeline's current
+	 * time and the delay, and then queued on the event's target timeline.
+	 * 
+	 * @param e event to be scheduled
+	 * @param delay delay relative to current simulation time
+	 */
+	public void schedule(Event e, long delay) {
+		e.getTimeline().add(e, now+delay);
 	}
 
 	public synchronized long getTime() {
 		return now;
 	}
 
-	void add(Event event) {
+	synchronized void add(Event event, long time) {
+		event.cancel();
+		event.time = time;
 		events.add(event);
 	}
 
-	void remove(Event event) {
+	synchronized void remove(Event event) {
 		events.remove(event);
 	}
 	

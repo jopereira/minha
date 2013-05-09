@@ -46,21 +46,8 @@ public abstract class Event implements Runnable, Comparable<Event> {
 	public abstract void run();
 	
 	/**
-	 * Schedule (or reschedule) event to a new deadline, as a delay on
-	 * current time in the associated timeline.
-	 * @param delta
-	 */
-	public void schedule(long delta) {
-		if (delta<0)
-			throw new RuntimeException("negative delay");
-		
-		cancel();
-		time = timeline.getTime() + delta;
-		timeline.add(this);
-	}
-
-	/**
-	 * Cancel event. Does nothing if event is not scheduled.
+	 * Cancel event. Does nothing if event is not scheduled. This can only
+	 * be called from the event's timeline.
 	 */
 	public void cancel() {
 		if (time >= 0)
@@ -68,13 +55,35 @@ public abstract class Event implements Runnable, Comparable<Event> {
 		time = -1;
 	}
 	
-	public int compareTo(Event other) {
-		return Long.signum(time-other.time);
+	/**
+	 * Reschedule the event. Can only be called from the event's target
+	 * timeline or when the simulation is stopped.
+	 * 
+	 * @param delay time delay in simulated nanoseconds
+	 */
+	public void schedule(long delay) {
+		timeline.schedule(this, delay);
 	}
-
+	
+	/**
+	 * Schedule the event using a (possibly) different timeline as 
+	 * a reference. This should be used whenever there is no
+	 * guarantee that the event's target timeline is the same as
+	 * the currently running.
+	 * 
+	 * @param delay time delay in simulated nanoseconds
+	 */
+	public void scheduleFrom(Timeline base, long delay) {
+		base.schedule(this, delay);
+	}
+	
 	void execute() {
 		time = -1;
 		run();
+	}
+	
+	public int compareTo(Event other) {
+		return Long.signum(time-other.time);
 	}
 	
 	public String toString() {
