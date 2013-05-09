@@ -44,17 +44,7 @@ public abstract class Event implements Runnable, Comparable<Event> {
 	 * Event code. 
 	 */
 	public abstract void run();
-	
-	/**
-	 * Cancel event. Does nothing if event is not scheduled. This can only
-	 * be called from the event's timeline.
-	 */
-	public void cancel() {
-		if (time >= 0)
-			timeline.remove(this);
-		time = -1;
-	}
-	
+		
 	/**
 	 * Reschedule the event. Can only be called from the event's target
 	 * timeline or when the simulation is stopped.
@@ -78,7 +68,6 @@ public abstract class Event implements Runnable, Comparable<Event> {
 	}
 	
 	void execute() {
-		time = -1;
 		run();
 	}
 	

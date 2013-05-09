@@ -19,22 +19,22 @@
 
 package pt.minha.kernel.simulation;
 
-public class Scheduler {
-	private Timeline timeline;
+public class Processor implements Runnable {
+	private Schedule sched;
 	
-	public Scheduler() {
-		timeline = new Timeline();
+	Processor(Schedule sched) {
+		this.sched = sched;
 	}
 	
-	public Timeline getTimeline() {
-		return timeline;
-	}
-
-	public long getTime() {
-		return timeline.getTime();
-	}
-
-	public boolean run(long limit) {
-		return timeline.run(limit);
+	public void run() {
+		while(true) {
+			Event next = sched.next();
+			
+			if (next == null)
+				break;
+			
+			next.execute();
+			sched.usage.using(1);			
+		}
 	}
 }

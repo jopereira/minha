@@ -19,22 +19,13 @@
 
 package pt.minha.kernel.simulation;
 
-import java.util.PriorityQueue;
-
 public class Timeline {
-	private Usage usage;
 	
-	private long now = 0;
-	private PriorityQueue<Event> events = new PriorityQueue<Event>();
+	volatile long now = 0;
+	private Schedule sched;
 	
-	public static double toSeconds(long time) {
-		return ((double)time)/1e9;
-	}
-	
-	private long simulationTime;
-
-	public Timeline() {
-		usage = new Usage(this, 1000000000, "simulation", 1, "events/s", 1); 
+	Timeline(Schedule sched) {
+		this.sched = sched;
 	}
 	
 	/**
@@ -45,53 +36,18 @@ public class Timeline {
 	 * @param delay delay relative to current simulation time
 	 */
 	public void schedule(Event e, long delay) {
-		e.getTimeline().add(e, now+delay);
+		sched.add(e, getTime()+delay);
 	}
 
-	public synchronized long getTime() {
+	public long getTime() {
 		return now;
 	}
-
-	synchronized void add(Event event, long time) {
-		event.cancel();
-		event.time = time;
-		events.add(event);
-	}
-
-	synchronized void remove(Event event) {
-		events.remove(event);
+	
+	public void returnFromRun() {
+		sched.returnFromRun();
 	}
 	
-	public synchronized void returnFromRun() {
-		this.simulationTime = 1;
-	}
-
-	public boolean run(long limit) {
-		synchronized(this) {
-			this.simulationTime = limit;
-		}
-		
-		while(!events.isEmpty()) {
-			Event next = null;
-			
-			synchronized(this) {
-				if (simulationTime>0 && now>simulationTime)
-					break;
-				
-				next = events.poll();			
-			
-				if (next == null)
-					break;
-				
-				if (next.time < now)
-					throw new RuntimeException("FATAL: Time going backwards");
-				
-				now = next.time;			
-			}
-			next.execute();
-			usage.using(1);
-		}
-		
-		return !events.isEmpty();
+	public static double toSeconds(long time) {
+		return ((double)time)/1e9;
 	}
 }
