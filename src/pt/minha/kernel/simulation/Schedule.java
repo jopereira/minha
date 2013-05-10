@@ -25,12 +25,11 @@ public class Schedule {
 	volatile long simulationTime;
 	Usage usage;
 	private long latest;
+	private int idle, procs=2;
 	
 	private PriorityQueue<Event> events = new PriorityQueue<Event>();
-	private Processor proc;
 
 	public Schedule() {
-		proc = new Processor(this);
 		usage = new Usage(newTimeline(), 1000000000, "simulation", 1, "events/s", 1); 
 	}
 	
@@ -51,21 +50,38 @@ public class Schedule {
 			events.remove(event);
 		event.time = time;
 		events.add(event);
+		notify();
 	}
 
-	synchronized Event next() {
+	synchronized Event next(Timeline target) {
+		if (target != null)
+			target.release();
+		
+		idle++;
+		
 		Event next = events.peek();
 		
-		if (next == null)
-			return null;
+		while((next == null && idle<procs) || (next!= null && next.time < simulationTime && next.getTimeline().isBusy()))
+			try {
+				wait();
+				next = events.peek();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}		
 		
-		if (next.time > simulationTime)
+		if (next == null || next.time >= simulationTime) {
+			notifyAll();
 			return null;
+		}
+		
+		idle--;
 		
 		events.poll();
+		notify();
 
 		latest = next.time;
-		next.getTimeline().now = next.time;
+		next.getTimeline().acquire(latest);
 		next.time = -1;
 		
 		return next;
@@ -75,8 +91,19 @@ public class Schedule {
 		if (limit == 0)
 			limit = Long.MAX_VALUE;
 		simulationTime = limit;
-		
-		proc.run();
+
+		Thread[] threads = new Thread[procs];
+		for(int i = 0; i<threads.length; i++) {
+			threads[i] = new Thread(new Processor(this));
+			threads[i].start();
+		}
+		for(int i = 0; i<threads.length; i++)
+			try {
+				threads[i].join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		
 		return !events.isEmpty();
 	}

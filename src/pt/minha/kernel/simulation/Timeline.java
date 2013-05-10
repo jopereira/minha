@@ -23,6 +23,7 @@ public class Timeline {
 	
 	volatile long now = 0;
 	private Schedule sched;
+	private boolean busy;
 	
 	Timeline(Schedule sched) {
 		this.sched = sched;
@@ -49,5 +50,18 @@ public class Timeline {
 	
 	public static double toSeconds(long time) {
 		return ((double)time)/1e9;
+	}
+
+	void acquire(long time) {
+		busy = true;
+		now = time;
+	}
+	
+	void release() {
+		busy = false;
+	}
+	
+	boolean isBusy() {
+		return busy;
 	}
 }

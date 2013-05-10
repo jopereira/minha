@@ -27,12 +27,15 @@ public class Processor implements Runnable {
 	}
 	
 	public void run() {
+		Timeline target = null;
+		
 		while(true) {
-			Event next = sched.next();
+			Event next = sched.next(target);
 			
 			if (next == null)
 				break;
 			
+			target = next.getTimeline();
 			next.execute();
 			sched.usage.using(1);			
 		}
