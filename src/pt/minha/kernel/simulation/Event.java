@@ -68,6 +68,8 @@ public abstract class Event implements Runnable, Comparable<Event> {
 	}
 	
 	void execute() {
+		timeline.now = time;
+		time = -1;
 		run();
 	}
 	

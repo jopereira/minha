@@ -21,6 +21,7 @@ package pt.minha.kernel.simulation;
 
 public class Processor implements Runnable {
 	private Schedule sched;
+	long base;
 	
 	Processor(Schedule sched) {
 		this.sched = sched;
@@ -30,14 +31,16 @@ public class Processor implements Runnable {
 		Timeline target = null;
 		
 		while(true) {
-			Event next = sched.next(target);
+			target = sched.next(this, target);
 			
-			if (next == null)
+			if (target == null)
 				break;
 			
-			target = next.getTimeline();
-			next.execute();
-			sched.usage.using(1);			
+			while(!target.workingset.isEmpty()) {
+				Event next = target.workingset.poll();
+				next.execute();
+				sched.usage.using(1);
+			}
 		}
 	}
 }

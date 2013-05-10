@@ -19,12 +19,21 @@
 
 package pt.minha.kernel.simulation;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.PriorityQueue;
+
 public class Timeline {
 	
-	volatile long now = 0;
+	long now = 0;
+	private long lease;
 	private Schedule sched;
-	private boolean busy;
+	private Collection<Event> outgoing = new ArrayList<Event>();
 	
+	boolean busy;
+	PriorityQueue<Event> workingset = new PriorityQueue<Event>();
+	PriorityQueue<Event> schedule = new PriorityQueue<Event>();
+
 	Timeline(Schedule sched) {
 		this.sched = sched;
 	}
@@ -37,7 +46,13 @@ public class Timeline {
 	 * @param delay delay relative to current simulation time
 	 */
 	public void schedule(Event e, long delay) {
-		sched.add(e, getTime()+delay);
+		assert(e.time == -1); // FIXME: can't cancel or reschedule event
+		
+		e.time = now+delay;
+		if (e.getTimeline() == this && busy && e.time<lease)
+			workingset.add(e);
+		else
+			outgoing.add(e);
 	}
 
 	public long getTime() {
@@ -52,16 +67,25 @@ public class Timeline {
 		return ((double)time)/1e9;
 	}
 
-	void acquire(long time) {
+	// This is executed in the context of Schedule synchronization,
+	// that owns the local schedule queue
+	void acquire(long lease) {
 		busy = true;
-		now = time;
+		this.lease = lease;
+		while(!schedule.isEmpty() && schedule.peek().time < lease)
+			workingset.add(schedule.poll());
 	}
 	
+	// This is executed in the context of the Schedule synchronization,
+	// that owns all local schedule queues
 	void release() {
 		busy = false;
+		for(Event e: outgoing)
+			e.getTimeline().schedule.add(e);
+		outgoing.clear();
 	}
 	
-	boolean isBusy() {
-		return busy;
+	long earliest() {
+		return schedule.isEmpty()?Long.MAX_VALUE:schedule.peek().time;
 	}
 }

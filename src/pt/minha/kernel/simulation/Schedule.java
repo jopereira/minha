@@ -19,84 +19,101 @@
 
 package pt.minha.kernel.simulation;
 
-import java.util.PriorityQueue;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Schedule {
 	volatile long simulationTime;
 	Usage usage;
-	private long latest;
-	private int idle, procs=2;
+	private int idle, procs=1;
+	private Processor processors[];
+	private long base, fuzzyness = 100000;
+	private List<Timeline> timelines = new ArrayList<Timeline>();
+	private Timeline nextline;
 	
-	private PriorityQueue<Event> events = new PriorityQueue<Event>();
-
 	public Schedule() {
 		usage = new Usage(newTimeline(), 1000000000, "simulation", 1, "events/s", 1); 
 	}
 	
 	public Timeline newTimeline() {
-		return new Timeline(this);
+		Timeline t = new Timeline(this);
+		timelines.add(t);
+		return t;
 	}
 
 	public long getTime() {
-		return latest;
+		return base;
 	}
 
 	public void returnFromRun() {
 		this.simulationTime = 1;
 	}
 	
-	synchronized void add(Event event, long time) {
-		if (event.time != -1)
-			events.remove(event);
-		event.time = time;
-		events.add(event);
-		notify();
+	private void updateLimits() {
+		base = Long.MAX_VALUE-2*fuzzyness;
+		for(Processor p: processors)
+			if (p.base < base)
+				base = p.base;
+		
+		long nexttime = Long.MAX_VALUE;
+		nextline = null;
+		for(Timeline t: timelines) {
+			if (!t.busy && t.earliest() < nexttime) { 
+				nexttime = t.earliest();
+				nextline = t;
+			}
+		}
 	}
-
-	synchronized Event next(Timeline target) {
+	
+	synchronized Timeline next(Processor proc, Timeline target) {
 		if (target != null)
 			target.release();
-		
+	
+		proc.base = Long.MAX_VALUE-2*fuzzyness;
 		idle++;
 		
-		Event next = events.peek();
-		
-		while((next == null && idle<procs) || (next!= null && next.time < simulationTime && next.getTimeline().isBusy()))
+		updateLimits();
+		notify();
+				
+		while((nextline == null && idle<procs) || (nextline != null && nextline.earliest() > base+fuzzyness))
 			try {
 				wait();
-				next = events.peek();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}		
+
+		idle--;
 		
-		if (next == null || next.time >= simulationTime) {
+		if (nextline == null || nextline.earliest() >= simulationTime) {
 			notifyAll();
 			return null;
 		}
+	
+		proc.base = nextline.earliest();
+		if (proc.base < base)
+			base = proc.base;
+		nextline.acquire(base+fuzzyness);
 		
-		idle--;
-		
-		events.poll();
-		notify();
-
-		latest = next.time;
-		next.getTimeline().acquire(latest);
-		next.time = -1;
-		
-		return next;
+		return nextline;
 	}
 
 	public boolean run(long limit) {
 		if (limit == 0)
-			limit = Long.MAX_VALUE;
+			limit = Long.MAX_VALUE-3*fuzzyness;
 		simulationTime = limit;
 
+		for(Timeline t: timelines)
+			t.release();
+
 		Thread[] threads = new Thread[procs];
+		processors = new Processor[procs];
 		for(int i = 0; i<threads.length; i++) {
-			threads[i] = new Thread(new Processor(this));
+			processors[i] = new Processor(this);
+			threads[i] = new Thread(processors[i]);
 			threads[i].start();
 		}
+		
 		for(int i = 0; i<threads.length; i++)
 			try {
 				threads[i].join();
@@ -105,6 +122,6 @@ public class Schedule {
 				e.printStackTrace();
 			}
 		
-		return !events.isEmpty();
+		return nextline!=null;
 	}
 }
