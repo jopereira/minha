@@ -38,8 +38,10 @@ public class Processor implements Runnable {
 			
 			while(!target.workingset.isEmpty()) {
 				Event next = target.workingset.poll();
+				if (next.time == -1)
+					continue;
 				next.execute();
-				sched.usage.using(1);
+				target.usage.using(1);
 			}
 		}
 	}

@@ -20,25 +20,29 @@
 package pt.minha.kernel.simulation;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class Schedule {
 	volatile long simulationTime;
-	Usage usage;
-	private int idle, procs=1;
+	private int idle, procs=4;
 	private Processor processors[];
-	private long base, fuzzyness = 100000;
+	private long base, fuzzyness = 10000000;
 	private List<Timeline> timelines = new ArrayList<Timeline>();
+	private Iterator<Timeline> next;
 	private Timeline nextline;
+	volatile boolean running;
 	
 	public Schedule() {
-		usage = new Usage(newTimeline(), 1000000000, "simulation", 1, "events/s", 1); 
+		for(int i = 0; i<4; i++)
+			timelines.add(new Timeline(this));
+		next = timelines.iterator();
 	}
 	
 	public Timeline newTimeline() {
-		Timeline t = new Timeline(this);
-		timelines.add(t);
-		return t;
+		if (!next.hasNext())
+			next = timelines.iterator();
+		return next.next();
 	}
 
 	public long getTime() {
@@ -105,15 +109,17 @@ public class Schedule {
 
 		for(Timeline t: timelines)
 			t.release();
+		
+		running = true;
 
 		Thread[] threads = new Thread[procs];
 		processors = new Processor[procs];
 		for(int i = 0; i<threads.length; i++) {
 			processors[i] = new Processor(this);
 			threads[i] = new Thread(processors[i]);
-			threads[i].start();
 		}
-		
+		for(int i = 0; i<threads.length; i++)
+			threads[i].start();
 		for(int i = 0; i<threads.length; i++)
 			try {
 				threads[i].join();
@@ -121,6 +127,8 @@ public class Schedule {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		
+		running = false;
 		
 		return nextline!=null;
 	}

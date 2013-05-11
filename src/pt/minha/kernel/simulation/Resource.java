@@ -70,6 +70,8 @@ public class Resource extends Event {
 	public synchronized void release(long delta, Event wakeup) {
 		usage.using(delta);
 		
+		assert(wakeup != null);
+		
 		this.wakeup = wakeup;
 		this.schedule(delta);
 	}
