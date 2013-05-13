@@ -25,9 +25,9 @@ import java.util.List;
 
 public class Schedule {
 	volatile long simulationTime;
-	private int idle, procs=4;
+	private int idle, procs=2;
 	private Processor processors[];
-	private long base, fuzzyness = 10000000;
+	private long base, now, fuzzyness = 1000000;
 	private List<Timeline> timelines = new ArrayList<Timeline>();
 	private Iterator<Timeline> next;
 	private Timeline nextline;
@@ -46,7 +46,7 @@ public class Schedule {
 	}
 
 	public long getTime() {
-		return base;
+		return now;
 	}
 
 	public void returnFromRun() {
@@ -54,9 +54,9 @@ public class Schedule {
 	}
 	
 	private void updateLimits() {
-		base = Long.MAX_VALUE-2*fuzzyness;
+		base = Long.MAX_VALUE;
 		for(Processor p: processors)
-			if (p.base < base)
+			if (p.base <= base)
 				base = p.base;
 		
 		long nexttime = Long.MAX_VALUE;
@@ -67,50 +67,64 @@ public class Schedule {
 				nextline = t;
 			}
 		}
+		
+		// Do this without overflow:
+		// if (nexttime >= base+fuzzyness)
+		if (nexttime-fuzzyness >= base)
+			nextline = null;
 	}
 	
 	synchronized Timeline next(Processor proc, Timeline target) {
 		if (target != null)
 			target.release();
 	
-		proc.base = Long.MAX_VALUE-2*fuzzyness;
+		proc.base = Long.MAX_VALUE;
 		idle++;
 		
 		updateLimits();
-		notify();
-				
-		while((nextline == null && idle<procs) || (nextline != null && nextline.earliest() > base+fuzzyness))
+		
+		while(nextline == null && idle<procs)
 			try {
 				wait();
+				if (nextline == null)
+					updateLimits();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}		
 
-		idle--;
 		
 		if (nextline == null || nextline.earliest() >= simulationTime) {
 			notifyAll();
 			return null;
 		}
-	
-		proc.base = nextline.earliest();
-		if (proc.base < base)
-			base = proc.base;
-		nextline.acquire(base+fuzzyness);
+
+		idle--;
 		
-		return nextline;
+		assert(!nextline.busy);
+
+		Timeline result = nextline;
+		nextline = null;
+
+		proc.base = result.earliest();
+		now = base+fuzzyness;
+		result.acquire(base+fuzzyness);
+		
+		notify();
+		
+		return result;
 	}
 
 	public boolean run(long limit) {
 		if (limit == 0)
-			limit = Long.MAX_VALUE-3*fuzzyness;
+			limit = Long.MAX_VALUE;
 		simulationTime = limit;
 
 		for(Timeline t: timelines)
 			t.release();
 		
 		running = true;
+		idle = 0;
 
 		Thread[] threads = new Thread[procs];
 		processors = new Processor[procs];
@@ -127,7 +141,7 @@ public class Schedule {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		
+
 		running = false;
 		
 		return nextline!=null;

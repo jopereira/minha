@@ -92,6 +92,10 @@ public class Timeline {
 					schedule.add(next);
 			} else {
 				next.stime = -1;
+				if (next.time < now) {
+					next.time = now;
+					now++;
+				}
 				workingset.add(next);
 			}
 			

@@ -21,7 +21,7 @@ package pt.minha.kernel.simulation;
 
 public class Processor implements Runnable {
 	private Schedule sched;
-	long base;
+	long base = Long.MAX_VALUE;
 	
 	Processor(Schedule sched) {
 		this.sched = sched;
