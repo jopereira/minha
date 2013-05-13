@@ -107,7 +107,11 @@ public class Schedule {
 		nextline = null;
 
 		proc.base = result.earliest();
+		// This is needed when all procs are idle
+		if (proc.base < base)
+			base = proc.base;
 		now = base+fuzzyness;
+		
 		result.acquire(base+fuzzyness);
 		
 		notify();
