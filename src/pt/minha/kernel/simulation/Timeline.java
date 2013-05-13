@@ -30,14 +30,12 @@ public class Timeline {
 	private Schedule sched;
 	private Collection<Event> outgoing = new ArrayList<Event>();
 	
-	Usage usage;
 	boolean busy;
 	PriorityQueue<Event> workingset = new PriorityQueue<Event>(10, new Event.LocalOrder());
 	PriorityQueue<Event> schedule = new PriorityQueue<Event>(10, new Event.GlobalOrder());
 
 	Timeline(Schedule sched) {
 		this.sched = sched;
-		usage = new Usage(this, 1000000000, "simulation", 1, "events/s", 1); 	
 	}
 	
 	/**

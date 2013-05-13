@@ -19,7 +19,12 @@
 
 package pt.minha.kernel.simulation;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Processor implements Runnable {
+	private static Logger logger = LoggerFactory.getLogger("pt.minha.simulation");
+	
 	private Schedule sched;
 	long base = Long.MAX_VALUE;
 	
@@ -29,20 +34,30 @@ public class Processor implements Runnable {
 	
 	public void run() {
 		Timeline target = null;
-		
+	
 		while(true) {
+			long t1 = System.nanoTime();
 			target = sched.next(this, target);
 			
 			if (target == null)
 				break;
 			
+			long t2 = System.nanoTime();
+			long st1 = target.now;
+			int events = 0;
+
 			while(!target.workingset.isEmpty()) {
 				Event next = target.workingset.poll();
 				if (next.time == -1)
 					continue;
 				next.execute();
-				target.usage.using(1);
+				events++;
 			}
+			
+			long t3 = System.nanoTime();
+			long st2 = target.now;
+			
+			logger.trace("synch={} sim={} ev={} real={}", t2-t1, st2-st1, events, t3-t2);
 		}
 	}
 }
