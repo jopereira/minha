@@ -93,6 +93,6 @@ public abstract class Event implements Runnable {
 	}
 
 	public String toString() {
-		return super.toString()+" at "+time;
+		return super.toString()+"@["+time+","+stime+"]";
 	}
 }

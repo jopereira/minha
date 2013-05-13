@@ -320,7 +320,7 @@ public class SimulationThread extends Thread implements Closeable {
 		}
 		
 		public String toString() {
-			return "Wakeup "+SimulationThread.this;
+			return super.toString()+"->"+SimulationThread.this;
 		}
 	}
 	
