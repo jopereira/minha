@@ -112,7 +112,7 @@ public class SimulationProcess implements EntryInterface {
 						if (target.getDelay()>0)
 							SimulationThread.currentSimulationThread().idle(target.getDelay(), false, false);
 
-						return result.getResult();
+						return result.waitResult();
 					}
 					return result.getFakeResult();
 				} finally {					

@@ -37,11 +37,15 @@ public class ResultHolder {
 	}
 	
 	public synchronized Object getResult() throws Throwable {
-		while(!done)
-			wait();
 		if (exception != null)
 			throw exception;
 		return result;
+	}
+
+	public synchronized Object waitResult() throws Throwable {
+		while(!done)
+			wait();
+		return getResult();
 	}
 	
 	public synchronized Object getFakeResult() throws Throwable {

@@ -72,7 +72,8 @@ public class Runner {
 			
 			for(Entry<Main> main: entry)
 				try {
-					main.getResult();
+					if (main.isComplete())
+						main.getResult();
 				} catch (Throwable e) {
 					e.printStackTrace();
 				}
