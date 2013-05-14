@@ -19,6 +19,7 @@
 
 package pt.minha.models.local;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import pt.minha.api.Main;
@@ -26,13 +27,15 @@ import pt.minha.models.local.lang.SimulationThread;
 
 public class MainEntry implements Main {
 	@Override
-	public void main(String impl, String[] args) throws Exception {
+	public void main(String impl, String[] args) throws Throwable {
 		// Run main
 		Class<?> claz=Class.forName(impl);
 		Method m = claz.getMethod("main", new String[0].getClass());
 		
 		try {
 			m.invoke(claz, (Object)args);
+		} catch(InvocationTargetException ite) {
+			throw ite.getTargetException();
 		} finally {
 			// For for all remaining non-daemon threads to stop
 			pt.minha.models.fake.java.lang.Thread.currentThread().setDaemon(true);

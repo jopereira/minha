@@ -28,7 +28,7 @@ public interface Main {
 	 * 
 	 * @param impl executable class with a static main method
 	 * @param args arguments to the main class
-	 * @throws Exception
+	 * @throws Throwable 
 	 */
-	public void main(String impl, String... args) throws Exception;
+	public void main(String impl, String... args) throws Throwable;
 }

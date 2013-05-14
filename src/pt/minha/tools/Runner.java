@@ -25,6 +25,8 @@
 
 package pt.minha.tools;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import pt.minha.api.Entry;
@@ -35,7 +37,7 @@ import pt.minha.api.World;
 
 public class Runner {
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Throwable {
 		try {						
 			long simulationTime = Long.parseLong(System.getProperty("simulationTime", "0"));
 
@@ -50,6 +52,8 @@ public class Runner {
 			World world = new World();
 			
 			CommandLineArgumentsParser cla = new CommandLineArgumentsParser(args);
+
+			List<Entry<Main>> entry = new ArrayList<Entry<Main>>();
 			
 			for (final InstanceArguments argsInstance : cla) {
 				for (int i=1; i<=argsInstance.getN(); i++) {
@@ -57,6 +61,7 @@ public class Runner {
 					Process proc = host.createProcess();
 					Entry<Main> main = proc.createEntry();
 					main.at(argsInstance.getDelay(), TimeUnit.SECONDS).queue().main(argsInstance.getMain(), argsInstance.getArgs());
+					entry.add(main);
 				}
 			}
 			
@@ -64,6 +69,13 @@ public class Runner {
 			
 			long time=System.nanoTime();
 			long stime=world.run(simulationTime, TimeUnit.SECONDS);
+			
+			for(Entry<Main> main: entry)
+				try {
+					main.getResult();
+				} catch (Throwable e) {
+					e.printStackTrace();
+				}
 			
 			System.err.println("====================================================================================");
 			System.err.println("simulation finished: "+((double)(System.nanoTime()-time)/1e9)+"s real time / "+(((double)stime)/1e9)+"s simulation time");
