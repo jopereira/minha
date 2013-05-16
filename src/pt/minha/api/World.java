@@ -241,7 +241,7 @@ public class World implements Closeable {
 		if (limit != 0)
 			limit += timeline.getTime();
 		
-		boolean empty = timeline.run(limit);
+		boolean hasNext = timeline.run(limit);
 		
 		lock.lock();
 		stopping = true;
@@ -250,7 +250,7 @@ public class World implements Closeable {
 			cond.awaitUninterruptibly();
 		lock.unlock();
 		
-		return empty;
+		return hasNext;
 	}
 	
 	void acquire(boolean runner) {
