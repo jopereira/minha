@@ -19,11 +19,9 @@
 
 package pt.minha.kernel.simulation;
 
-import java.util.Comparator;
-
-public abstract class Event implements Runnable {
+public abstract class Event implements Runnable, Comparable<Event> {
 	private Timeline timeline;
-	long time, stime;
+	long time;
 
 	/**
 	 * Create an event on a specific simulation time line.
@@ -32,7 +30,6 @@ public abstract class Event implements Runnable {
 	public Event(Timeline timeline) {
 		this.timeline = timeline;
 		this.time = -1;
-		this.stime = -1;
 	}
 	
 	/**
@@ -73,26 +70,24 @@ public abstract class Event implements Runnable {
 	void execute() {
 		assert(time >= 0);
 		
-		timeline.now = time;
 		time = -1;
 		run();
 	}
-	
-	public static class GlobalOrder implements Comparator<Event> {
-		@Override
-		public int compare(Event o1, Event o2) {
-			return Long.signum(o1.stime-o2.stime);
-		}
-	}
-	
-	public static class LocalOrder implements Comparator<Event> {
-		@Override
-		public int compare(Event o1, Event o2) {
-			return Long.signum(o1.time-o2.time);
-		}
+
+	/**
+	 * Total order of events, sorted first by time and second by
+	 * object id. Assumes that Object.hashCode() is unique, a least
+	 * w.h.p. for events found concurrently within the same queue, thus
+	 * providing an unique id.
+	 */
+	@Override
+	public int compareTo(Event other) {
+		if (time != other.time)
+			return Long.signum(time-other.time);
+		return Integer.signum(hashCode()-other.hashCode());
 	}
 
 	public String toString() {
-		return super.toString()+"@["+time+","+stime+"]";
+		return super.toString()+"@["+time+"ns]";
 	}
 }

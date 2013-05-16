@@ -19,123 +19,92 @@
 
 package pt.minha.kernel.simulation;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.PriorityQueue;
+import java.util.Iterator;
+import java.util.NavigableSet;
+import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Timeline {
 	
-	long now = 0;
-	private long lease;
+	private Lock lock = new ReentrantLock(false);
+	private NavigableSet<Event> schedule = new ConcurrentSkipListSet<Event>();
+	private long doorstop = Long.MAX_VALUE;
+		
+	private long now = 0;
 	private Schedule sched;
-	private Collection<Event> outgoing = new ArrayList<Event>();
 	
-	boolean busy;
-	PriorityQueue<Event> workingset = new PriorityQueue<Event>(10, new Event.LocalOrder());
-	PriorityQueue<Event> schedule = new PriorityQueue<Event>(10, new Event.GlobalOrder());
-
 	Timeline(Schedule sched) {
 		this.sched = sched;
 	}
 	
 	/**
 	 * Schedule an event. The event time is computed using this timeline's current
-	 * time and the delay, and then queued on the event's target timeline.
-	 * 
+	 * time and the delay, and then queued on the event's target timeline.	 * 
 	 * @param e event to be scheduled
 	 * @param delay delay relative to current simulation time
 	 */
 	public void schedule(Event e, long delay) {
-		assert(isLocal(e) || !isFuture(e));
-		if (isPresent(e))
-			workingset.remove(e);
-		else if (isOutgoing(e))
-			outgoing.remove(e);
-		
+		if (e.time != -1) {
+			assert(e.getTimeline() == this);
+			schedule.remove(e);
+		}
+				
 		e.time = now+delay;
-		
-		assert(!sched.running || busy);
-		if (isLocal(e) && isPresent(e) && busy)
-			workingset.add(e);
-		else
-			outgoing.add(e);
+		e.getTimeline().schedule.add(e);
 	}
 
-	public long getTime() {
-		return now;
-	}
-	
 	public void returnFromRun() {
 		sched.returnFromRun();
 	}
 	
-	public static double toSeconds(long time) {
-		return ((double)time)/1e9;
+	public long getTime() {
+		return now;
 	}
-
-	// This is executed in the context of Schedule synchronization,
-	// that owns the local schedule queue
-	void acquire(long lease) {
-		busy = true;
-		this.lease = lease;
-		Event next = schedule.peek();
-		while(next!=null && next.stime < lease) {
-			next = schedule.poll();
-			
-			assert(isFuture(next));
-			
-			if (next.time != next.stime) {
-				next.stime = next.time;
-				if (isFuture(next))
-					schedule.add(next);
-			} else {
-				next.stime = -1;
-				if (next.time < now) {
-					next.time = now;
-					now++;
-				}
-				workingset.add(next);
-			}
-			
-			next = schedule.peek();
+	
+	public boolean isQuiescent() {
+		return schedule.isEmpty();
+	}
+	
+	long baseline() {
+		try {
+			if (!schedule.isEmpty())
+				return schedule.first().time;
+		} catch(NoSuchElementException e) {
+			// fall through
 		}
-	}
-	
-	// This is executed in the context of the Schedule synchronization,
-	// that owns all local schedule queues
-	void release() {
-		busy = false;
-		for(Event e: outgoing) {
-			assert(e.time >= 0);
-			
-			if (isFuture(e))
-				e.getTimeline().schedule.remove(e);
-
-			e.stime = e.time;
-			
-			if (isFuture(e))
-				e.getTimeline().schedule.add(e);
-		}
-		outgoing.clear();
-	}
-	
-	long earliest() {
-		return schedule.isEmpty()?Long.MAX_VALUE:schedule.peek().stime;
-	}
-	
-	private boolean isPresent(Event e) {
-		return e.time >= 0 && e.getTimeline()==this && e.time < lease; 
-	}
-	
-	private boolean isOutgoing(Event e) {
-		return e.time >= 0 && (e.getTimeline()!=this || e.time > lease);
-	}
-	
-	private boolean isFuture(Event e) {
-		return e.stime >= 0;
+		return doorstop;
 	}
 		
-	private boolean isLocal(Event e) {
-		return e.getTimeline()==this;
+	boolean run() {
+		
+		if (!lock.tryLock())
+			return false;
+		
+		Iterator<Event> i = schedule.iterator();
+		
+		while(i.hasNext()) {
+			Event next = i.next();
+			if (next.time >= sched.lease.get())
+				break;
+			if (next.time > now)
+				now = next.time;
+			doorstop = now;
+			i.remove();
+			next.execute();
+		}
+
+		sched.in.incrementAndGet();
+		doorstop = Long.MAX_VALUE;
+		sched.out.incrementAndGet();
+		
+		lock.unlock();
+		
+		return true;
+	}
+	
+	public static double toSeconds(long time) {
+		return ((double)time)/1e9;
 	}
 }

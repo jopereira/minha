@@ -20,122 +20,75 @@
 package pt.minha.kernel.simulation;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class Schedule {
+public class Schedule implements Runnable {
+		
+	AtomicLong in = new AtomicLong(), out = new AtomicLong();
+	AtomicLong lease = new AtomicLong();
 	volatile long simulationTime;
-	private int idle, procs=2;
-	private Processor processors[];
-	private long base, now, fuzzyness = 1000000;
-	private List<Timeline> timelines = new ArrayList<Timeline>();
-	private Iterator<Timeline> next;
-	private Timeline nextline;
-	volatile boolean running;
 	
-	public Schedule() {
-		for(int i = 0; i<4; i++)
-			timelines.add(new Timeline(this));
-		next = timelines.iterator();
-	}
+	private long fuzzyness = 1000000;
+	private int procs=2;
+	
+	private List<Timeline> timelines = new ArrayList<Timeline>();
 	
 	public Timeline newTimeline() {
-		if (!next.hasNext())
-			next = timelines.iterator();
-		return next.next();
+		Timeline t = new Timeline(this);
+		timelines.add(t);
+		return t;
 	}
 
 	public long getTime() {
-		return now;
+		return lease.get();
 	}
 
 	public void returnFromRun() {
 		this.simulationTime = 1;
 	}
-	
-	private void updateLimits() {
-		base = Long.MAX_VALUE;
-		for(Processor p: processors)
-			if (p.base <= base)
-				base = p.base;
-		
-		long nexttime = Long.MAX_VALUE;
-		nextline = null;
-		for(Timeline t: timelines) {
-			if (!t.busy && t.earliest() < nexttime) { 
-				nexttime = t.earliest();
-				nextline = t;
+
+	public void run() {
+		int base = 0;
+
+		while(true) {
+			long min = Long.MAX_VALUE;
+			long e = out.get();
+
+			int i;
+			for(i=0; i<timelines.size(); i++) {
+				Timeline t = timelines.get((i+base)%timelines.size());
+				
+				long l = t.baseline();
+
+				if (l<min)
+					min = l;
+
+				if (l<lease.get() && t.run())
+					break;
+			}
+			base = i;
+			
+			if (min >= simulationTime)
+				break;
+			
+			if (in.get() == e) {
+				long prev = lease.get();
+				min += fuzzyness;
+				while(prev < min && !lease.compareAndSet(prev, min)) 
+					prev = lease.get();
 			}
 		}
-		
-		// Do this without overflow:
-		// if (nexttime >= base+fuzzyness)
-		if (nexttime-fuzzyness >= base)
-			nextline = null;
 	}
 	
-	synchronized Timeline next(Processor proc, Timeline target) {
-		if (target != null)
-			target.release();
-	
-		proc.base = Long.MAX_VALUE;
-		idle++;
-		
-		updateLimits();
-		
-		while(nextline == null && idle<procs)
-			try {
-				wait();
-				if (nextline == null)
-					updateLimits();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}		
-
-		
-		if (nextline == null || nextline.earliest() >= simulationTime) {
-			notifyAll();
-			return null;
-		}
-
-		idle--;
-		
-		assert(!nextline.busy);
-
-		Timeline result = nextline;
-		nextline = null;
-
-		proc.base = result.earliest();
-		// This is needed when all procs are idle
-		if (proc.base < base)
-			base = proc.base;
-		now = base+fuzzyness;
-		
-		result.acquire(base+fuzzyness);
-		
-		notify();
-		
-		return result;
-	}
-
 	public boolean run(long limit) {
 		if (limit == 0)
-			limit = Long.MAX_VALUE;
+			limit = Long.MAX_VALUE-fuzzyness;
 		simulationTime = limit;
 
-		for(Timeline t: timelines)
-			t.release();
-		
-		running = true;
-		idle = 0;
-
 		Thread[] threads = new Thread[procs];
-		processors = new Processor[procs];
-		for(int i = 0; i<threads.length; i++) {
-			processors[i] = new Processor(this);
-			threads[i] = new Thread(processors[i]);
-		}
+		for(int i = 0; i<threads.length; i++)
+			threads[i] = new Thread(this);
 		for(int i = 0; i<threads.length; i++)
 			threads[i].start();
 		for(int i = 0; i<threads.length; i++)
@@ -146,8 +99,9 @@ public class Schedule {
 				e.printStackTrace();
 			}
 
-		running = false;
-		
-		return nextline!=null;
+		boolean quiescent = true;
+		for(Timeline t: timelines)
+			quiescent &= t.isQuiescent();
+		return !quiescent;
 	}
 }
