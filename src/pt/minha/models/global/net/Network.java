@@ -87,7 +87,7 @@ public class Network {
 		return ip1+"."+ip2+"."+ip3+"."+ip4;
 	}
 	
-	public InetAddress addHost(String host, NetworkStack stack) throws UnknownHostException {
+	public synchronized InetAddress addHost(String host, NetworkStack stack) throws UnknownHostException {
 		InetAddress ia;
 		if (host==null)
 			do {
@@ -107,7 +107,8 @@ public class Network {
 		return ia;		
 	}		
 
-	public void addToGroup(InetAddress mcastaddr, NetworkStack ms) throws IOException {
+	public synchronized void addToGroup(InetAddress mcastaddr, NetworkStack ms) throws IOException {
+		System.out.println("add to group "+mcastaddr+" "+ms);
 		if ( !multicastSockets.containsKey(mcastaddr) )
 			multicastSockets.put(mcastaddr, new LinkedList<NetworkStack>());
 		
@@ -116,7 +117,7 @@ public class Network {
     		sockets.add(ms);
 	}
 		
-	public void removeFromGroup(InetAddress mcastaddr, NetworkStack ms) throws IOException {
+	public synchronized void removeFromGroup(InetAddress mcastaddr, NetworkStack ms) throws IOException {
     	if (multicastSockets.containsKey(mcastaddr)) {
     		if ( !multicastSockets.get(mcastaddr).remove(ms) )
     			throw new IOException("MulticastSocket '"+ms+"' is not in group '"+mcastaddr+"'");
