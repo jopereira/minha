@@ -19,6 +19,12 @@
 
 package pt.minha.kernel.simulation;
 
+/**
+ * A work unit in the event-driven simulation. Event code runs at
+ * a specific simulation time in the context of a simulation timeline.
+ * It can freely inspect and modify simulation state associated with
+ * the timeline without concurrency issues. 
+ */
 public abstract class Event implements Runnable, Comparable<Event> {
 	private Timeline timeline;
 	long time;
@@ -47,7 +53,8 @@ public abstract class Event implements Runnable, Comparable<Event> {
 		
 	/**
 	 * Reschedule the event. Can only be called from the event's target
-	 * timeline or when the simulation is stopped.
+	 * timeline or when the simulation is stopped. This can be called even
+	 * if this event is currently scheduled.
 	 * 
 	 * @param delay time delay in simulated nanoseconds
 	 */
@@ -59,7 +66,8 @@ public abstract class Event implements Runnable, Comparable<Event> {
 	 * Schedule the event using a (possibly) different timeline as 
 	 * a reference. This should be used whenever there is no
 	 * guarantee that the event's target timeline is the same as
-	 * the currently running.
+	 * the currently running. This can only be called if the event
+	 * is not currently scheduled.
 	 * 
 	 * @param delay time delay in simulated nanoseconds
 	 */

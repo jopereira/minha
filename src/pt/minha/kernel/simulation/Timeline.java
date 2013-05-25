@@ -26,6 +26,13 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * A simulation timeline is a sequence of related events. Execution of
+ * events within the same timeline is strictly totally ordered and 
+ * accurately timed, even with parallel execution. Event exection across
+ * different timelines is causally ordered and might be subject to
+ * spurious delays.
+ */
 public class Timeline {
 	
 	private Lock lock = new ReentrantLock(false);
@@ -33,19 +40,13 @@ public class Timeline {
 	private long doorstop = Long.MAX_VALUE;
 		
 	private long now = 0;
-	private Schedule sched;
+	private Scheduler sched;
 	
-	Timeline(Schedule sched) {
+	Timeline(Scheduler sched) {
 		this.sched = sched;
 	}
 	
-	/**
-	 * Schedule an event. The event time is computed using this timeline's current
-	 * time and the delay, and then queued on the event's target timeline.	 * 
-	 * @param e event to be scheduled
-	 * @param delay delay relative to current simulation time
-	 */
-	public void schedule(Event e, long delay) {
+	void schedule(Event e, long delay) {
 		if (e.time != -1) {
 			assert(e.getTimeline() == this);
 			schedule.remove(e);
@@ -55,14 +56,31 @@ public class Timeline {
 		e.getTimeline().schedule.add(e);
 	}
 
-	public void returnFromRun() {
-		sched.returnFromRun();
+	/**
+	 * Get a reference to the scheduler that owns this timeline.
+	 * 
+	 * @return the scheduler
+	 */
+	public Scheduler getScheduler() {
+		return sched;
 	}
 	
+	/**
+	 * Current time in this timeline. This is safe only when called
+	 * from events in this timeline.
+	 * 
+	 * @return current simulation time
+	 */
 	public long getTime() {
 		return now;
 	}
 	
+	/**
+	 * True if no events are scheduled in this timeline. The simulation
+	 * is stopped when all timelines are quiescent.
+	 * 
+	 * @return true if no events remain
+	 */
 	public boolean isQuiescent() {
 		return schedule.isEmpty();
 	}

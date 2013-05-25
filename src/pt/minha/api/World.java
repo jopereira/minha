@@ -38,7 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pt.minha.kernel.instrument.ClassConfig;
-import pt.minha.kernel.simulation.Schedule;
+import pt.minha.kernel.simulation.Scheduler;
 import pt.minha.models.global.ResultHolder;
 import pt.minha.models.global.net.Network;
 import pt.minha.models.global.net.NetworkConfig;
@@ -53,7 +53,7 @@ public class World implements Closeable {
 	
 	private ClassConfig cc;
 	private NetworkConfig nc;
-	private Schedule schedule;
+	private Scheduler sched;
 	private Network network;
 	private List<Host> hosts = new ArrayList<Host>();
 	private List<Invocation> queue = new ArrayList<Invocation>();
@@ -86,9 +86,9 @@ public class World implements Closeable {
 		if (is!=null)
 			props.load(is);
 		cc = new ClassConfig(props);
-		schedule = new Schedule();
+		sched = new Scheduler();
 		
-		network = new Network(schedule.newTimeline(), nc);
+		network = new Network(sched.createTimeline(), nc);
 	}
 	
 	/**
@@ -99,7 +99,7 @@ public class World implements Closeable {
 	 * @throws SimulationException
 	 */
 	public Host createHost(String ip) throws SimulationException {
-		Host host = new Host(this, cc, schedule.newTimeline(), ip, network);
+		Host host = new Host(this, cc, sched.createTimeline(), ip, network);
 		hosts.add(host);
 		return host;
 	}
@@ -211,7 +211,7 @@ public class World implements Closeable {
 	public long runNanos(long nanosTimeout) {
 		acquire(true);
 		runSimulation(nanosTimeout);
-		long time = schedule.getTime();
+		long time = sched.getTime();
 		release(true);
 		return time;
 	}
@@ -232,16 +232,16 @@ public class World implements Closeable {
 			while(!m.isComplete() && runSimulation(0))
 				;
 		}
-		long time = schedule.getTime();
+		long time = sched.getTime();
 		release(true);
 		return time;
 	}
 	
 	boolean runSimulation(long limit) {
 		if (limit != 0)
-			limit += schedule.getTime();
+			limit += sched.getTime();
 		
-		boolean hasNext = schedule.run(limit);
+		boolean hasNext = sched.run(limit);
 		
 		lock.lock();
 		stopping = true;

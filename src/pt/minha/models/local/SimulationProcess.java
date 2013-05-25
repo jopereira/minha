@@ -113,7 +113,7 @@ public class SimulationProcess implements EntryInterface {
 				try {
 					
 					if (target.isMilestone())
-						SimulationThread.currentSimulationThread().getTimeline().returnFromRun();
+						SimulationThread.currentSimulationThread().getTimeline().getScheduler().stop();
 
 					if (target.invoke(method, args, result)) {
 						if (target.getDelay()>0)

@@ -23,32 +23,52 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Schedule implements Runnable {
+/**
+ * Event-driven simulation scheduler. This is the main simulation entry
+ * point, that includes the simulation main loop.
+ */
+public class Scheduler implements Runnable {
 		
 	AtomicLong in = new AtomicLong(), out = new AtomicLong();
 	AtomicLong lease = new AtomicLong();
-	volatile long simulationTime;
+	private volatile long simulationTime;
 	
 	private long fuzzyness = 1000000;
 	private int procs=2;
-	
+
 	private List<Timeline> timelines = new ArrayList<Timeline>();
 	
-	public Timeline newTimeline() {
+	/**
+	 * Create a new simulation timeline. 
+	 * @return the new timeline
+	 */
+	public Timeline createTimeline() {
 		Timeline t = new Timeline(this);
 		timelines.add(t);
 		return t;
 	}
 
+	/**
+	 * Current simulation time. This should be used only when
+	 * the simulation is stopped.
+	 * 
+	 * @return current simulation time
+	 */
 	public long getTime() {
 		return lease.get();
 	}
 
-	public void returnFromRun() {
+	/**
+	 * Quit the simulation. There might be a short delay before the
+	 * simulation is actually stopped, so some events might be run
+	 * after this method is invoked. This can safely be invoked from
+	 * any timeline or external thread.
+	 */
+	public void stop() {
 		this.simulationTime = 1;
 	}
 
-	public void run() {
+	private void execute() {
 		int base = 0;
 
 		while(true) {
@@ -81,6 +101,13 @@ public class Schedule implements Runnable {
 		}
 	}
 	
+	/**
+	 * Run the simulation until the upper time limit is reached.
+	 * The simulation will also stop when no events remain
+	 * or {@link #stop()} is called.
+	 * 
+	 * @param limit maximum simulation time, 0 to run forever 
+	 */
 	public boolean run(long limit) {
 		if (limit == 0)
 			limit = Long.MAX_VALUE-fuzzyness;
@@ -88,7 +115,11 @@ public class Schedule implements Runnable {
 
 		Thread[] threads = new Thread[procs];
 		for(int i = 0; i<threads.length; i++)
-			threads[i] = new Thread(this);
+			threads[i] = new Thread() {
+				public void run() {
+					execute();
+				}
+			};
 		for(int i = 0; i<threads.length; i++)
 			threads[i].start();
 		for(int i = 0; i<threads.length; i++)
@@ -103,5 +134,13 @@ public class Schedule implements Runnable {
 		for(Timeline t: timelines)
 			quiescent &= t.isQuiescent();
 		return !quiescent;
+	}
+	
+	/**
+	 * Run the simulation. The simulation stops when no events remain
+	 * or {@link #stop()} is called.
+	 */
+	public void run() {
+		run(0l);
 	}
 }

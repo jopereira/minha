@@ -22,7 +22,12 @@ package pt.minha.kernel.simulation;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
 
-
+/**
+ * Abstract finite resource. The resource is used for the time duration between
+ * acquire succeeds and release is called. This should be used in cases where
+ * the amount used cannot be predicted before the resource is actially acquired,
+ * as it depends on state that changes while queueing. 
+ */
 public class Resource extends Event {
 	private boolean busy, stopped;
 	private LinkedList<Event> queue;
