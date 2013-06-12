@@ -36,35 +36,30 @@ public class SimpleResource {
 	 * Use the resource. This might lead to arbitrarily long queuing delay
 	 * but the event will eventually get scheduled.
 	 * 
-	 * @param event the event to signal completion
 	 * @param usage amount of time used in the resource
-	 * @param delay additional delay after the resource has been used
+	 * @return target time for scheduling event
 	 */
-	public void use(Event event, long usage, long delay) {
+	public long use(long usage) {
 		if (used < timeline.getTime())
 			used = timeline.getTime();
 		used += usage;
-		event.schedule(used+delay);
+		return used;
 	}
 
 	/**
-	 * Use the resource conditionally. The event is scheduled and the
-	 * resource used only if it does not exceed the maximum queuing
-	 * delay. 
+	 * Use the resource conditionally. The resource is used only if
+	 * it does not exceed the maximum queuing delay. 
 	 * 
 	 * @param max maximum queuing delay tolerated
-	 * @param event the event to signal completion
 	 * @param usage amount of time used in the resource
-	 * @param delay additional delay after the resource has been used
-	 * @return true when within the delay bound 
+	 * @return target time for scheduling event, -1 if queue is full
 	 */
-	public boolean useConditionally(long max, Event event, long usage, long delay) {
+	public long useConditionally(long max, long usage) {
 		if (used < timeline.getTime())
 			used = timeline.getTime();
 		if (used+usage-timeline.getTime() > max)
-			return false;
+			return -1;
 		used += usage;
-		event.schedule(used+delay);
-		return true;
+		return used;
 	}
 }

@@ -21,7 +21,6 @@ package pt.minha.models.global.net;
 
 import java.io.IOException;
 import java.util.Properties;
-import java.util.Random;
 
 public class NetworkConfig {
 	public long writeCost;
@@ -33,9 +32,6 @@ public class NetworkConfig {
 	private double real_coef[];
 	private int minha_degree;
 	private double minha_coef[];
-
-	private double packetLoss;
-	private Random random = new Random();
 
 	// read calibration
 	public NetworkConfig(Properties conf) throws Exception {
@@ -52,9 +48,6 @@ public class NetworkConfig {
 				.getProperty("network.delay.minha_degree"));
 		real_coef = new double[real_degree + 1];
 		minha_coef = new double[real_degree + 1];
-
-		packetLoss = Double.parseDouble(conf.getProperty("network.packetLoss",
-				"0"));
 
 		String inputStr1 = conf.getProperty("network.delay.real_coef");
 		String[] coef1S = inputStr1.split(",");
@@ -87,7 +80,7 @@ public class NetworkConfig {
 	 * @param payload
 	 * @return
 	 */
-	public long getNetworkDelay(int payload) {
+	public long getNetworkOverhead(int payload) {
 		if (!networkDelay)
 			return 0;
 
@@ -100,9 +93,11 @@ public class NetworkConfig {
 		return (long) res;
 	}
 
-	public boolean isLostPacket() {
-		if (packetLoss > 0)
-			return random.nextDouble() < packetLoss;
-		return false;
+	public long getLineDelay(int size) {
+		return size; // FIXME: Hardcoded 1Gbits network
+	}
+
+	public long getMaxDelay(int length) {
+		return getLineDelay(65535); // FIXME: Hardcoded 64KB buffer
 	}
 }

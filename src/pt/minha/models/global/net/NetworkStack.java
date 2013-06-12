@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 import pt.minha.kernel.simulation.Event;
+import pt.minha.kernel.simulation.SimpleResource;
 import pt.minha.kernel.simulation.Timeline;
 
 public class NetworkStack {
@@ -42,6 +43,7 @@ public class NetworkStack {
 	private int INITIAL_PORT = 10000;
 	
 	private String macAddress;
+	private SimpleResource bandwidth;
 	
 	public NetworkStack(Timeline timeline, String host, Network network) throws UnknownHostException {
 		this.timeline = timeline;
@@ -51,6 +53,8 @@ public class NetworkStack {
 		this.macAddress = "02:00";
 		for(int i=0;i<localAddress.getAddress().length;i++)
 			macAddress+=":"+Integer.toHexString(localAddress.getAddress()[i]);
+		
+		this.bandwidth = new SimpleResource(timeline);
 	}
 
 	public InetAddress getLocalAddress() {
@@ -150,28 +154,36 @@ public class NetworkStack {
 	}
 	
 	public void relayTCPConnect(final InetSocketAddress serverAddr, final TCPPacket tcpPacket) {
+		long qdelay = bandwidth.use(getConfig().getLineDelay(tcpPacket.getSize())) - getTimeline().getTime();
+		
 		NetworkStack target = network.getHost(serverAddr.getAddress());
 		if (target==null)
 			tcpPacket.getSource().scheduleRead(new TCPPacket(null, tcpPacket.getSource(), 0, 0, new byte[0], TCPPacket.RST)).schedule(0);
 		else
-			target.handleConnect(serverAddr, tcpPacket).scheduleFrom(timeline, 0);				
+			target.handleConnect(serverAddr, tcpPacket).scheduleFrom(timeline, qdelay+getConfig().getNetworkOverhead(tcpPacket.getSize()));				
 	}
 		
 	public void relayTCPData(final TCPPacket p) {
-		p.getDestination().scheduleRead(p).scheduleFrom(timeline, getConfig().getNetworkDelay(p.getSize()));
+		p.getDestination().scheduleRead(p).scheduleFrom(timeline, getConfig().getNetworkOverhead(p.getSize()));
 	}
 
 	public void relayUDP(final InetSocketAddress destination, final DatagramPacket p) {
+		long time = bandwidth.useConditionally(getConfig().getMaxDelay(p.getLength()), getConfig().getLineDelay(p.getLength()));
+		if (time < 0)
+			return;
+		
+		long qdelay = time - getTimeline().getTime();
+		
 		if (destination.getAddress().isMulticastAddress()) {
 			List<NetworkStack> stacks = network.getMulticastHosts(destination.getAddress());
 			if (stacks != null)
 				for (NetworkStack stack: stacks)
-					stack.handleDatagram(destination, p).scheduleFrom(timeline, getConfig().getNetworkDelay(p.getLength()));
+					stack.handleDatagram(destination, p).scheduleFrom(timeline, qdelay+getConfig().getNetworkOverhead(p.getLength()));
 		
 		} else {
 			NetworkStack stack = network.getHost(destination.getAddress());
 			if (stack!=null)
-				stack.handleDatagram(destination, p).scheduleFrom(timeline, getConfig().getNetworkDelay(p.getLength()));
+				stack.handleDatagram(destination, p).scheduleFrom(timeline, qdelay+getConfig().getNetworkOverhead(p.getLength()));
 		}
 	}
 
