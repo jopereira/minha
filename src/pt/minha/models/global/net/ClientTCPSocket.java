@@ -150,7 +150,7 @@ public class ClientTCPSocket extends AbstractSocket {
 	 * @param p packet
 	 */
 	protected void sendPacket(TCPPacket p) {
-		stack.getNetwork().relayTCPData(p).scheduleFrom(stack.getTimeline(), 0);
+		stack.relayTCPData(p);
 	}
 
 	/**
@@ -159,7 +159,7 @@ public class ClientTCPSocket extends AbstractSocket {
 	 * @param p packet
 	 */
 	protected void sendPacket(TCPPacket p, InetSocketAddress serverAddress) {
-		stack.getNetwork().relayTCPConnect(serverAddress, p);		
+		stack.relayTCPConnect(serverAddress, p);		
 	}
 	
 	public Event scheduleRead(final TCPPacket p) {

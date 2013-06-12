@@ -107,7 +107,7 @@ public class World implements Closeable {
 		
 		logger.info("using up to {} processors, {}ns fuzzyness", procs, fuzzyness);
 		
-		network = new Network(sched.createTimeline(), nc);
+		network = new Network(nc);
 	}
 	
 	/**

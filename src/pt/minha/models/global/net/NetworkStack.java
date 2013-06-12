@@ -144,11 +144,37 @@ public class NetworkStack {
 				if (ssi==null)
 					ssi = socketsTCP.get(new InetSocketAddress(destination.getPort()));
 				if (ssi==null || !ssi.queueConnect(p)) // connection refused
-					network.relayTCPData(new TCPPacket(null, p.getSource(), 0, 0, new byte[0], TCPPacket.RST)).scheduleFrom(timeline, 0);
+					relayTCPData(new TCPPacket(null, p.getSource(), 0, 0, new byte[0], TCPPacket.RST));
 			}
 		};
 	}
 	
+	public void relayTCPConnect(final InetSocketAddress serverAddr, final TCPPacket tcpPacket) {
+		NetworkStack target = network.getHost(serverAddr.getAddress());
+		if (target==null)
+			tcpPacket.getSource().scheduleRead(new TCPPacket(null, tcpPacket.getSource(), 0, 0, new byte[0], TCPPacket.RST)).schedule(0);
+		else
+			target.handleConnect(serverAddr, tcpPacket).scheduleFrom(timeline, 0);				
+	}
+		
+	public void relayTCPData(final TCPPacket p) {
+		p.getDestination().scheduleRead(p).scheduleFrom(timeline, getConfig().getNetworkDelay(p.getSize()));
+	}
+
+	public void relayUDP(final InetSocketAddress destination, final DatagramPacket p) {
+		if (destination.getAddress().isMulticastAddress()) {
+			List<NetworkStack> stacks = network.getMulticastHosts(destination.getAddress());
+			if (stacks != null)
+				for (NetworkStack stack: stacks)
+					stack.handleDatagram(destination, p).scheduleFrom(timeline, getConfig().getNetworkDelay(p.getLength()));
+		
+		} else {
+			NetworkStack stack = network.getHost(destination.getAddress());
+			if (stack!=null)
+				stack.handleDatagram(destination, p).scheduleFrom(timeline, getConfig().getNetworkDelay(p.getLength()));
+		}
+	}
+
 	public NetworkConfig getConfig() {
 		return network.config;
 	}

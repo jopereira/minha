@@ -81,7 +81,7 @@ public class UDPSocket extends AbstractSocket {
 		System.arraycopy(packet.getData(), packet.getOffset(), data, 0, data.length);
 		DatagramPacket dp = new DatagramPacket(data, data.length, getLocalAddress());
 		InetSocketAddress destination = new InetSocketAddress(packet.getAddress(), packet.getPort());
-		stack.getNetwork().relayUDP(destination, dp).scheduleFrom(stack.getTimeline(), 0);
+		stack.relayUDP(destination, dp);
 	}
 
 	public DatagramPacket receive() {
