@@ -40,7 +40,7 @@ public class SocketChannelImpl extends SocketChannel {
 	private ClientTCPSocket tcp;
 
 	public SocketChannelImpl(SelectorProvider provider) {
-		this(provider, new ClientTCPSocket(SimulationThread.currentSimulationThread().getHost().getNetwork()));
+		this(provider, new ClientTCPSocket(SimulationThread.currentSimulationThread().getProcess().getNetwork()));
 	}
 
 	public SocketChannelImpl(SelectorProvider provider, ClientTCPSocket tcp) {

@@ -39,7 +39,7 @@ public class MainEntry implements Main {
 		} finally {
 			// For for all remaining non-daemon threads to stop
 			pt.minha.models.fake.java.lang.Thread.currentThread().setDaemon(true);
-			SimulationThread.currentSimulationThread().getHost().stop();
+			SimulationThread.currentSimulationThread().getProcess().stop();
 		}
 	}
 }

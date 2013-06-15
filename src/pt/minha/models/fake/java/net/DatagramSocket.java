@@ -49,7 +49,7 @@ public class DatagramSocket {
 	}
 
 	public DatagramSocket(SocketAddress address) throws SocketException {
-		udp=new UDPSocket(SimulationThread.currentSimulationThread().getHost().getNetwork());
+		udp=new UDPSocket(SimulationThread.currentSimulationThread().getProcess().getNetwork());
 		udp.bind((InetSocketAddress)address);
 	}
 	

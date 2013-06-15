@@ -46,18 +46,18 @@ public class NetworkInterface {
 	
 	public static Enumeration<NetworkInterface> getNetworkInterfaces() {
 		Vector<NetworkInterface> aux = new Vector<NetworkInterface>();
-		NetworkStack net = SimulationThread.currentSimulationThread().getHost().getNetwork(); 
+		NetworkStack net = SimulationThread.currentSimulationThread().getProcess().getNetwork(); 
 		aux.add(new NetworkInterface(net.getMACAddress(), net.getLocalAddress()));
 		return aux.elements();
 	}
 
 	public List<InterfaceAddress> getInterfaceAddresses() {
-		NetworkStack net = SimulationThread.currentSimulationThread().getHost().getNetwork();
+		NetworkStack net = SimulationThread.currentSimulationThread().getProcess().getNetwork();
 		return Collections.singletonList(new InterfaceAddress(net));
 	}
 	
 	public static NetworkInterface getByInetAddress(InetAddress addr) {
-		NetworkStack net = SimulationThread.currentSimulationThread().getHost().getNetwork();
+		NetworkStack net = SimulationThread.currentSimulationThread().getProcess().getNetwork();
 		return new NetworkInterface(net.getMACAddress(), net.getLocalAddress());
 	}
 	

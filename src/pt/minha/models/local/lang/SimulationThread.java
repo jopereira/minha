@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import pt.minha.api.Host;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.kernel.timer.IntervalTimer;
@@ -36,7 +37,7 @@ public class SimulationThread extends Thread implements Closeable {
 	
 	private pt.minha.models.fake.java.lang.Thread fakeThread;
 	private long id;
-	private SimulationProcess host;
+	private SimulationProcess process;
 	private long time = -1;
 	private boolean blocked, rt, dead, started, interruptible, interrupted;
 	private boolean parked, permit;
@@ -55,12 +56,12 @@ public class SimulationThread extends Thread implements Closeable {
 	public SimulationThread(boolean rt, SimulationProcess host, Runnable runnable, pt.minha.models.fake.java.lang.Thread fakeThread) {
 
 		if (host==null)
-			host = ((SimulationThread) Thread.currentThread()).host;
+			host = ((SimulationThread) Thread.currentThread()).process;
 		
 		setContextClassLoader(this.getClass().getClassLoader());
 				
 		this.rt = rt;
-		this.host = host;
+		this.process = host;
 		this.runnable = runnable;
 		this.fakeThread = fakeThread;
 		this.id=host.getNextThreadId();
@@ -105,16 +106,20 @@ public class SimulationThread extends Thread implements Closeable {
 		return this.fakeThread;
 	}
 	
-	public SimulationProcess getHost() {
-		return host;
+	public SimulationProcess getProcess() {
+		return process;
 	}
 	
+	public Host getHost() {
+		return process.getHost();
+	}
+
 	public Timeline getTimeline() {
-		return host.getCPU().getTimeline();
+		return process.getCPU().getTimeline();
 	}
 
 	public void run() {
-		host.addThread(this);
+		process.addThread(this);
 		
 		lock.lock();
 		while(blocked && !dead)
@@ -148,7 +153,7 @@ public class SimulationThread extends Thread implements Closeable {
 			dead = true;
 			lock.unlock();
 		
-			host.removeThread(this);
+			process.removeThread(this);
 		}
 	}
 	
@@ -265,7 +270,7 @@ public class SimulationThread extends Thread implements Closeable {
 		if (time>=0)
 			throw new RuntimeException("restarting time");
 
-		host.getCPU().acquire(getWakeup());
+		process.getCPU().acquire(getWakeup());
 		resync();
 		
 		time = timer.getTime() - overhead;
@@ -288,7 +293,7 @@ public class SimulationThread extends Thread implements Closeable {
 		
 		time = -1;
 		
-		host.getCPU().release(delta+overhead, getWakeup());
+		process.getCPU().release(delta+overhead, getWakeup());
 		resync();
 		
 		return getTimeline().getTime();
@@ -304,7 +309,7 @@ public class SimulationThread extends Thread implements Closeable {
 	
 	private class WakeUpEvent extends Event {
 		public WakeUpEvent() {
-			super(host.getTimeline());
+			super(process.getTimeline());
 		}
 
 		public void run() {
@@ -349,7 +354,7 @@ public class SimulationThread extends Thread implements Closeable {
 	}
 	
 	public String toString() {
-		return "SimulationThread@"+host.getNetwork().getLocalAddress().getHostAddress()+"["+fakeThread.getName()+"]";
+		return "SimulationThread@"+process.getNetwork().getLocalAddress().getHostAddress()+"["+fakeThread.getName()+"]";
 	}
 
 	@Override

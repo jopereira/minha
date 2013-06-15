@@ -89,6 +89,14 @@ public class Host implements Closeable {
 	}
 	
 	/**
+	 * Returns an unique name for this host.
+	 * @return a unique identifier of this host
+	 */
+	public String getName() {
+		return getAddress().getHostAddress();
+	}
+	
+	/**
 	 * Gets the simulated world container.
 	 * @return the simulation world for this host
 	 */

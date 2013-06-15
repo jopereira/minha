@@ -22,7 +22,7 @@ public class DatagramChannelImpl extends DatagramChannel {
 	private UDPSocket udp;
 
 	protected DatagramChannelImpl(SelectorProvider provider) {
-		this(provider, new UDPSocket(SimulationThread.currentSimulationThread().getHost().getNetwork()));
+		this(provider, new UDPSocket(SimulationThread.currentSimulationThread().getProcess().getNetwork()));
 	}
 
 	protected DatagramChannelImpl(SelectorProvider provider, UDPSocket udp) {

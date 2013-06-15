@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import pt.minha.api.Host;
 import pt.minha.kernel.simulation.Resource;
 import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.EntryHandler;
@@ -41,24 +42,30 @@ public class SimulationProcess implements EntryInterface {
 	private long threadId = -2; // -1 is "main" thread, 0 is the first user thread	
 	private Resource cpu;
 	private NetworkStack network;
+	private Host host;
 		
-	public SimulationProcess(Resource cpu, NetworkStack network) {
+	public SimulationProcess(Host host, Resource cpu, NetworkStack network) {
+		this.host = host;
 		this.cpu = cpu;
 		this.network = network;
+	}
+	
+	public Host getHost() {
+		return host;
 	}
 	
 	public Resource getCPU() {
 		return cpu;
 	}
 	
-	public Timeline getTimeline() {
-		return cpu.getTimeline();
-	}
-	
 	public NetworkStack getNetwork() {
 		return network;
 	}
 
+	public Timeline getTimeline() {
+		return cpu.getTimeline();
+	}
+	
 	public long getNextThreadId() {
 		threadId++;
 		return threadId;
@@ -127,5 +134,5 @@ public class SimulationProcess implements EntryInterface {
 		ArrayList<SimulationThread> l = new ArrayList<SimulationThread>(threads);
 		for(SimulationThread t: l)
 			t.close();
-	}	
+	}
 }

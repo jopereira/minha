@@ -130,9 +130,9 @@ public class Thread extends Object implements Runnable {
     public final void setDaemon(boolean on) {
     	daemon = on;
     	if (on)
-    		simulationThread.getHost().removeThread(simulationThread);
+    		simulationThread.getProcess().removeThread(simulationThread);
     	else
-    		simulationThread.getHost().addThread(simulationThread);
+    		simulationThread.getProcess().addThread(simulationThread);
     }
 
     public boolean isDaemon() {
@@ -153,7 +153,7 @@ public class Thread extends Object implements Runnable {
     
     public final void setName(String name) {
     	this.name = name;
-		simulationThread.setName(name+"@"+simulationThread.getHost().getNetwork().getLocalAddress().getHostAddress());
+		simulationThread.setName(name+"@"+simulationThread.getProcess().getNetwork().getLocalAddress().getHostAddress());
     }
     
     public final String getName() {

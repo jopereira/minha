@@ -37,7 +37,7 @@ public class ServerSocket {
 	private ServerSocketChannel channel; 
 	
 	public ServerSocket() throws IOException {
-		tcp = new ListeningTCPSocket(SimulationThread.currentSimulationThread().getHost().getNetwork());
+		tcp = new ListeningTCPSocket(SimulationThread.currentSimulationThread().getProcess().getNetwork());
 	}
 	
 	public ServerSocket(int port) throws IOException {

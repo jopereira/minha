@@ -41,7 +41,7 @@ public class Socket {
 	private SocketChannel channel;
 
 	public Socket() throws IOException {
-		tcp = new ClientTCPSocket(SimulationThread.currentSimulationThread().getHost().getNetwork());
+		tcp = new ClientTCPSocket(SimulationThread.currentSimulationThread().getProcess().getNetwork());
 	}
 	
     public Socket(InetAddress address, int port) throws IOException {
