@@ -10,10 +10,15 @@
 	<property name="compile-debug" value="on"/>
 	<property name="compile-target" value="1.6"/>
 
-	<path id="project.classpath">
+	<path id="compiler.classpath">
     	<fileset dir="${lib}">
     		<include name="*"/>
     	</fileset>
+    </path>
+
+	<path id="runtime.classpath">
+		<path refid="compiler.classpath"/>
+		<path path="${build-lib}/minha.jar"/>
     </path>
 
 	<target name="build" depends="package,native" description="build everything"/>
@@ -35,12 +40,12 @@
 	<target name="compile" depends="init" description="compile Java source files">
 		<javac destdir="${build-classes}" debug="${compile-debug}" source="${compile-target}" target="${compile-target}" includeantruntime="false">
 			<src path="${src}"/>
-			<classpath refid="project.classpath"/>
+			<classpath refid="compiler.classpath"/>
 		</javac>
 	</target>
 
     <target name="doc" depends="init">
-        <javadoc sourcepath="${src}" destdir="${build-api}" packagenames="pt.minha.api.*" classpathref="project.classpath"/>
+        <javadoc sourcepath="${src}" destdir="${build-api}" packagenames="pt.minha.api.*" classpathref="compiler.classpath"/>
     </target>
 
 	<target name="package" depends="compile,doc" description="package into jar file">
@@ -67,5 +72,23 @@
 
 	<target name="clean" description="clean up" >
 		<delete dir="${build}"/>
+	</target>
+
+	<property name="server" value="localhost"/>
+
+	<target name="calibration-server" description="run calibration benchmark server">
+		<java classname="pt.minha.calibration.Calibrator">
+			<arg value="--server"/>
+			<classpath refid="runtime.classpath"/>
+		</java>
+	</target>
+
+	<target name="calibrate" description="run calibration benchmark">
+		<echo message="Expecting calibration benchmark server at ${server}."/>
+		<echo message="You can change server name with ant -Dserver=name calibration-server."/>
+		<java classname="pt.minha.calibration.Calibrator">
+			<arg value="${server}"/>
+			<classpath refid="runtime.classpath"/>
+		</java>
 	</target>
 </project>
