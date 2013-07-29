@@ -48,7 +48,7 @@ public class TCPPacket implements Comparable<TCPPacket> {
 	}
 
 	public int getAcknowledgement() {
-		return seq;
+		return ack;
 	}
 	
 	public int getSize() {
