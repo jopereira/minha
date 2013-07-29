@@ -122,7 +122,7 @@ public class Socket {
 
 					int total = 0, res = 0;
 					
-					while(res < len) {
+					while(total+res < len) {
 						while (!tcp.writers.isReady()) {
 							if (res > 0) {
 								total += res;
@@ -134,7 +134,7 @@ public class Socket {
 							SimulationThread.currentSimulationThread().pause(false, false);
 						}
 						
-						res += tcp.write(b, off+res, len-res);
+						res += tcp.write(b, off+total+res, len-(total+res));
 					}
 					total += res;			
 					tcp.uncork();
