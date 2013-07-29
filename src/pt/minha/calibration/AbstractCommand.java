@@ -25,6 +25,7 @@ import java.io.ObjectInputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.net.InetSocketAddress;
+import java.util.Map;
 
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
@@ -40,10 +41,10 @@ public abstract class AbstractCommand implements Command {
 	private transient long cputime;
 	private transient ThreadMXBean mxbean;
 	
-	public void setParameters(InetSocketAddress srv, int samples, int payload, Object... params) {
-		this.srv = srv;
-		this.payload = payload;
-		this.samples = samples;
+	public void setParameters(Map<String, Object> p) {
+		this.srv = (InetSocketAddress) p.get("server");
+		this.samples = (Integer) p.get("samples");
+		this.payload = (Integer) p.get("payload");
 		
 		begin = 0;
 		idx = 0;

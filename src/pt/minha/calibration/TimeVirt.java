@@ -19,14 +19,41 @@
 
 package pt.minha.calibration;
 
-import java.util.Map;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
 
-import pt.minha.api.Global;
-
-@Global
-public interface Command {
-	public void setParameters(Map<String, Object> p);
+public class TimeVirt extends AbstractCommand {
 	
-	public Object client() throws Exception;	
-	public Object server() throws Exception;
+	@Override
+	public Object client() throws IOException, InterruptedException {
+		double stuff = Math.random();
+
+		for (int i = 0; i < 10; i++) {
+			for(int j = 0; j < payload; j++)
+				stuff = stuff * 11 / 7;
+			System.nanoTime();
+			ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
+		}
+
+		start();
+		for (int i = 0; i < samples; i++) {
+			for(int j = 0; j < payload; j++)
+				stuff = stuff * 11 / 7;
+			add(payload, System.nanoTime());
+		}
+		Result r = stop(true);
+		
+		System.out.println("defeat hostspot "+stuff);
+			
+		return r;
+	}
+
+	@Override
+	public Object server() throws IOException {
+		return null;
+	}
+
+	public String toString() {
+		return "CPU virtulization "+super.toString();
+	}
 }

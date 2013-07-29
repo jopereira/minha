@@ -22,15 +22,19 @@ package pt.minha.calibration;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
 
 public class TCPFlood extends AbstractCommand {
 	
 	private int usec;
 
-	public TCPFlood(int usec) {
-		this.usec = usec;
+	public void setParameters(Map<String,Object> p) {
+		super.setParameters(p);
+		if (p.containsKey("usec"))
+			this.usec = (Integer) p.get("usec");
 	}
 
 	@Override
@@ -39,7 +43,16 @@ public class TCPFlood extends AbstractCommand {
 		OutputStream out = s.getOutputStream();
 		byte[] buffer = new byte[payload];
 
+		for (int i = 0; i < 10; i++) {
+			out.write(buffer);
+			if (usec>0)
+				Thread.sleep(usec);
+			System.nanoTime();
+			ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
+		}
+
 		start();
+
 		for (int i = 0; i < samples; i++) {
 			out.write(buffer);
 			if (usec>0)
@@ -49,16 +62,25 @@ public class TCPFlood extends AbstractCommand {
 		Result r = stop(true);
 	
 		s.close();
-		
+
 		return r;
 	}
 
 	@Override
 	public Object server() throws IOException {
+		try {
 		ServerSocket ss = new ServerSocket(srv.getPort());
 		Socket s = ss.accept();
+
 		InputStream in = s.getInputStream();
 		byte[] buffer = new byte[payload];
+
+		for (int i = 0; i < 10; i++) {
+			if (!readFully(in, buffer))
+				break;
+			System.nanoTime();
+			ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
+		}
 
 		start();
 		for (int i = 0; i < samples; i++) {
@@ -67,11 +89,15 @@ public class TCPFlood extends AbstractCommand {
 			add(payload, System.nanoTime());
 		}
 		Result r = stop(true);
-		
+
 		s.close();
 		ss.close();
 
 		return r;
+		} catch(Throwable e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	public String toString() {

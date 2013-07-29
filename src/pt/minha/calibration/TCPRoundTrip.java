@@ -22,6 +22,7 @@ package pt.minha.calibration;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -33,7 +34,15 @@ public class TCPRoundTrip extends AbstractCommand {
 		OutputStream out = s.getOutputStream();
 		InputStream in = s.getInputStream();
 		byte[] buffer = new byte[payload];
-		
+
+		for (int i = 0; i < 10; i++) {
+			out.write(buffer);
+			if (!readFully(in, buffer))
+				break;
+			System.nanoTime();
+			ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
+		}
+
 		start();
 		long prev = System.nanoTime();
 		for (int i = 0; i < samples; i++) {
@@ -58,10 +67,18 @@ public class TCPRoundTrip extends AbstractCommand {
 		OutputStream out = s.getOutputStream();
 		InputStream in = s.getInputStream();
 		byte[] buffer = new byte[payload];
+
+		for (int i = 0; i < 10; i++) {
+			if (!readFully(in, buffer))
+				break;
+			out.write(buffer);
+			System.nanoTime();
+			ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
+		}
 		
 		start();
 		long prev = -1;
-		for (;;) {
+		for (int i = 0; i < samples; i++) {
 			if (!readFully(in, buffer))
 				break;
 			long time = System.nanoTime();

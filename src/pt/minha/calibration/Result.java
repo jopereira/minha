@@ -21,6 +21,9 @@ package pt.minha.calibration;
 
 import java.io.Serializable;
 
+import pt.minha.api.Global;
+
+@Global
 public class Result implements Serializable {
 	public double meanLatency, varLatency;
 	public double meanCPU;

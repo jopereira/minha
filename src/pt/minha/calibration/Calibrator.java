@@ -29,7 +29,8 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
@@ -50,41 +51,53 @@ public class Calibrator implements Closeable {
 	public Calibrator(String server) throws UnknownHostException, IOException {
 		logger.info("client: connecting to {}", server);
 
-		socket = new Socket(server, 12345);			
+		socket = new Socket(server, 12345);
 		oos = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 		oos.flush();
 		ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
 	}
 	
-	private Result runCommand(Command next) throws Throwable {
+	private Result runReal(Map<String,Object> p) throws Throwable {
 		// Reality
-		logger.info("client: sending {}", next);
 		
-		oos.writeObject(next);
+		logger.info("real: sending {}", p);
+
+		oos.writeObject(p);
 		oos.flush();
 		Thread.sleep(1000);
 		
-		logger.info("client: running {}", next);
+		logger.info("real: running {}", p);
+		
+		Command next = (Command) Class.forName((String) p.get("bench")).newInstance();
+		next.setParameters(p);
 
 		Result rcli = (Result) next.client();
 
-		logger.info("client: running {} done", next);
+		logger.info("real: running {} done", next);
 		
 		Object rsrv = ois.readObject();
 
 		logger.info("client: got reply");
 		
-		// Simulation
-		/*PWorld world = new World();			
-		Entry<Command>[] e = world.createEntries(2, Command.class, next.getClass().getName());
+		logger.info("real: got {}/{}", rcli, rsrv);
+		
+		return rcli;
+	}
+				
+	private Result runSimulated(Map<String,Object> p) throws Throwable {
+		Command next = (Command) Class.forName((String) p.get("bench")).newInstance();
+		next.setParameters(p);
+
+		World world = new World();			
+		Entry<Command>[] e = world.createEntries(2, Command.class, (String) p.get("bench"));
 
 		logger.info("simulation: loading {}", next);
 
-		InetSocketAddress srv = new InetSocketAddress(e[1].getProcess().getHost().getAddress(), 20000); 
-		e[1].queue().setParameters(srv, 1000, 1);
-		e[0].queue().setParameters(srv, 1000, 1);			
-		world.runAll(e);
-
+		InetSocketAddress srv = new InetSocketAddress(e[1].getProcess().getHost().getAddress(), 20000);
+		p.put("server", srv);
+		e[0].call().setParameters(p);
+		e[1].call().setParameters(p);
+		
 		logger.info("simulation: running {}", next);
 
 		e[1].queue().server();
@@ -96,15 +109,11 @@ public class Calibrator implements Closeable {
 
 		logger.info("simulation: running {} done", next);
 		
-		world.close();*/
-
-		// Summarize results
-		//summarize(rcli, rsrv, scli, srv);
+		world.close();
 		
-		//logger.info("got {}/{} vs {}/{}", rcli, rsrv, scli, ssrv);
-		logger.info("got {}/{}", rcli, rsrv);
+		logger.info("simulation: got {}/{}", scli, ssrv);
 
-		return rcli;
+		return (Result) scli;
 	}
 
 	public void close() throws IOException {
@@ -128,13 +137,15 @@ public class Calibrator implements Closeable {
 				ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(s.getInputStream()));
 				
 				while(!s.isClosed()) {
-					Command next = (Command) ois.readObject();
+					Map<String,Object> p = (Map<String,Object>) ois.readObject();					
+					Command next = (Command) Class.forName((String) p.get("bench")).newInstance();
+					next.setParameters(p);
 					
-					logger.info("server: running {}", next);
+					logger.info("server: running {}", p);
 					
 					Object result = next.server();
 
-					logger.info("server: running {} done", next);
+					logger.info("server: running {} done", p);
 
 					oos.writeObject(result);
 					oos.flush();
@@ -154,58 +165,60 @@ public class Calibrator implements Closeable {
 		} else {
 			Calibrator calib = new Calibrator(args[0]);
 
-			// Warm-up (JIT, etc)
-			
-			{
-			Command next = new TCPFlood(0);
-			next.setParameters(new InetSocketAddress(args[0], 20000), 5000, 1);
-			calib.runCommand(next);
-			}
-
-			{
-			Command next = new TCPRoundTrip();
-			next.setParameters(new InetSocketAddress(args[0], 20000), 5000, 1);
-			calib.runCommand(next);
+			SimpleRegression cpuoh = new SimpleRegression(true);
+			for(int i: new int[]{100, 1000, 10000, 20000}) {
+				Map<String,Object> p = new HashMap<String, Object>();
+				p.put("bench", TimeVirt.class.getName());
+				p.put("samples", 50000);
+				p.put("payload", i);
+				Result r = calib.runReal(p);
+				Result s = calib.runSimulated(p);
+				cpuoh.addData(s.meanCPU, r.meanCPU);
 			}
 			
 			// Run
 
 			double max = Double.MIN_VALUE;
 			SimpleRegression netCPU = new SimpleRegression(true);
+			SimpleRegression netCPU_s = new SimpleRegression(true);
 			for(int i: new int[]{1, 100, 1000, 4000, 8000, 16000}) {
-				Command next = new TCPFlood(0);
-				next.setParameters(new InetSocketAddress(args[0], 20000), 5000, i);
-				Result r = calib.runCommand(next);
+				Map<String,Object> p = new HashMap<String, Object>();
+				p.put("bench", TCPFlood.class.getName());
+				p.put("server", new InetSocketAddress(args[0], 20000));
+				p.put("samples", 5000);
+				p.put("payload", i);
+				Result r = calib.runReal(p);
 				netCPU.addData(i, r.meanCPU);
+				Result s = calib.runSimulated(p);
+				netCPU_s.addData(i, s.meanCPU);
+
 				double bw = 8*i*1e9d/r.meanLatency;
 				if (bw > max)
 					max = bw;
-			}
-			
-			SimpleRegression switchOverhead = new SimpleRegression(true);
-			for(int i: new int[]{1, 100, 1000, 4000, 8000, 16000}) {
-				Command next = new TCPFlood(1);
-				next.setParameters(new InetSocketAddress(args[0], 20000), 5000, i);
-				Result r = calib.runCommand(next);
-				switchOverhead.addData(i, r.meanCPU);
-			}
-			
-			SimpleRegression rtt = new SimpleRegression(true);
-			for(int i: new int[]{1, 100, 1000, 4000, 8000, 16000}) {
-				Command next = new TCPRoundTrip();
-				next.setParameters(new InetSocketAddress(args[0], 20000), 5000, i);
-				Result r = calib.runCommand(next);
-				rtt.addData(i, r.meanLatency);
-			}
-			
-			// Compute results
-			
-			logger.info("CPU in net stack: {}+{}*b", netCPU.getIntercept(), netCPU.getSlope());
-			logger.info("context switch overhead: {} (ignored: +{}*b)", switchOverhead.getIntercept()-netCPU.getIntercept(), switchOverhead.getSlope()-netCPU.getSlope());
-			logger.info("network latency: {}+{}*b", rtt.getIntercept()-2*switchOverhead.getIntercept(), rtt.getSlope()/2-netCPU.getSlope());
-			logger.info("network bandwith: {} bps", max);
 
+			}
+
+			SimpleRegression rtt = new SimpleRegression(true);
+			SimpleRegression rtt_s = new SimpleRegression(true);
+			for(int i: new int[]{1, 100, 1000, 4000, 8000, 16000}) {
+				Map<String,Object> p = new HashMap<String, Object>();
+				p.put("bench", TCPRoundTrip.class.getName());
+				p.put("server", new InetSocketAddress(args[0], 20000));
+				p.put("samples", 5000);
+				p.put("payload", i);
+				Result r = calib.runReal(p);
+				rtt.addData(i, r.meanLatency);
+				Result s = calib.runSimulated(p);
+				rtt_s.addData(i, s.meanLatency);
+			}
+			
 			calib.close();
+
+			// Compute results
+						
+			logger.info("virtualization overhead: {}", new Linear(cpuoh.getIntercept(), cpuoh.getSlope()));
+			logger.info("flood: real {} vs {}", new Linear(netCPU.getIntercept(), netCPU.getSlope()), new Linear(netCPU_s.getIntercept(), netCPU_s.getSlope()));
+			logger.info("rtt: real {} vs {}", new Linear(rtt.getIntercept(), rtt.getSlope()), new Linear(rtt_s.getIntercept(), rtt_s.getSlope()));
 		}
 	}
 }
