@@ -48,6 +48,8 @@ public class SimulationThread extends Thread implements Closeable {
 	
 	private Runnable runnable;
 	
+	public long totalCPU;
+	
 	// fake_join
 	private pt.minha.models.fake.java.util.concurrent.locks.ReentrantLock joinLock = new pt.minha.models.fake.java.util.concurrent.locks.ReentrantLock();
 	private Condition joinCond = joinLock.newCondition();
@@ -293,6 +295,7 @@ public class SimulationThread extends Thread implements Closeable {
 		
 		time = -1;
 		
+		totalCPU += delta+overhead;
 		process.getCPU().release(delta+overhead, getWakeup());
 		resync();
 		
