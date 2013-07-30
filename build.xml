@@ -77,7 +77,7 @@
 	<property name="server" value="localhost"/>
 
 	<target name="calibration-server" description="run calibration benchmark server">
-		<java classname="pt.minha.calibration.Calibrator">
+		<java classname="pt.minha.calibration.Calibrator" fork="true">
 			<arg value="--server"/>
 			<classpath refid="runtime.classpath"/>
 		</java>
@@ -86,7 +86,7 @@
 	<target name="calibrate" description="run calibration benchmark">
 		<echo message="Expecting calibration benchmark server at ${server}."/>
 		<echo message="You can change server name with ant -Dserver=name calibration-server."/>
-		<java classname="pt.minha.calibration.Calibrator">
+		<java classname="pt.minha.calibration.Calibrator" fork="true">
 			<arg value="${server}"/>
 			<classpath refid="runtime.classpath"/>
 		</java>
