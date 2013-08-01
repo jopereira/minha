@@ -86,7 +86,26 @@ public class World implements Closeable {
 		if (is!=null)
 			props.load(is);
 		cc = new ClassConfig(props);
-		sched = new Scheduler();
+		
+		// load simulation properties
+		props = new Properties();
+		props.load(ClassLoader.getSystemClassLoader().getResourceAsStream("default.simulation.properties"));			
+		props = new Properties(props);
+		is = ClassLoader.getSystemClassLoader().getResourceAsStream("simulation.properties"); 
+		if (is!=null)
+			props.load(is);
+		int procs = Integer.parseInt(props.getProperty("processors"));
+		if (procs < 0)
+			procs = Runtime.getRuntime().availableProcessors()*-procs;		
+		int timelines = Integer.parseInt(props.getProperty("timelines"));
+		if (timelines < 0)
+			timelines = procs*-timelines;		
+		long fuzzyness = Long.parseLong(props.getProperty("fuzzyness"));
+		if (fuzzyness < 0)
+			fuzzyness = nc.getNetworkDelay(1)*-fuzzyness;		
+		sched = new Scheduler(procs, timelines, fuzzyness);
+		
+		logger.info("using up to {} processors, {}ns fuzzyness", procs, fuzzyness);
 		
 		network = new Network(sched.createTimeline(), nc);
 	}

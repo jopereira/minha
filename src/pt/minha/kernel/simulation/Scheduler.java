@@ -32,9 +32,16 @@ public class Scheduler implements Runnable {
 	AtomicLong in = new AtomicLong(), out = new AtomicLong();
 	AtomicLong lease = new AtomicLong();
 	private volatile long simulationTime;
+	private int next = 0;
 	
-	private long fuzzyness = 1000000;
-	private int procs=2;
+	private long fuzzyness;
+	private int procs, numlines;	
+	
+	public Scheduler(int procs, int numlines, long fuzzyness) {
+		this.procs = procs;
+		this.numlines = numlines;
+		this.fuzzyness = fuzzyness;
+	}
 
 	private List<Timeline> timelines = new ArrayList<Timeline>();
 	
@@ -43,9 +50,13 @@ public class Scheduler implements Runnable {
 	 * @return the new timeline
 	 */
 	public Timeline createTimeline() {
-		Timeline t = new Timeline(this);
-		timelines.add(t);
-		return t;
+		if (numlines<1 || timelines.size()<numlines) {
+			next++;
+			Timeline t = new Timeline(this);
+			timelines.add(t);
+			return t;
+		} else
+			return timelines.get(next++%timelines.size());
 	}
 
 	/**
@@ -112,6 +123,12 @@ public class Scheduler implements Runnable {
 		if (limit == 0)
 			limit = Long.MAX_VALUE-fuzzyness;
 		simulationTime = limit;
+		
+		int effprocs = procs;
+		if (procs>timelines.size()/2) {
+			effprocs = timelines.size()/2;
+			if (effprocs == 0) effprocs = 1;
+		}
 
 		Thread[] threads = new Thread[procs];
 		for(int i = 0; i<threads.length; i++)
