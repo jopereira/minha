@@ -22,6 +22,8 @@ package pt.minha.models.fake.java.lang.management;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 
+import javax.management.MBeanServer;
+
 import pt.minha.models.local.lang.SimulationThread;
 
 public class ManagementFactory {
@@ -195,5 +197,10 @@ public class ManagementFactory {
 				return null;
 			}
 		};
+	}
+	
+	public static MBeanServer getPlatformMBeanServer() {
+		// FIXME: should wrap and prefix mbeans with instance name
+		return java.lang.management.ManagementFactory.getPlatformMBeanServer(); 
 	}
 }
