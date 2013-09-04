@@ -130,7 +130,7 @@ public class ReentrantLock implements Lock {
 
 	@Override
 	public boolean tryLock() {
-		if (busy!=0)
+		if (busy!=0 && !isHeldByCurrentThread())
 			return false;
 		lock();
 		return true;
