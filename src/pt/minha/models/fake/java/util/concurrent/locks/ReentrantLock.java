@@ -167,6 +167,9 @@ public class ReentrantLock implements Lock {
 		}
 
 		private long awaitNanosUnint(long nanosTimeout) {
+			if (!isHeldByCurrentThread())
+				throw new IllegalMonitorStateException();
+
 			long before=0, after=0;
 			
 			try {
@@ -211,6 +214,9 @@ public class ReentrantLock implements Lock {
 
 		@Override
 		public void signal() {
+			if (!isHeldByCurrentThread())
+				throw new IllegalMonitorStateException();
+
 			try {
 				SimulationThread.stopTime(0);
 			
@@ -224,6 +230,9 @@ public class ReentrantLock implements Lock {
 
 		@Override
 		public void signalAll() {
+			if (!isHeldByCurrentThread())
+				throw new IllegalMonitorStateException();
+
 			try {
 				SimulationThread.stopTime(0);
 			
@@ -239,6 +248,9 @@ public class ReentrantLock implements Lock {
 		
 		@Override
 		public long awaitNanos(long nanosTimeout) throws InterruptedException {
+			if (!isHeldByCurrentThread())
+				throw new IllegalMonitorStateException();
+
 			long before=0, after=0;
 			
 			try {

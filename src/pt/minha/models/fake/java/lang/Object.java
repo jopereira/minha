@@ -77,35 +77,55 @@ public class Object {
 	}
 	
 	private void fake_wait() throws InterruptedException {
-		cond.await();
+		try {
+			cond.await();
+		} catch(NullPointerException e) {
+			throw new IllegalMonitorStateException();
+		}
 	}
 	public static final void _fake_wait(java.lang.Object _this) throws InterruptedException {
 		cast(_this).fake_wait();
 	}
 
 	private void fake_wait(long timeout) throws InterruptedException {
-		cond.await(timeout, TimeUnit.MILLISECONDS);
+		try {
+			cond.await(timeout, TimeUnit.MILLISECONDS);
+		} catch(NullPointerException e) {
+			throw new IllegalMonitorStateException();
+		}
 	}	
 	public static final void _fake_wait(java.lang.Object _this, long timeout) throws InterruptedException {
 		cast(_this).fake_wait(timeout);
 	}
 
 	private void fake_wait(long timeout, int nanos) throws InterruptedException {
-		cond.await(timeout*1000000000+nanos, TimeUnit.NANOSECONDS);
+		try {
+			cond.await(timeout*1000000000+nanos, TimeUnit.NANOSECONDS);
+		} catch(NullPointerException e) {
+			throw new IllegalMonitorStateException();
+		}
 	}
 	public static final void _fake_wait(java.lang.Object _this, long timeout, int nanos) throws InterruptedException {
 		cast(_this).fake_wait(timeout, nanos);
 	}
 	
 	private void fake_notify() {
-		cond.signal();
+		try {
+			cond.signal();
+		} catch(NullPointerException e) {
+			throw new IllegalMonitorStateException();
+		}
 	}
 	public static final void _fake_notify(java.lang.Object _this) {
 		cast(_this).fake_notify();
 	}
 
 	public void fake_notifyAll() {
-		cond.signalAll();
+		try {
+			cond.signalAll();
+		} catch(NullPointerException e) {
+			throw new IllegalMonitorStateException();
+		}
 	}
 	public static final void _fake_notifyAll(java.lang.Object _this) {
 		cast(_this).fake_notifyAll();
