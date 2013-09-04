@@ -89,6 +89,7 @@ public class UDPSocket extends AbstractSocket {
 	}
 	
 	public void shutdown() {
+		readers.wakeup();
 		stack.removeUDPSocket(getLocalAddress());
 	}
 
