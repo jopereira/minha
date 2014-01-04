@@ -29,6 +29,7 @@ import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.EntryHandler;
 import pt.minha.models.global.EntryInterface;
 import pt.minha.models.global.ResultHolder;
+import pt.minha.models.global.SimulationThreadDeath;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class Trampoline implements EntryHandler, Runnable {		
@@ -95,16 +96,19 @@ public class Trampoline implements EntryHandler, Runnable {
 					SimulationThread.stopTime(0);
 					
 					i.result.reportReturn(result);
+					if (!i.result.isIgnored())
+						host.getTimeline().getScheduler().stop();
 					
 				} catch(InvocationTargetException ite) {
-					if (!SimulationThread.currentSimulationThread().fake_isAlive())
-						return;
-					SimulationThread.stopTime(0);
 					i.result.reportException(ite.getTargetException());
-				}
-				
-				if (!i.result.isIgnored())
-					host.getTimeline().getScheduler().stop();
+					if (!i.result.isIgnored())
+						host.getTimeline().getScheduler().stop();
+
+					if (ite.getTargetException() instanceof SimulationThreadDeath)
+						throw (SimulationThreadDeath)ite.getTargetException();
+					else
+						SimulationThread.stopTime(0);						
+				}				
 			}
 		} catch (Exception e) {
 			throw new RuntimeException("exception entering simulation", e);
