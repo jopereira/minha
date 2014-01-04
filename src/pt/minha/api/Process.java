@@ -54,7 +54,7 @@ public class Process implements Closeable {
 	 * Create an entry point to inject arbitrary invocations within a process.
 	 * This avoids the main method and can be used for multiple invocations.
 	 * 
-	 * @param clz the interface (global) of the class to be created
+	 * @param intf the interface (global) of the class to be created
 	 * @param impl the name of the class (translated) to be created within the process
 	 * @throws ClassNotFoundException 
 	 * @throws IllegalAccessException 
@@ -71,7 +71,6 @@ public class Process implements Closeable {
 	/** 
 	 * Create an entry point start a program within a process.
 	 * 
-	 * @param impl the name of the class (translated) to be created within the process
 	 * @throws ClassNotFoundException 
 	 * @throws IllegalAccessException 
 	 * @throws InstantiationException 
@@ -88,9 +87,9 @@ public class Process implements Closeable {
 	 * Create a proxy to receive callbacks from this simulation process. This proxy
 	 * is to be handled to simulation code as a parameter to an entry method.
 	 * 
-	 * @param clz the interface (global) of the class to be created
+	 * @param intf the interface (global) of the class to be created
 	 * @param impl the object implementing the interface handling invocations
-	 * @returns an exit proxy
+	 * @return an exit proxy
 	 */
 	public <T> Exit<T> createExit(Class<T> intf, T impl) {
 		return new Exit<T>(this, intf, impl);

@@ -95,7 +95,7 @@ public class Exit<T> extends Milestone {
 	 * invocation. This is imposed only on synchronous invocations. The
 	 * callee can override this delay within the invocation.
 	 * 
-	 * @param before simulated delay in nanoseconds
+	 * @param delay simulated delay in nanoseconds
 	 * @return the object itself for chaining invocations
 	 */
 	public Exit<T> delay(long delay) {
