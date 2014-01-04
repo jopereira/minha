@@ -137,7 +137,7 @@ public class SocketChannelImpl extends SocketChannel {
 			
 			b.position(b.position()+res);
 
-			cost = tcp.getNetwork().getConfig().readCost*res;
+			cost = tcp.getNetwork().getConfig().getTCPOverhead(res);
 			
 			return res;
 		} finally {
@@ -166,7 +166,7 @@ public class SocketChannelImpl extends SocketChannel {
 					if (res > 0) {
 						total += res;
 						res = 0;
-						cost = tcp.getNetwork().getConfig().writeCost*total;
+						cost = tcp.getNetwork().getConfig().getTCPOverhead(total);
 						tcp.uncork();
 					}
 					tcp.writers.queue(current.getWakeup());
@@ -181,7 +181,7 @@ public class SocketChannelImpl extends SocketChannel {
 			total += res;			
 			tcp.uncork();
 		
-			cost = tcp.getNetwork().getConfig().writeCost*total;
+			cost = tcp.getNetwork().getConfig().getTCPOverhead(total);
 
 			if (interrupted) {
 				close();
@@ -220,7 +220,7 @@ public class SocketChannelImpl extends SocketChannel {
 					if (res > 0) {
 						total += res;
 						res = 0;
-						cost = tcp.getNetwork().getConfig().writeCost*total;
+						cost = tcp.getNetwork().getConfig().getTCPOverhead(total);
 						tcp.uncork();
 					}
 					tcp.writers.queue(current.getWakeup());
@@ -236,7 +236,7 @@ public class SocketChannelImpl extends SocketChannel {
 			total += res;			
 			tcp.uncork();
 		
-			cost = tcp.getNetwork().getConfig().writeCost*total;
+			cost = tcp.getNetwork().getConfig().getTCPOverhead(total);
 				
 			if (interrupted) {
 				close();

@@ -41,7 +41,6 @@ import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.simulation.Scheduler;
 import pt.minha.models.global.ResultHolder;
 import pt.minha.models.global.net.Network;
-import pt.minha.models.global.net.NetworkConfig;
 
 /**
  * The simulation container. This is the main entry point for Minha.
@@ -52,7 +51,7 @@ public class World implements Closeable {
 	private static Logger logger = LoggerFactory.getLogger("pt.minha.API");
 	
 	private ClassConfig cc;
-	private NetworkConfig nc;
+	private Calibration nc;
 	private Scheduler sched;
 	private Network network;
 	private List<Host> hosts = new ArrayList<Host>();
@@ -69,14 +68,14 @@ public class World implements Closeable {
 	 */
 	public World() throws Exception {		
 		
-		// load network calibration values
+		// load calibration values
 		Properties props = new Properties();
-		props.load(ClassLoader.getSystemClassLoader().getResourceAsStream("default.network.properties"));			
+		props.load(ClassLoader.getSystemClassLoader().getResourceAsStream("default.calibration.properties"));			
 		props = new Properties(props);
-		InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("network.properties"); 
+		InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("calibration.properties"); 
 		if (is!=null)
 			props.load(is);
-		nc = new NetworkConfig(props);
+		nc = new Calibration(props);
 		
 		// load instrumentation properties
 		props = new Properties();
@@ -254,6 +253,14 @@ public class World implements Closeable {
 		long time = sched.getTime();
 		release(true);
 		return time;
+	}
+	
+	/**
+	 * Get the current calibration parameters.
+	 * @return calibration parameters
+	 */
+	public Calibration getCalibration() {
+		return nc;
 	}
 	
 	boolean runSimulation(long limit) {

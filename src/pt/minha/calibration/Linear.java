@@ -22,6 +22,9 @@ package pt.minha.calibration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Linear relation used for configuration.
+ */
 public class Linear {
 	private static Pattern re = Pattern.compile("([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)?(([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)[xX])?");
 	private double intercept, slope;
@@ -42,13 +45,11 @@ public class Linear {
 	}
 	
 	public long scale(long value) {
-		long result = (long) (slope*value + intercept);
-		if (result < 1)
-			return 1;
-		return result;
+		return (long) (slope*value + intercept);
 	}
 	
 	public static final Linear ZERO = new Linear(0, 0);
+	public static final Linear UNIT = new Linear(1, 0);
 	public static final Linear IDENTITY = new Linear(0, 1);
 	
 	public String toString() {

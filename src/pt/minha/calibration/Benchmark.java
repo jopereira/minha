@@ -23,8 +23,11 @@ import java.util.Map;
 
 import pt.minha.api.Global;
 
+/**
+ * Interface for calibration benchmarks.
+ */
 @Global
-public interface Command {
+public interface Benchmark {
 	public void setParameters(Map<String, Object> p);
 	
 	public Object client() throws Exception;	

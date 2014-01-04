@@ -83,7 +83,7 @@ public class DatagramChannelImpl extends DatagramChannel {
 			
 			dst.put(p.getData(), p.getOffset(), res);
 			
-			cost = udp.getNetwork().getConfig().readCost*p.getLength();
+			cost = udp.getNetwork().getConfig().getUDPOverhead(p.getLength());
 			
 			return res;
 		} finally {
@@ -117,7 +117,7 @@ public class DatagramChannelImpl extends DatagramChannel {
 			
 			udp.send(new DatagramPacket(data, data.length, udp.getRemoteAddress()));
 						
-			cost = udp.getNetwork().getConfig().writeCost*data.length;
+			cost = udp.getNetwork().getConfig().getUDPOverhead(data.length);
 			
 			return data.length;
 		} finally {

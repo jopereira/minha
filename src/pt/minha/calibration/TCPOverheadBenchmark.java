@@ -20,40 +20,87 @@
 package pt.minha.calibration;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Map;
 
-public class TimeVirt extends AbstractCommand {
+public class TCPOverheadBenchmark extends AbstractBenchmark {
 	
+	private int usec;
+
+	public void setParameters(Map<String,Object> p) {
+		super.setParameters(p);
+		if (p.containsKey("usec"))
+			this.usec = (Integer) p.get("usec");
+	}
+
 	@Override
 	public Object client() throws IOException, InterruptedException {
-		double stuff = Math.random();
+		Socket s = new Socket(srv.getAddress(), srv.getPort());
+		OutputStream out = s.getOutputStream();
+		byte[] buffer = new byte[payload];
 
 		for (int i = 0; i < 10; i++) {
-			for(int j = 0; j < payload; j++)
-				stuff = stuff * 11 / 7;
+			out.write(buffer);
+			if (usec>0)
+				Thread.sleep(usec);
+			System.nanoTime();
+			ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
+		}
+
+		start();
+
+		for (int i = 0; i < samples; i++) {
+			out.write(buffer);
+			if (usec>0)
+				Thread.sleep(usec);
+			add(payload, System.nanoTime());
+		}
+		Result r = stop(true);
+	
+		s.close();
+
+		return r;
+	}
+
+	@Override
+	public Object server() throws IOException {
+		try {
+		ServerSocket ss = new ServerSocket(srv.getPort());
+		Socket s = ss.accept();
+
+		InputStream in = s.getInputStream();
+		byte[] buffer = new byte[payload];
+
+		for (int i = 0; i < 10; i++) {
+			if (!readFully(in, buffer))
+				break;
 			System.nanoTime();
 			ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
 		}
 
 		start();
 		for (int i = 0; i < samples; i++) {
-			for(int j = 0; j < payload; j++)
-				stuff = stuff * 11 / 7;
+			if (!readFully(in, buffer))
+				break;
 			add(payload, System.nanoTime());
 		}
 		Result r = stop(true);
-		
-		System.out.println("defeat hostspot "+stuff);
-			
-		return r;
-	}
 
-	@Override
-	public Object server() throws IOException {
-		return null;
+		s.close();
+		ss.close();
+
+		return r;
+		} catch(Throwable e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	public String toString() {
-		return "CPU virtulization "+super.toString();
+		return "TCP flooding "+super.toString();
 	}
 }

@@ -19,23 +19,44 @@
 
 package pt.minha.calibration;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
 
-import pt.minha.api.Global;
-
-@Global
-public class Result implements Serializable {
-	public double meanLatency, varLatency;
-	public double meanCPU;
+/**
+ * Benchmark for CPU overhead in time virtualization.
+ */
+public class CPUBenchmark extends AbstractBenchmark {
 	
-	public Result(double meanLatency, double varLatency, double meanCPU) {
-		super();
-		this.meanLatency = meanLatency;
-		this.varLatency = varLatency;
-		this.meanCPU = meanCPU;
+	@Override
+	public Object client() throws IOException, InterruptedException {
+		double stuff = Math.random();
+
+		for (int i = 0; i < 10; i++) {
+			for(int j = 0; j < payload; j++)
+				stuff = stuff * 11 / 7;
+			System.nanoTime();
+			ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
+		}
+
+		start();
+		for (int i = 0; i < samples; i++) {
+			for(int j = 0; j < payload; j++)
+				stuff = stuff * 11 / 7;
+			add(payload, System.nanoTime());
+		}
+		Result r = stop(true);
+		
+		System.out.println("defeat hostspot "+stuff);
+			
+		return r;
+	}
+
+	@Override
+	public Object server() throws IOException {
+		return null;
 	}
 
 	public String toString() {
-		return "latency="+meanLatency+"("+varLatency+") cpu="+meanCPU;
+		return "CPU virtualization "+super.toString();
 	}
 }

@@ -22,6 +22,7 @@ package pt.minha.calibration;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.net.InetSocketAddress;
@@ -30,7 +31,12 @@ import java.util.Map;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
 
-public abstract class AbstractCommand implements Command {
+import pt.minha.api.Global;
+
+/**
+ * Base class for calibration benchmarks.
+ */
+public abstract class AbstractBenchmark implements Benchmark {
 	public InetSocketAddress srv;
 	public int samples;
 	public int payload;
@@ -100,5 +106,22 @@ public abstract class AbstractCommand implements Command {
 	
 	public String toString() {
 		return "probe: "+samples+" samples of "+payload+" bytes";
+	}
+	
+	@Global
+	public static class Result implements Serializable {
+		public double meanLatency, varLatency;
+		public double meanCPU;
+		
+		public Result(double meanLatency, double varLatency, double meanCPU) {
+			super();
+			this.meanLatency = meanLatency;
+			this.varLatency = varLatency;
+			this.meanCPU = meanCPU;
+		}
+
+		public String toString() {
+			return "latency="+meanLatency+"("+varLatency+") cpu="+meanCPU;
+		}
 	}
 }

@@ -26,7 +26,7 @@ import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class TCPRoundTrip extends AbstractCommand {
+public class TCPLatencyBenchmark extends AbstractBenchmark {
 	
 	@Override
 	public Object client() throws IOException {

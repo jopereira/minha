@@ -87,8 +87,10 @@
 		<echo message="Expecting calibration benchmark server at ${server}."/>
 		<echo message="You can change server name with ant -Dserver=name calibration-server."/>
 		<java classname="pt.minha.calibration.Calibrator" fork="true">
-			<arg value="${server}"/>
 			<classpath refid="runtime.classpath"/>
+			<jvmarg value="-Dorg.slf4j.simpleLogger.defaultLogLevel=warn"/>
+			<jvmarg value="-Dorg.slf4j.simpleLogger.log.pt.minha.calibration=info"/>
+			<arg value="${server}"/>
 		</java>
 	</target>
 </project>

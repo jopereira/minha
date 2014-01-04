@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import pt.minha.api.Calibration;
+
 public class Network {
 	// address generation and registry
 	private int ip1 = 10;
@@ -36,9 +38,9 @@ public class Network {
 	private final Map<InetAddress, NetworkStack> hosts = new HashMap<InetAddress, NetworkStack>();
 	private final Map<InetAddress, List<NetworkStack>> multicastSockets = new HashMap<InetAddress, List<NetworkStack>>();
 	
-	NetworkConfig config;
+	Calibration config;
 	
-	public Network(NetworkConfig nc) {
+	public Network(Calibration nc) {
 		this.config = nc;
 	}
 	

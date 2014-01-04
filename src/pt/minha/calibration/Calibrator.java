@@ -22,6 +22,7 @@ package pt.minha.calibration;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -31,15 +32,23 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pt.minha.api.Calibration;
 import pt.minha.api.Entry;
 import pt.minha.api.World;
+import pt.minha.calibration.AbstractBenchmark.Result;
 
+/**
+ * Calibration tool. This tool runs a micro-benchmark and computes 
+ * configuration parameters that calibrate the simulator to mimic
+ * the performance of the real hardware. 
+ */
 public class Calibrator implements Closeable {
 	
 	private static Logger logger = LoggerFactory.getLogger("pt.minha.calibration");
@@ -68,7 +77,7 @@ public class Calibrator implements Closeable {
 		
 		logger.info("real: running {}", p);
 		
-		Command next = (Command) Class.forName((String) p.get("bench")).newInstance();
+		Benchmark next = (Benchmark) Class.forName((String) p.get("bench")).newInstance();
 		next.setParameters(p);
 
 		Result rcli = (Result) next.client();
@@ -77,19 +86,22 @@ public class Calibrator implements Closeable {
 		
 		Object rsrv = ois.readObject();
 
-		logger.info("client: got reply");
-		
-		logger.info("real: got {}/{}", rcli, rsrv);
+		logger.info("real server: {}", rsrv);
+		logger.info("real client: {}", rcli);
 		
 		return rcli;
 	}
 				
-	private Result runSimulated(Map<String,Object> p) throws Throwable {
-		Command next = (Command) Class.forName((String) p.get("bench")).newInstance();
+	private Result runSimulated(Map<String,Object> p, Properties props) throws Throwable {
+		Benchmark next = (Benchmark) Class.forName((String) p.get("bench")).newInstance();
 		next.setParameters(p);
 
-		World world = new World();			
-		Entry<Command>[] e = world.createEntries(2, Command.class, (String) p.get("bench"));
+		World world = new World();
+		Calibration c = world.getCalibration();
+		c.reset();
+		c.load(props);
+		
+		Entry<Benchmark>[] e = world.createEntries(2, Benchmark.class, (String) p.get("bench"));
 
 		logger.info("simulation: loading {}", next);
 
@@ -107,11 +119,10 @@ public class Calibrator implements Closeable {
 		Object scli = e[0].getResult();
 		Object ssrv = e[1].getResult();
 
-		logger.info("simulation: running {} done", next);
-		
 		world.close();
 		
-		logger.info("simulation: got {}/{}", scli, ssrv);
+		logger.info("simulation server: got {}", ssrv);
+		logger.info("simulation client: got {}", scli);
 
 		return (Result) scli;
 	}
@@ -138,7 +149,7 @@ public class Calibrator implements Closeable {
 				
 				while(!s.isClosed()) {
 					Map<String,Object> p = (Map<String,Object>) ois.readObject();					
-					Command next = (Command) Class.forName((String) p.get("bench")).newInstance();
+					Benchmark next = (Benchmark) Class.forName((String) p.get("bench")).newInstance();
 					next.setParameters(p);
 					
 					logger.info("server: running {}", p);
@@ -164,17 +175,21 @@ public class Calibrator implements Closeable {
 			runServer();
 		} else {
 			Calibrator calib = new Calibrator(args[0]);
+			
+			Properties props = new Properties();
 
 			SimpleRegression cpuoh = new SimpleRegression(true);
 			for(int i: new int[]{100, 1000, 10000, 20000}) {
 				Map<String,Object> p = new HashMap<String, Object>();
-				p.put("bench", TimeVirt.class.getName());
+				p.put("bench", CPUBenchmark.class.getName());
 				p.put("samples", 50000);
 				p.put("payload", i);
 				Result r = calib.runReal(p);
-				Result s = calib.runSimulated(p);
+				Result s = calib.runSimulated(p, props);
 				cpuoh.addData(s.meanCPU, r.meanCPU);
 			}
+			
+			props.setProperty("cpuScaling", new Linear(cpuoh.getIntercept(), cpuoh.getSlope()).toString());
 			
 			// Run
 
@@ -183,42 +198,53 @@ public class Calibrator implements Closeable {
 			SimpleRegression netCPU_s = new SimpleRegression(true);
 			for(int i: new int[]{1, 100, 1000, 4000, 8000, 16000}) {
 				Map<String,Object> p = new HashMap<String, Object>();
-				p.put("bench", TCPFlood.class.getName());
+				p.put("bench", TCPOverheadBenchmark.class.getName());
 				p.put("server", new InetSocketAddress(args[0], 20000));
 				p.put("samples", 5000);
 				p.put("payload", i);
 				Result r = calib.runReal(p);
 				netCPU.addData(i, r.meanCPU);
-				Result s = calib.runSimulated(p);
+				Result s = calib.runSimulated(p, props);
 				netCPU_s.addData(i, s.meanCPU);
 
 				double bw = 8*i*1e9d/r.meanLatency;
 				if (bw > max)
 					max = bw;
-
 			}
 
+			props.setProperty("networkBandwidth", Long.toString((long)max));
+			props.setProperty("tcpOverhead", new Linear(
+					(netCPU.getIntercept()-netCPU_s.getIntercept())/2,
+					(netCPU.getSlope()-netCPU_s.getSlope())/2).toString());
+			
 			SimpleRegression rtt = new SimpleRegression(true);
 			SimpleRegression rtt_s = new SimpleRegression(true);
 			for(int i: new int[]{1, 100, 1000, 4000, 8000, 16000}) {
 				Map<String,Object> p = new HashMap<String, Object>();
-				p.put("bench", TCPRoundTrip.class.getName());
+				p.put("bench", TCPLatencyBenchmark.class.getName());
 				p.put("server", new InetSocketAddress(args[0], 20000));
 				p.put("samples", 5000);
 				p.put("payload", i);
 				Result r = calib.runReal(p);
 				rtt.addData(i, r.meanLatency);
-				Result s = calib.runSimulated(p);
+				Result s = calib.runSimulated(p, props);
 				rtt_s.addData(i, s.meanLatency);
 			}
-			
-			calib.close();
 
-			// Compute results
+			props.setProperty("networkLatency", new Linear(
+					(rtt.getIntercept()-rtt_s.getIntercept())/2,
+					(rtt.getSlope()-rtt_s.getSlope())/2).toString());
 						
-			logger.info("virtualization overhead: {}", new Linear(cpuoh.getIntercept(), cpuoh.getSlope()));
-			logger.info("flood: real {} vs {}", new Linear(netCPU.getIntercept(), netCPU.getSlope()), new Linear(netCPU_s.getIntercept(), netCPU_s.getSlope()));
-			logger.info("rtt: real {} vs {}", new Linear(rtt.getIntercept(), rtt.getSlope()), new Linear(rtt_s.getIntercept(), rtt_s.getSlope()));
+			calib.close();
+			
+			for(String key: props.stringPropertyNames())
+				logger.info("result: {}={}", key, props.getProperty(key));
+
+			// Write results
+
+			FileOutputStream file = new FileOutputStream("calibration.properties");
+			props.store(file, "Generated calibration properties");
+			file.close();			
 		}
 	}
 }

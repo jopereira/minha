@@ -86,7 +86,7 @@ public class Socket {
 					
 					int res = tcp.read(b, off, len); 
 
-					cost = tcp.getNetwork().getConfig().readCost*len;
+					cost = tcp.getNetwork().getConfig().getTCPOverhead(len);
 					
 					return res;
 				} finally {
@@ -127,7 +127,7 @@ public class Socket {
 							if (res > 0) {
 								total += res;
 								res = 0;
-								cost = tcp.getNetwork().getConfig().writeCost*total;
+								cost = tcp.getNetwork().getConfig().getTCPOverhead(total);
 								tcp.uncork();
 							}
 							tcp.writers.queue(SimulationThread.currentSimulationThread().getWakeup());
@@ -139,7 +139,7 @@ public class Socket {
 					total += res;			
 					tcp.uncork();
 					
-					cost = tcp.getNetwork().getConfig().writeCost*total;
+					cost = tcp.getNetwork().getConfig().getTCPOverhead(total);
 				} finally {
 					tcp.writeAt(time);
 					

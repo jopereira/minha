@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import pt.minha.api.Calibration;
 import pt.minha.api.Host;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.Timeline;
@@ -38,6 +39,7 @@ public class SimulationThread extends Thread implements Closeable {
 	private pt.minha.models.fake.java.lang.Thread fakeThread;
 	private long id;
 	private SimulationProcess process;
+	private Calibration nc;
 	private long time = -1;
 	private boolean blocked, rt, dead, started, interruptible, interrupted;
 	private boolean parked, permit;
@@ -61,9 +63,10 @@ public class SimulationThread extends Thread implements Closeable {
 			host = ((SimulationThread) Thread.currentThread()).process;
 		
 		setContextClassLoader(this.getClass().getClassLoader());
-				
+
 		this.rt = rt;
 		this.process = host;
+		this.nc = process.getNetwork().getConfig();
 		this.runnable = runnable;
 		this.fakeThread = fakeThread;
 		this.id=host.getNextThreadId();
@@ -288,15 +291,18 @@ public class SimulationThread extends Thread implements Closeable {
 	}
 	
 	private long doStopTime(long overhead) {
-		long delta = timer.getTime() - time;
+		long delta = nc.getCPUDelay(timer.getTime() - time) + overhead;
+		
+		if (delta<0)
+			delta = 1;
 		
 		if (time<0)
 			throw new RuntimeException("restopping time");
 		
 		time = -1;
 		
-		totalCPU += delta+overhead;
-		process.getCPU().release(delta+overhead, getWakeup());
+		totalCPU += delta;
+		process.getCPU().release(delta, getWakeup());
 		resync();
 		
 		return getTimeline().getTime();
@@ -367,7 +373,7 @@ public class SimulationThread extends Thread implements Closeable {
 		wakeupCond.signalAll();
 		lock.unlock();
 	}
-
+	
 	/*
 	 public void m() {
 	 	realCode();

@@ -30,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import pt.minha.api.Calibration;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.SimpleResource;
 import pt.minha.kernel.simulation.Timeline;
@@ -160,15 +161,15 @@ public class NetworkStack {
 		if (target==null)
 			tcpPacket.getSource().scheduleRead(new TCPPacket(null, tcpPacket.getSource(), 0, 0, new byte[0], TCPPacket.RST)).schedule(0);
 		else
-			target.handleConnect(serverAddr, tcpPacket).scheduleFrom(timeline, qdelay+getConfig().getNetworkOverhead(tcpPacket.getSize()));				
+			target.handleConnect(serverAddr, tcpPacket).scheduleFrom(timeline, qdelay+getConfig().getTCPOverhead(tcpPacket.getSize()));				
 	}
 		
 	public void relayTCPData(final TCPPacket p) {
-		p.getDestination().scheduleRead(p).scheduleFrom(timeline, getConfig().getNetworkOverhead(p.getSize()));
+		p.getDestination().scheduleRead(p).scheduleFrom(timeline, getConfig().getTCPOverhead(p.getSize()));
 	}
 
 	public void relayUDP(final InetSocketAddress destination, final DatagramPacket p) {
-		long time = bandwidth.useConditionally(getConfig().getMaxDelay(p.getLength()), getConfig().getLineDelay(p.getLength()));
+		long time = bandwidth.useConditionally(getConfig().getMaxDelay(), getConfig().getLineDelay(p.getLength()));
 		if (time < 0)
 			return;
 		
@@ -178,16 +179,16 @@ public class NetworkStack {
 			List<NetworkStack> stacks = network.getMulticastHosts(destination.getAddress());
 			if (stacks != null)
 				for (NetworkStack stack: stacks)
-					stack.handleDatagram(destination, p).scheduleFrom(timeline, qdelay+getConfig().getNetworkOverhead(p.getLength()));
+					stack.handleDatagram(destination, p).scheduleFrom(timeline, qdelay+getConfig().getTCPOverhead(p.getLength()));
 		
 		} else {
 			NetworkStack stack = network.getHost(destination.getAddress());
 			if (stack!=null)
-				stack.handleDatagram(destination, p).scheduleFrom(timeline, qdelay+getConfig().getNetworkOverhead(p.getLength()));
+				stack.handleDatagram(destination, p).scheduleFrom(timeline, qdelay+getConfig().getTCPOverhead(p.getLength()));
 		}
 	}
 
-	public NetworkConfig getConfig() {
+	public Calibration getConfig() {
 		return network.config;
 	}
 }

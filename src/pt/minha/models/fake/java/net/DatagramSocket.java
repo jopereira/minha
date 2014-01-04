@@ -67,7 +67,7 @@ public class DatagramSocket {
 			throw new SocketException("send on closed socket");
 		
 		try {
-			SimulationThread.stopTime(udp.getNetwork().getConfig().writeCost*packet.getLength());
+			SimulationThread.stopTime(udp.getNetwork().getConfig().getUDPOverhead(packet.getLength()));
 
 			udp.send(packet);
 			
@@ -102,7 +102,7 @@ public class DatagramSocket {
 			packet.setLength(cost);
 		
 		} finally {
-			SimulationThread.startTime(udp.getNetwork().getConfig().readCost*cost);
+			SimulationThread.startTime(udp.getNetwork().getConfig().getUDPOverhead(cost));
 		}
 	}
 
