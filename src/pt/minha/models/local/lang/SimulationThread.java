@@ -179,9 +179,6 @@ public class SimulationThread extends Thread implements Closeable {
 	private void wakeup() {
 		lock.lock();
 		
-		if (dead)
-			throw new RuntimeException("Dead thread waking up. They live!");
-		
 		blocked = false;
 		interruptible = false;
 		wakeupCond.signal();
