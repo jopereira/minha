@@ -68,7 +68,6 @@ public class TCPOverheadBenchmark extends AbstractBenchmark {
 
 	@Override
 	public Object server() throws IOException {
-		try {
 		ServerSocket ss = new ServerSocket(srv.getPort());
 		Socket s = ss.accept();
 
@@ -94,10 +93,6 @@ public class TCPOverheadBenchmark extends AbstractBenchmark {
 		ss.close();
 
 		return r;
-		} catch(Throwable e) {
-			e.printStackTrace();
-			return null;
-		}
 	}
 
 	public String toString() {
