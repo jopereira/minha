@@ -25,6 +25,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
 import pt.minha.models.fake.java.nio.channels.DatagramChannel;
 import pt.minha.models.global.net.UDPSocket;
@@ -33,6 +34,7 @@ import pt.minha.models.local.lang.SimulationThread;
 public class DatagramSocket {
 	protected UDPSocket udp;
 	
+	private int soTimeout = 0;
     private boolean closed = false;
     private DatagramChannel channel;
 		
@@ -84,14 +86,25 @@ public class DatagramSocket {
 		
 		try {
 			SimulationThread.stopTime(0);
-			
-			while(!udp.readers.isReady() && !closed) {
-				udp.readers.queue(SimulationThread.currentSimulationThread().getWakeup());
-				SimulationThread.currentSimulationThread().pause(false, false);
+			SimulationThread current = SimulationThread.currentSimulationThread(); 
+
+			long before = current.getTimeline().getTime();
+			long deadline = before+soTimeout*1000000;
+
+			while(!udp.readers.isReady() && !closed && (soTimeout == 0 || current.getTimeline().getTime()<deadline)) {
+				udp.readers.queue(current.getWakeup());
+				if (soTimeout>0)
+					current.getWakeup().schedule(deadline - current.getTimeline().getTime());
+				current.pause(false, false);
 			}
 			
 			if (closed)
 				throw new SocketException("receive on closed socket");
+			
+			if (!udp.readers.isReady()) {
+				udp.readers.cancel(current.getWakeup());
+				throw new SocketTimeoutException();
+			}
 			
 			DatagramPacket p=udp.receive();
 					
@@ -149,5 +162,13 @@ public class DatagramSocket {
 
 	public void setSendBufferSize(int size) throws SocketException {
 		// not implemented
+	}
+	
+	public void setSoTimeout(int millis) throws SocketException {
+		soTimeout = millis;
+	}
+	
+	public int getSoTimeout() {
+		return soTimeout;
 	}
 }
