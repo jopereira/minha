@@ -101,7 +101,7 @@ public class World implements Closeable {
 			timelines = procs*-timelines;		
 		long fuzzyness = Long.parseLong(props.getProperty("fuzzyness"));
 		if (fuzzyness < 0)
-			fuzzyness = nc.getLineDelay(1)*-fuzzyness;		
+			fuzzyness = (nc.getLineDelay(10)+nc.getAdditionalDelay(10))*-fuzzyness;		
 		sched = new Scheduler(procs, timelines, fuzzyness);
 		
 		logger.info("using up to {} processors, {}ns fuzzyness", procs, fuzzyness);

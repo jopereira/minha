@@ -154,18 +154,20 @@ public class NetworkStack {
 		};
 	}
 	
-	public void relayTCPConnect(final InetSocketAddress serverAddr, final TCPPacket tcpPacket) {
-		long qdelay = bandwidth.use(getConfig().getLineDelay(tcpPacket.getSize())) - getTimeline().getTime();
+	public void relayTCPConnect(final InetSocketAddress serverAddr, final TCPPacket p) {
+		long qdelay = bandwidth.use(getConfig().getLineDelay(p.getSize())) + getConfig().getAdditionalDelay(p.getSize()) - getTimeline().getTime();
 		
 		NetworkStack target = network.getHost(serverAddr.getAddress());
 		if (target==null)
-			tcpPacket.getSource().scheduleRead(new TCPPacket(null, tcpPacket.getSource(), 0, 0, new byte[0], TCPPacket.RST)).schedule(0);
+			p.getSource().scheduleRead(new TCPPacket(null, p.getSource(), 0, 0, new byte[0], TCPPacket.RST)).schedule(qdelay);
 		else
-			target.handleConnect(serverAddr, tcpPacket).scheduleFrom(timeline, qdelay+getConfig().getTCPOverhead(tcpPacket.getSize()));				
+			target.handleConnect(serverAddr, p).scheduleFrom(timeline, qdelay);				
 	}
 		
 	public void relayTCPData(final TCPPacket p) {
-		p.getDestination().scheduleRead(p).scheduleFrom(timeline, getConfig().getTCPOverhead(p.getSize()));
+		long qdelay = bandwidth.use(getConfig().getLineDelay(p.getSize())) + getConfig().getAdditionalDelay(p.getSize()) - getTimeline().getTime();
+		
+		p.getDestination().scheduleRead(p).scheduleFrom(timeline, qdelay);
 	}
 
 	public void relayUDP(final InetSocketAddress destination, final DatagramPacket p) {
@@ -173,18 +175,18 @@ public class NetworkStack {
 		if (time < 0)
 			return;
 		
-		long qdelay = time - getTimeline().getTime();
+		long qdelay = time + getConfig().getAdditionalDelay(p.getLength()) - getTimeline().getTime();
 		
 		if (destination.getAddress().isMulticastAddress()) {
 			List<NetworkStack> stacks = network.getMulticastHosts(destination.getAddress());
 			if (stacks != null)
 				for (NetworkStack stack: stacks)
-					stack.handleDatagram(destination, p).scheduleFrom(timeline, qdelay+getConfig().getTCPOverhead(p.getLength()));
+					stack.handleDatagram(destination, p).scheduleFrom(timeline, qdelay);
 		
 		} else {
 			NetworkStack stack = network.getHost(destination.getAddress());
 			if (stack!=null)
-				stack.handleDatagram(destination, p).scheduleFrom(timeline, qdelay+getConfig().getTCPOverhead(p.getLength()));
+				stack.handleDatagram(destination, p).scheduleFrom(timeline, qdelay);
 		}
 	}
 

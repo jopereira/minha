@@ -43,8 +43,15 @@ public class Calibration {
 
 	// Network switch
 	public long getLineDelay(int size) {
+		long res = (long) (size*(1e9d/(networkBandwidth/8)));
+		if (res<=0)
+			return 1;
+		return res;
+	}
+
+	public long getAdditionalDelay(int size) {
 		long res = networkLatency.scale(size);
-		if (res<0)
+		if (res<=0)
 			return 1;
 		return res;
 	}
@@ -80,6 +87,7 @@ public class Calibration {
 	public void load(Properties props) {
 		cpuScaling = new Linear(props.getProperty("cpuScaling", cpuScaling.toString()));
 		networkLatency = new Linear(props.getProperty("networkLatency", networkLatency.toString()));
+		networkBandwidth = Long.parseLong(props.getProperty("networkBandwidth", Long.toString(networkBandwidth)));
 		tcpOverhead = new Linear(props.getProperty("tcpOverhead", tcpOverhead.toString()));
 		udpOverhead = new Linear(props.getProperty("udpOverhead", udpOverhead.toString()));
 		udpBuffer = Integer.parseInt(props.getProperty("udpBuffer", Integer.toString(udpBuffer)));
@@ -92,6 +100,7 @@ public class Calibration {
 	public void save(Properties props) {
 		props.setProperty("cpuScaling", cpuScaling.toString());
 		props.setProperty("networkLatency", networkLatency.toString());
+		props.setProperty("networkBandwidth", Long.toString(networkBandwidth));
 		props.setProperty("tcpOverhead", tcpOverhead.toString());
 		props.setProperty("udpOverhead", udpOverhead.toString());
 		props.setProperty("udpBuffer", Integer.toString(udpBuffer));
@@ -100,6 +109,7 @@ public class Calibration {
 	private Linear cpuScaling;
 
 	private Linear networkLatency;
+	private long networkBandwidth;
 
 	private Linear tcpOverhead;
 	private Linear udpOverhead;
