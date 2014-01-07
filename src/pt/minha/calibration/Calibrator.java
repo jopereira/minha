@@ -217,6 +217,24 @@ public class Calibrator implements Closeable {
 					(netCPU.getIntercept()-netCPU_s.getIntercept())/2,
 					(netCPU.getSlope()-netCPU_s.getSlope())/2).toString());
 			
+			SimpleRegression udpCPU = new SimpleRegression(true);
+			SimpleRegression udpCPU_s = new SimpleRegression(true);
+			for(int i: new int[]{1, 100, 1000, 4000, 8000, 16000}) {
+				Map<String,Object> p = new HashMap<String, Object>();
+				p.put("bench", UDPOverheadBenchmark.class.getName());
+				p.put("server", new InetSocketAddress(args[0], 20000));
+				p.put("samples", 5000);
+				p.put("payload", i);
+				Result r = calib.runReal(p);
+				udpCPU.addData(i, r.meanCPU);
+				Result s = calib.runSimulated(p, props);
+				udpCPU_s.addData(i, s.meanCPU);
+			}
+
+			props.setProperty("udpOverhead", new Linear(
+					(udpCPU.getIntercept()-udpCPU_s.getIntercept())/2,
+					(udpCPU.getSlope()-udpCPU_s.getSlope())/2).toString());
+			
 			SimpleRegression rtt = new SimpleRegression(true);
 			SimpleRegression rtt_s = new SimpleRegression(true);
 			for(int i: new int[]{1, 100, 1000, 4000, 8000, 16000}) {
