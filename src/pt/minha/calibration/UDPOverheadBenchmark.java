@@ -36,10 +36,10 @@ public class UDPOverheadBenchmark extends AbstractBenchmark {
 			this.usec = (Integer) p.get("usec");
 	}
 	
-	private void poison(DatagramSocket s) throws IOException {
+	private void poison(DatagramSocket s, int v) throws IOException {
 		s.setSoTimeout(1000);
 		byte[] pill = new byte[1];
-		pill[0]=1;
+		pill[0]=(byte)v;
 		for(int i = 0; i<10; i++) {
 			DatagramPacket packet = new DatagramPacket(pill, 1, srv);
 			s.send(packet);
@@ -68,9 +68,11 @@ public class UDPOverheadBenchmark extends AbstractBenchmark {
 			ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
 		}
 
-		poison(s);
+		poison(s, 1);
 		
 		start();
+		
+		buffer[0]=2;
 
 		for (int i = 0; i < samples; i++) {
 			DatagramPacket packet = new DatagramPacket(buffer, payload, srv);
@@ -81,7 +83,7 @@ public class UDPOverheadBenchmark extends AbstractBenchmark {
 		}
 		Result r = stop(true);
 
-		poison(s);
+		poison(s, 3);
 
 		s.close();
 
@@ -109,7 +111,9 @@ public class UDPOverheadBenchmark extends AbstractBenchmark {
 		while (true) {
 			DatagramPacket packet = new DatagramPacket(buffer, payload, srv);
 			s.receive(packet);
-			if (packet.getData()[0] == 1) {
+			if (packet.getData()[0] == 1)
+				continue;
+			if (packet.getData()[0] == 3) {
 				s.send(packet);
 				break;
 			}
