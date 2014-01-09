@@ -134,5 +134,6 @@ public class SimulationProcess implements EntryInterface {
 		ArrayList<SimulationThread> l = new ArrayList<SimulationThread>(threads);
 		for(SimulationThread t: l)
 			t.close();
+		network.close();
 	}
 }

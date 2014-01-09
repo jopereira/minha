@@ -19,6 +19,7 @@
 
 package pt.minha.models.global.net;
 
+import java.io.Closeable;
 import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -26,16 +27,18 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import pt.minha.api.Calibration;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.SimpleResource;
 import pt.minha.kernel.simulation.Timeline;
 
-public class NetworkStack {
+public class NetworkStack implements Closeable {
 	private Network network;
 	private Timeline timeline;
 	
@@ -105,6 +108,7 @@ public class NetworkStack {
 		
 	private final Map<InetSocketAddress, UDPSocket> socketsUDP = new HashMap<InetSocketAddress, UDPSocket>();
 	private final Map<InetSocketAddress, ListeningTCPSocket> socketsTCP = new HashMap<InetSocketAddress, ListeningTCPSocket>();
+	private final Set<ClientTCPSocket> connTCP = new HashSet<ClientTCPSocket>();
 	
 	public InetSocketAddress addTCPSocket(InetSocketAddress isa, ListeningTCPSocket ab) throws SocketException {
 		if ( socketsTCP.containsKey(isa) )
@@ -112,6 +116,10 @@ public class NetworkStack {
 
 		socketsTCP.put(isa, ab);
 		return isa;
+	}
+
+	public void addTCPConnection(ClientTCPSocket ab) {
+		connTCP.add(ab);
 	}
 
 	public InetSocketAddress addUDPSocket(InetSocketAddress isa, UDPSocket udpSocket) throws SocketException {
@@ -123,13 +131,15 @@ public class NetworkStack {
 	}
 
 	public void removeTCPSocket(InetSocketAddress isa) {
-		if ( socketsTCP.containsKey(isa) )
-			socketsTCP.remove(isa);
+		socketsTCP.remove(isa);
+	}
+
+	public void removeTCPConn(ClientTCPSocket isa) {
+		connTCP.remove(isa);
 	}
 	
 	public void removeUDPSocket(InetSocketAddress isa) {
-		if ( socketsUDP.containsKey(isa) )
-			socketsUDP.remove(isa);
+		socketsUDP.remove(isa);
 	}
 	
 	public Event handleDatagram(final InetSocketAddress destination, final DatagramPacket packet) {
@@ -192,5 +202,13 @@ public class NetworkStack {
 
 	public Calibration getConfig() {
 		return network.config;
+	}
+
+	@Override
+	public void close() {
+		for(ClientTCPSocket tcp: connTCP) {
+			tcp.shutdownInput();
+			tcp.shutdownOutput();
+		}
 	}
 }

@@ -61,6 +61,8 @@ public class ClientTCPSocket extends AbstractSocket {
 		super(stack);
 		
 		init();
+		
+		stack.addTCPConnection(this);
 	}
 		
 	/**
@@ -85,7 +87,9 @@ public class ClientTCPSocket extends AbstractSocket {
 		super(stack, local);
 		
 		init();
-		
+
+		stack.addTCPConnection(this);
+
 		synSent = true;
 		receivePacket(syn);
 	}
@@ -309,6 +313,9 @@ public class ClientTCPSocket extends AbstractSocket {
 		out.close(true);
 		
 		uncork();
+		
+		if (in.isClosing())
+			stack.removeTCPConn(this);
 	}
 
 	/**
@@ -319,6 +326,9 @@ public class ClientTCPSocket extends AbstractSocket {
 			return;
 		
 		in.close(false);
+
+		if (out.isClosing())
+			stack.removeTCPConn(this);
 	}	
 	
 	public boolean isConnecting() {
