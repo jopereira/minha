@@ -103,7 +103,7 @@ public class Scheduler implements Runnable {
 			if (min >= simulationTime)
 				break;
 			
-			if (in.get() == e) {
+			if (i==timelines.size() && in.get() == e) {
 				long prev = lease.get();
 				min += fuzzyness;
 				while(prev < min && !lease.compareAndSet(prev, min)) 

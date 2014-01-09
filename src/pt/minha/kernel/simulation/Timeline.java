@@ -19,7 +19,6 @@
 
 package pt.minha.kernel.simulation;
 
-import java.util.Iterator;
 import java.util.NavigableSet;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -100,16 +99,14 @@ public class Timeline {
 		if (!lock.tryLock())
 			return false;
 		
-		Iterator<Event> i = schedule.iterator();
-		
-		while(i.hasNext()) {
-			Event next = i.next();
+		while(!schedule.isEmpty()) {
+			Event next = schedule.first();
 			if (next.time >= sched.lease.get())
 				break;
 			if (next.time > now)
 				now = next.time;
 			doorstop = now;
-			i.remove();
+			schedule.remove(next);
 			next.execute();
 		}
 
