@@ -129,10 +129,6 @@ public class Thread extends Object implements Runnable {
 
     public final void setDaemon(boolean on) {
     	daemon = on;
-    	if (on)
-    		simulationThread.getProcess().removeThread(simulationThread);
-    	else
-    		simulationThread.getProcess().addThread(simulationThread);
     }
 
     public boolean isDaemon() {

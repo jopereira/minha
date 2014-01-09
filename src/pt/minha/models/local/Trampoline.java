@@ -43,6 +43,7 @@ public class Trampoline implements EntryHandler, Runnable {
 		this.implName = implName;
 		this.host = (SimulationProcess) host;
 		this.thread = new pt.minha.models.fake.java.lang.Thread((SimulationProcess)host, this);
+		this.thread.setDaemon(true);
 		thread.simulationStart(0);
 	}
 	

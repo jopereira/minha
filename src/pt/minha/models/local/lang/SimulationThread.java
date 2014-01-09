@@ -24,6 +24,9 @@ import java.io.IOException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import pt.minha.api.Calibration;
 import pt.minha.api.Host;
 import pt.minha.kernel.simulation.Event;
@@ -52,6 +55,8 @@ public class SimulationThread extends Thread implements Closeable {
 	
 	public long totalCPU;
 	
+	private Logger logger;
+	
 	// fake_join
 	private pt.minha.models.fake.java.util.concurrent.locks.ReentrantLock joinLock = new pt.minha.models.fake.java.util.concurrent.locks.ReentrantLock();
 	private Condition joinCond = joinLock.newCondition();
@@ -78,6 +83,8 @@ public class SimulationThread extends Thread implements Closeable {
 		
 		blocked = true;
 		setDaemon(true);
+		
+		logger = LoggerFactory.getLogger("pt.minha.thread."+host.getNetwork().getLocalAddress().getHostAddress().replace(".", "_")+"."+id);
 	}
 
 	/**
@@ -138,10 +145,12 @@ public class SimulationThread extends Thread implements Closeable {
 			if (rt) startTime(0);
 			runnable.run();
 		} catch(SimulationThreadDeath d) {
-			// good! :-)
+			if (fake_isDaemon())
+				logger.info("Daemon thread killed");
+			else
+				logger.warn("Thread died: simulation finished or deadlock?");
 		} catch (Throwable e) {
-			e.printStackTrace();
-			System.exit(1);
+			logger.warn("Uncaught exception", e);
 		} finally {
 			if (!dead) {
 				joinLock.lock();
@@ -333,6 +342,10 @@ public class SimulationThread extends Thread implements Closeable {
 
 	public long fake_getId() {
 		return id;
+	}
+	
+	public boolean fake_isDaemon() {
+		return fakeThread.isDaemon();
 	}
 	
 	public void park(long nanos) {

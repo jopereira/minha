@@ -39,7 +39,7 @@ import pt.minha.models.local.lang.SimulationThread;
 
 public class SimulationProcess implements EntryInterface {
 	private Set<SimulationThread> threads = new HashSet<SimulationThread>();
-	private long threadId = -2; // -1 is "main" thread, 0 is the first user thread	
+	private long threadId = 0;	
 	private Resource cpu;
 	private NetworkStack network;
 	private Host host;
@@ -67,8 +67,7 @@ public class SimulationProcess implements EntryInterface {
 	}
 	
 	public long getNextThreadId() {
-		threadId++;
-		return threadId;
+		return threadId++;
 	}
 	
 	/* The following methods are supposed to be called outside simulation events,
@@ -86,10 +85,15 @@ public class SimulationProcess implements EntryInterface {
 		while(true) {
 			SimulationThread t = null;
 			synchronized(this) {
-				if (threads.isEmpty())
-					break;
-				t = threads.iterator().next();
+				for(SimulationThread st: threads) {
+					if (!st.fake_isDaemon()) {
+						t = st;
+						break;
+					}
+				}
 			}
+			if (t==null)
+				break;
 			t.fake_join(0);
 		}
 		cpu.stop();
