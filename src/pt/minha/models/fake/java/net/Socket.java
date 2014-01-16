@@ -29,7 +29,6 @@ import java.net.SocketException;
 import java.nio.channels.IllegalBlockingModeException;
 
 import pt.minha.models.fake.java.nio.channels.SocketChannel;
-import pt.minha.models.global.Debug;
 import pt.minha.models.global.net.ClientTCPSocket;
 import pt.minha.models.local.lang.SimulationThread;
 
@@ -92,7 +91,6 @@ public class Socket {
 					return res;
 				} finally {
 					if (cost<0) cost = 0;
-					Debug.println("XXX cost "+cost+" "+SimulationThread.currentSimulationThread().getTimeline().getTime());
 					tcp.readAt(SimulationThread.currentSimulationThread().getTimeline().getTime()+cost);
 					
 					SimulationThread.startTime(cost);					
