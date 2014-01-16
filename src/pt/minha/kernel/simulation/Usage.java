@@ -22,6 +22,9 @@ package pt.minha.kernel.simulation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// ****************************
+// FIXME: This is currently disabled as it doesn't work with the parallel simulation kernel.
+// ****************************
 
 public class Usage extends Event {
 	private long interval, base, acum, rtbase;
@@ -67,13 +70,13 @@ public class Usage extends Event {
 		acum = 0;
 		rtbase = rtnow;
 		
-		schedule(interval);
+		//schedule(interval);
 	}
 	
 	public void using(long used) {
 		acum += used;
 		if (base<0 && acum > threshold) {
-			schedule(interval);
+			//schedule(interval);
 			base = getTimeline().getTime();
 			rtbase = System.nanoTime();
 		}
