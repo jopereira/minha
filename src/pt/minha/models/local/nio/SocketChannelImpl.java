@@ -116,9 +116,8 @@ public class SocketChannelImpl extends SocketChannel {
 			throw new SocketException("socket closed");
 
 		long cost = 0;
-		int res = 0;
 
-		long time = SimulationThread.stopTime(0);
+		SimulationThread.stopTime(0);
 		try {
 			SimulationThread current = SimulationThread.currentSimulationThread();
 			boolean interrupted = current.getInterruptedStatus(false) && isBlocking();
@@ -133,7 +132,7 @@ public class SocketChannelImpl extends SocketChannel {
 				throw new ClosedByInterruptException();
 			}
 			
-			res = tcp.read(b.array(), b.position(), b.remaining());
+			int res = tcp.read(b.array(), b.position(), b.remaining());
 			
 			b.position(b.position()+res);
 
@@ -141,7 +140,8 @@ public class SocketChannelImpl extends SocketChannel {
 			
 			return res;
 		} finally {
-			if (res>0) tcp.readAt(time+cost);
+			if (cost<0) cost = 0;
+			tcp.readAt(SimulationThread.currentSimulationThread().getTimeline().getTime()+cost);
 			SimulationThread.startTime(cost);					
 		}
 	}
