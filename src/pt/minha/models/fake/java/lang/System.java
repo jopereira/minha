@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Properties;
 
 import pt.minha.models.local.io.SystemStreamsImpl;
 import pt.minha.models.local.lang.SimulationThread;
@@ -41,12 +42,16 @@ public class System {
 		return nanoTime()/1000000;
 	}
 	
+	public static Properties getProperties() {
+		return SimulationThread.currentSimulationThread().getProcess().getSystemProperties();
+	}
+	
 	public static String getProperty(String prop) {
-		return java.lang.System.getProperty(prop);
+		return getProperties().getProperty(prop);
 	}
 	
 	public static String getProperty(String prop, String value) {
-		return java.lang.System.getProperty(prop, value);
+		return getProperties().getProperty(prop, value);
 	}
 					
 	public static void arraycopy(java.lang.Object a, int b, java.lang.Object c, int d, int e) {

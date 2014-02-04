@@ -22,6 +22,9 @@ package pt.minha.api;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.instrument.InstrumentationLoader;
@@ -38,13 +41,21 @@ public class Process implements Closeable {
 	InstrumentationLoader loader;
 	EntryInterface impl;
 
-	Process(Host h, ClassConfig cc, NetworkStack network, Resource cpu) throws SimulationException {
+	Process(Host h, ClassConfig cc, NetworkStack network, Resource cpu, Properties sysProps) throws SimulationException {
 		this.host = h;
+		
+		// Copy properties to a Map, as java.util.Properties is "moved" and cannot
+		// be given to a different class loader.
+		Map<Object,Object> props = new HashMap<Object, Object>();
+		if (sysProps != null)
+			props.putAll(sysProps);
+		else
+			props.putAll(System.getProperties());
 
 		loader=new InstrumentationLoader(cc);
 		try {
 			Class<?> clz = loader.loadClass("pt.minha.models.local.SimulationProcess");
-			impl = (EntryInterface) clz.getDeclaredConstructor(Host.class, Resource.class, NetworkStack.class).newInstance(host, cpu, network);
+			impl = (EntryInterface) clz.getDeclaredConstructor(Host.class, Resource.class, NetworkStack.class, Map.class).newInstance(host, cpu, network, props);
 		} catch(Exception e) {
 			throw new SimulationException(e);
 		}

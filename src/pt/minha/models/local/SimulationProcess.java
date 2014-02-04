@@ -25,6 +25,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import pt.minha.api.Host;
@@ -43,11 +45,16 @@ public class SimulationProcess implements EntryInterface {
 	private Resource cpu;
 	private NetworkStack network;
 	private Host host;
+	private Properties sysProps;
 		
-	public SimulationProcess(Host host, Resource cpu, NetworkStack network) {
+	public SimulationProcess(Host host, Resource cpu, NetworkStack network, Map<Object,Object> props) {
 		this.host = host;
 		this.cpu = cpu;
 		this.network = network;
+		
+		// Now inside the process class loader, restore properties to java.util.Properties
+		this.sysProps = new Properties();
+		sysProps.putAll(props);
 	}
 	
 	public Host getHost() {
@@ -68,6 +75,10 @@ public class SimulationProcess implements EntryInterface {
 	
 	public long getNextThreadId() {
 		return threadId++;
+	}
+	
+	public Properties getSystemProperties() {
+		return sysProps;
 	}
 	
 	/* The following methods are supposed to be called outside simulation events,

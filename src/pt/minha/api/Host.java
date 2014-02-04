@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.simulation.Resource;
@@ -59,13 +60,28 @@ public class Host implements Closeable {
 	}
 	
 	/**
-	 * Create a host with automatically assigned IP address.
+	 * Create a host with automatically assigned IP address. System properties
+	 * are set from the host.
 	 * 
 	 * @return a host instance
 	 * @throws SimulationException
 	 */
 	public Process createProcess() throws SimulationException {
-		Process proc = new Process(this, cc, network, cpu);
+		Process proc = new Process(this, cc, network, cpu, null);
+		procs.add(proc);
+		return proc;
+	}
+	
+	/**
+	 * Create a host with automatically assigned IP address and custom
+	 * system properties.
+	 * 
+	 * @param props system properties for the simulated process
+	 * @return a host instance
+	 * @throws SimulationException
+	 */
+	public Process createProcess(Properties props) throws SimulationException {
+		Process proc = new Process(this, cc, network, cpu, props);
 		procs.add(proc);
 		return proc;
 	}
