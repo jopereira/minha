@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Map;
 import java.util.Properties;
 
 import pt.minha.models.local.io.SystemStreamsImpl;
@@ -43,7 +44,11 @@ public class System {
 	}
 	
 	public static Properties getProperties() {
-		return SimulationThread.currentSimulationThread().getProcess().getSystemProperties();
+		// Now in a class that uses moved, convert to java.util.Properties
+		Map<java.lang.Object,java.lang.Object> props = SimulationThread.currentSimulationThread().getProcess().getSystemProperties();
+		Properties sysProps = new Properties();
+		sysProps.putAll(props);
+		return sysProps;
 	}
 	
 	public static String getProperty(String prop) {
