@@ -81,4 +81,11 @@ public class Translation {
 	public String getFileName() {
 		return name+".class";
 	}
+	
+	public String toString() {
+		if (global)
+			return "@Global class "+name;
+		else
+			return "@Local(synch="+synch+",useFaked="+usingFakes+",useMoved="+usingMoved+") class "+name;
+	}
 }
