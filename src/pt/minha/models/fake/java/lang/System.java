@@ -30,6 +30,15 @@ import pt.minha.models.local.io.SystemStreamsImpl;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class System {
+	private static Properties sysProps;
+	
+	static {
+		// Now in a class that uses moved, convert to java.util.Properties
+		Map<java.lang.Object,java.lang.Object> props = SimulationThread.currentSimulationThread().getProcess().getSystemProperties();
+		sysProps = new Properties();
+		sysProps.putAll(props);		
+	}
+	
 	public static long nanoTime() {
 		try {
 			SimulationThread.stopTime(0);
@@ -48,19 +57,19 @@ public class System {
 	}
 	
 	public static Properties getProperties() {
-		// Now in a class that uses moved, convert to java.util.Properties
-		Map<java.lang.Object,java.lang.Object> props = SimulationThread.currentSimulationThread().getProcess().getSystemProperties();
-		Properties sysProps = new Properties();
-		sysProps.putAll(props);
 		return sysProps;
 	}
 	
 	public static String getProperty(String prop) {
-		return getProperties().getProperty(prop);
+		return sysProps.getProperty(prop);
 	}
 
 	public static String getProperty(String prop, String value) {
-		return getProperties().getProperty(prop, value);
+		return sysProps.getProperty(prop, value);
+	}
+	
+	public static String setProperty(String prop, String value) {
+		return (String) sysProps.setProperty(prop, value);
 	}
 					
 	public static void arraycopy(java.lang.Object a, int b, java.lang.Object c, int d, int e) {
