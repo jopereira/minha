@@ -56,7 +56,7 @@ public class Process implements Closeable {
 		loader=new InstrumentationLoader(cc);
 		try {
 			Class<?> clz = loader.loadClass("pt.minha.models.local.SimulationProcess");
-			impl = (EntryInterface) clz.getDeclaredConstructor(Host.class, Resource.class, NetworkStack.class, Map.class).newInstance(host, cpu, network, storage, props);
+			impl = (EntryInterface) clz.getDeclaredConstructor(Host.class, Resource.class, NetworkStack.class, Storage.class, Map.class).newInstance(host, cpu, network, storage, props);
 		} catch(Exception e) {
 			throw new SimulationException(e);
 		}

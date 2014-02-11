@@ -50,13 +50,13 @@ public class Host implements Closeable {
 	private ClassConfig cc;
 	private boolean closed;
 	
-	Host(World world, ClassConfig cc, Timeline timeline, String ip, Network network, Properties sc) throws SimulationException{
+	Host(World world, ClassConfig cc, Timeline timeline, String ip, Network network, Storage storage) throws SimulationException{
 		this.world = world;
 		this.cc = cc;
 		try {
 			this.network = new NetworkStack(timeline, ip, network);
 			this.cpu = new Resource(timeline, this.network.getLocalAddress().getHostAddress());
-			this.storage = new Storage(sc, timeline);
+			this.storage = storage;
 		} catch (UnknownHostException e) {
 			throw new SimulationException(e);
 		}

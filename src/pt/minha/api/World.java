@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import pt.minha.kernel.instrument.ClassConfig;
 import pt.minha.kernel.simulation.Scheduler;
 import pt.minha.models.global.ResultHolder;
+import pt.minha.models.global.disk.Storage;
 import pt.minha.models.global.net.Network;
 
 /**
@@ -52,7 +53,6 @@ public class World implements Closeable {
 	
 	private ClassConfig cc;
 	private Calibration nc;
-	private Properties sc;
 	private Scheduler sched;
 	private Network network;
 	private List<Host> hosts = new ArrayList<Host>();
@@ -102,15 +102,12 @@ public class World implements Closeable {
 			timelines = procs*-timelines;		
 		long fuzzyness = Long.parseLong(props.getProperty("fuzzyness"));
 		if (fuzzyness < 0)
-			fuzzyness = (nc.getLineDelay(10)+nc.getAdditionalDelay(10))*-fuzzyness;		
+			fuzzyness = (nc.getLineDelay(10)+nc.getLineLatency(10))*-fuzzyness;		
 		sched = new Scheduler(procs, timelines, fuzzyness);
 		
 		logger.info("using up to {} processors, {}ns fuzzyness", procs, fuzzyness);
 		
 		network = new Network(nc);
-		
-		props.load(ClassLoader.getSystemClassLoader().getResourceAsStream("storage.properties"));
-		sc = new Properties(props);
 	}
 	
 	/**
@@ -121,7 +118,7 @@ public class World implements Closeable {
 	 * @throws SimulationException
 	 */
 	public Host createHost(String ip) throws SimulationException {
-		Host host = new Host(this, cc, sched.createTimeline(), ip, network, sc);
+		Host host = new Host(this, cc, sched.createTimeline(), ip, network, new Storage(nc));
 		hosts.add(host);
 		return host;
 	}

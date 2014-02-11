@@ -49,7 +49,7 @@ public class Calibration {
 		return res;
 	}
 
-	public long getAdditionalDelay(int size) {
+	public long getLineLatency(int size) {
 		long res = networkLatency.scale(size);
 		if (res<=0)
 			return 1;
@@ -69,15 +69,51 @@ public class Calibration {
 		return getLineDelay(udpBuffer);
 	}
 	
+	// Storage
+	public long getReadDelay(int size) {
+		long res = (long) ((size*(1e9d/(ioBandwidth/8)))*(1-hitRate));
+		if (res<=0)
+			return 1;
+		return res;
+	}
+
+	public long getWriteDelay(long size) {
+		long res = (long) (size*(1e9d/(ioBandwidth/8)));
+		if (res<=0)
+			return 1;
+		return res;
+	}
+
+	public long getIOOverhead(int size) {
+		return ioOverhead.scale(size);
+	}
+
+	public long getMaxCachedDelay() {
+		return getWriteDelay(ioBuffer);
+	}
+
+	public long getIOLatency(int size) {
+		long res = ioLatency.scale(size);
+		if (res<=0)
+			return 1;
+		return res;
+	}
+	
 	/**
 	 * Reset calibration to defaults (i.e., no calibration).
 	 */
 	public void reset() {
 		cpuScaling = Linear.IDENTITY;
+
 		networkLatency = Linear.UNIT;
 		tcpOverhead = Linear.ZERO;
 		udpOverhead = Linear.ZERO;
 		udpBuffer = 65535;
+
+		ioLatency = Linear.UNIT;
+		ioOverhead = Linear.ZERO;
+		ioBuffer = 1024*1024*1024;
+		hitRate = 0.0;
 	}
 	
 	/**
@@ -86,11 +122,18 @@ public class Calibration {
 	 */
 	public void load(Properties props) {
 		cpuScaling = new Linear(props.getProperty("cpuScaling", cpuScaling.toString()));
+
 		networkLatency = new Linear(props.getProperty("networkLatency", networkLatency.toString()));
 		networkBandwidth = Long.parseLong(props.getProperty("networkBandwidth", Long.toString(networkBandwidth)));
 		tcpOverhead = new Linear(props.getProperty("tcpOverhead", tcpOverhead.toString()));
 		udpOverhead = new Linear(props.getProperty("udpOverhead", udpOverhead.toString()));
 		udpBuffer = Integer.parseInt(props.getProperty("udpBuffer", Integer.toString(udpBuffer)));
+
+		ioLatency = new Linear(props.getProperty("ioLatency", ioLatency.toString()));
+		ioOverhead = new Linear(props.getProperty("ioOverhead", ioOverhead.toString()));
+		ioBandwidth = Long.parseLong(props.getProperty("ioBandwidth", Long.toString(ioBandwidth)));
+		ioBuffer = Long.parseLong(props.getProperty("ioBuffer", Long.toString(ioBuffer)));
+		hitRate = Double.parseDouble(props.getProperty("hitRate", Double.toString(hitRate)));
 	}
 	
 	/**
@@ -99,19 +142,31 @@ public class Calibration {
 	 */
 	public void save(Properties props) {
 		props.setProperty("cpuScaling", cpuScaling.toString());
+
 		props.setProperty("networkLatency", networkLatency.toString());
 		props.setProperty("networkBandwidth", Long.toString(networkBandwidth));
 		props.setProperty("tcpOverhead", tcpOverhead.toString());
 		props.setProperty("udpOverhead", udpOverhead.toString());
 		props.setProperty("udpBuffer", Integer.toString(udpBuffer));
+
+		props.setProperty("ioLatency", ioLatency.toString());
+		props.setProperty("ioOverhead", ioOverhead.toString());
+		props.setProperty("ioBandwidth", Long.toString(ioBandwidth));
+		props.setProperty("ioBuffer", Long.toString(ioBuffer));
+		props.setProperty("hitRate", Double.toString(hitRate));
 	}
 	
 	private Linear cpuScaling;
 
 	private Linear networkLatency;
 	private long networkBandwidth;
-
 	private Linear tcpOverhead;
 	private Linear udpOverhead;
 	private int udpBuffer;
+	
+	private Linear ioLatency;
+	private Linear ioOverhead;
+	private long ioBandwidth;
+	private long ioBuffer;
+	private double hitRate;
 }

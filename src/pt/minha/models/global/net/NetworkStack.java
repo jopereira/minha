@@ -165,7 +165,7 @@ public class NetworkStack implements Closeable {
 	}
 	
 	public void relayTCPConnect(final InetSocketAddress serverAddr, final TCPPacket p) {
-		long qdelay = bandwidth.use(getConfig().getLineDelay(p.getSize())) + getConfig().getAdditionalDelay(p.getSize()) - getTimeline().getTime();
+		long qdelay = bandwidth.use(getConfig().getLineDelay(p.getSize())) + getConfig().getLineLatency(p.getSize()) - getTimeline().getTime();
 		
 		NetworkStack target = network.getHost(serverAddr.getAddress());
 		if (target==null)
@@ -175,7 +175,7 @@ public class NetworkStack implements Closeable {
 	}
 		
 	public void relayTCPData(final TCPPacket p) {
-		long qdelay = bandwidth.use(getConfig().getLineDelay(p.getSize())) + getConfig().getAdditionalDelay(p.getSize()) - getTimeline().getTime();
+		long qdelay = bandwidth.use(getConfig().getLineDelay(p.getSize())) + getConfig().getLineLatency(p.getSize()) - getTimeline().getTime();
 		
 		p.getDestination().scheduleRead(p).scheduleFrom(timeline, qdelay);
 	}
@@ -185,7 +185,7 @@ public class NetworkStack implements Closeable {
 		if (time < 0)
 			return;
 		
-		long qdelay = time + getConfig().getAdditionalDelay(p.getLength()) - getTimeline().getTime();
+		long qdelay = time + getConfig().getLineLatency(p.getLength()) - getTimeline().getTime();
 		
 		if (destination.getAddress().isMulticastAddress()) {
 			List<NetworkStack> stacks = network.getMulticastHosts(destination.getAddress());
