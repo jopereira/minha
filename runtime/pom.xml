@@ -8,14 +8,12 @@
   <parent>
     <groupId>pt.minha</groupId>
     <artifactId>platform</artifactId>
-    <version>3.0</version>
+    <version>3.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>pt.minha</groupId>
   <artifactId>minha-runtime</artifactId>
   <packaging>jar</packaging>
   <name>Minha runtime library</name>
-  <version>3.0</version>
 
   <dependencies>
    <dependency>

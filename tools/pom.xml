@@ -8,26 +8,24 @@
   <parent>
     <groupId>pt.minha</groupId>
     <artifactId>platform</artifactId>
-    <version>3.0</version>
+    <version>3.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>pt.minha</groupId>
   <artifactId>minha-tools</artifactId>
   <packaging>jar</packaging>
   <name>Minha command line tools</name>
-  <version>3.0</version>
 
   <dependencies>
     <dependency>
-      <groupId>pt.minha</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>minha-runtime</artifactId>
-      <version>3.0</version>
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>pt.minha</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>minha-native-timer</artifactId>
-      <version>3.0</version>
+      <version>${project.version}</version>
       <optional>true</optional>
     </dependency>
 
