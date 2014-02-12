@@ -85,13 +85,15 @@ public class Timeline {
 	}
 	
 	long baseline() {
+		long min = doorstop;
 		try {
-			if (!schedule.isEmpty())
-				return schedule.first().time;
+			long ev = schedule.first().time;
+			if (ev < min)
+				min = ev;
 		} catch(NoSuchElementException e) {
 			// fall through
 		}
-		return doorstop;
+		return min;
 	}
 		
 	boolean run() {
