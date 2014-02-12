@@ -1,0 +1,99 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>pt.minha</groupId>
+    <artifactId>platform</artifactId>
+    <version>3.0</version>
+  </parent>
+
+  <groupId>pt.minha</groupId>
+  <artifactId>minha-tools</artifactId>
+  <packaging>jar</packaging>
+  <name>Minha command line tools</name>
+  <version>3.0</version>
+
+  <dependencies>
+    <dependency>
+      <groupId>pt.minha</groupId>
+      <artifactId>minha-runtime</artifactId>
+      <version>3.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>pt.minha</groupId>
+      <artifactId>minha-native-timer</artifactId>
+      <version>3.0</version>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.7.2</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>appassembler-maven-plugin</artifactId>
+		<version>1.6</version>
+        <executions>
+           <execution>
+             <id>assemble-standalone</id>
+             <phase>package</phase>
+             <goals>
+                <goal>assemble</goal>
+             </goals>
+          </execution>
+        </executions>
+        <configuration>
+           <configurationSourceDirectory>src/main/resources</configurationSourceDirectory>
+           <includeConfigurationDirectoryInClasspath>true</includeConfigurationDirectoryInClasspath>
+           <copyConfigurationDirectory>true</copyConfigurationDirectory>
+           <programs>
+              <program>
+                 <mainClass>pt.minha.cmdline.Runner</mainClass>
+                 <name>minha</name>
+              </program>
+              <program>
+                 <mainClass>pt.minha.calibration.Calibrator</mainClass>
+                 <name>calibrate</name>
+              </program>
+           </programs>
+           <platforms>
+              <platform>windows</platform>
+              <platform>unix</platform>
+           </platforms>
+           <repositoryLayout>flat</repositoryLayout>
+           <repositoryName>lib</repositoryName>
+        </configuration>
+      </plugin>
+      <plugin>
+         <artifactId>maven-assembly-plugin</artifactId>
+         <version>2.4</version>
+            <executions>
+              <execution>
+               <phase>package</phase>
+               <goals>
+                  <goal>single</goal>
+               </goals>
+              </execution>
+            </executions>
+            <configuration>
+				<archiverConfig>
+					<!-- workaround for MASSEMBLY-449 -->
+        			<directoryMode>0755</directoryMode>
+    			</archiverConfig>
+               <descriptor>src/main/assembly/assembly.xml</descriptor>
+            </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

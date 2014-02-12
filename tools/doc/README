@@ -1,0 +1,41 @@
+
+* Minha.pt: middleware testing platform *
+
+
+1. Overview
+-----------
+
+The Minha platform virtualizes multiple JVM instances within a single
+JVM while simulating key environment components, thus reproducing the
+concurrency, distribution, and performance characteristics of the
+actual system.
+
+Implementation is based on Java and takes advantage of bytecode
+transformation to automatically convert application code to simulation
+environment.
+
+
+2. Latest Version
+-----------------
+
+Minha is distributed only in source form. For the latest version and
+documentation go to:
+
+        http://code.google.com/p/minha/
+
+More details about the project are available at the project web site:
+
+        http://www.minha.pt
+
+3. Running
+----------
+
+Run the command line tool:
+
+	$ ./bin/minha
+
+or:
+
+	C:> bin\minha.bat
+
+Multiple command lines for simulated processes are separated by commas (,).

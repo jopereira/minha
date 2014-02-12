@@ -1,0 +1,97 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>pt.minha</groupId>
+    <artifactId>platform</artifactId>
+    <version>3.0</version>
+  </parent>
+
+  <groupId>pt.minha</groupId>
+  <artifactId>minha-native-timer</artifactId>
+  <packaging>jar</packaging>
+  <name>Native profiling timer for Minha</name>
+  <version>3.0</version>
+
+  <repositories>
+    <repository>
+      <id>hawtjni.snapshot.fusesource.org</id>
+      <name>HawtJNI Snapshot Repo</name>
+      <url>http://hawtjni.fusesource.org/repo/snapshot</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>    
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>hawtjni.snapshot.fusesource.org</id>
+      <name>HawtJNI Snapshot Repo</name>
+      <url>http://hawtjni.fusesource.org/repo/snapshot</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <dependencies>
+    <dependency>
+      <groupId>pt.minha</groupId>
+      <artifactId>minha-runtime</artifactId>
+      <version>3.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.fusesource.hawtjni</groupId>
+      <artifactId>hawtjni-runtime</artifactId>
+      <version>1.8</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.fusesource.hawtjni</groupId>
+        <artifactId>maven-hawtjni-plugin</artifactId>
+        <version>1.8</version>
+
+        <dependencies>
+          <dependency>
+            <groupId>pt.minha</groupId>
+            <artifactId>minha-runtime</artifactId>
+            <version>3.0</version>
+            <exclusions>
+              <exclusion>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-all</artifactId>
+              </exclusion>
+            </exclusions>
+          </dependency>
+        </dependencies>
+
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+              <goal>build</goal>
+              <goal>package-jar</goal>
+              <goal>package-source</goal>
+            </goals>
+          </execution>
+        </executions>        
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
