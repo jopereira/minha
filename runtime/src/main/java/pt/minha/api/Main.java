@@ -20,7 +20,7 @@
 package pt.minha.api;
 
 /**
- * Interface for launching a executable in a simulated host.
+ * Interface for launching a self-contained executable.
  */
 public interface Main {
 	/**

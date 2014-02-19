@@ -21,7 +21,7 @@ package pt.minha.calibration;
 
 import java.util.Map;
 
-import pt.minha.api.Global;
+import pt.minha.api.sim.Global;
 
 /**
  * Interface for calibration benchmarks.

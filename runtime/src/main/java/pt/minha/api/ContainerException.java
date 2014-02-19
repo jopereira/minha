@@ -19,16 +19,12 @@
 
 package pt.minha.api;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
 /**
- * Marks a class as being loaded by the global system loader. This class
- * cannot reference any local classes directly and static fields will 
- * be shared by all host instances.
+ * An exception when interacting with the system container.
  */
-@Target(ElementType.TYPE)
-@Retention(value=RetentionPolicy.CLASS)
-public @interface Global {}
+public class ContainerException extends Exception {
+	public ContainerException(Exception e) {
+		super(e);
+	}
+
+}

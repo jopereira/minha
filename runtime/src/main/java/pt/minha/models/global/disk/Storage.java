@@ -19,7 +19,7 @@
 
 package pt.minha.models.global.disk;
 
-import pt.minha.api.Calibration;
+import pt.minha.api.sim.Calibration;
 import pt.minha.kernel.simulation.SimpleResource;
 import pt.minha.models.fake.java.io.File;
 import pt.minha.models.local.lang.SimulationThread;

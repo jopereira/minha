@@ -36,8 +36,8 @@ import org.testng.annotations.Test;
 
 import pt.minha.api.Entry;
 import pt.minha.api.Exit;
-import pt.minha.api.Global;
-import pt.minha.api.World;
+import pt.minha.api.sim.Global;
+import pt.minha.api.sim.Simulation;
 
 public class MulticastTest {
 	
@@ -88,7 +88,7 @@ public class MulticastTest {
 	// https://code.google.com/p/minha/issues/detail?id=6
 	@Test
 	public void multicast(@Mocked final Callback cb) throws Exception {
-		World world = new World();
+		Simulation world = new Simulation();
 				
 		final int N = 10;
 		final Entry<Target>[] en = world.createEntries(N, Target.class, Impl.class.getName());
@@ -129,7 +129,7 @@ public class MulticastTest {
 
 	@Test
 	public void filter(@Mocked final Callback yes, @Mocked final Callback no) throws Exception {
-		World world = new World();
+		Simulation world = new Simulation();
 		
 		final int N = 3;
 		final Entry<Target>[] en = world.createEntries(N, Target.class, Impl.class.getName());

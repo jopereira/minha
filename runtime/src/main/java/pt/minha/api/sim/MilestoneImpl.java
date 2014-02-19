@@ -17,11 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.api;
+package pt.minha.api.sim;
 
-public class SimulationException extends Exception {
-	public SimulationException(Exception e) {
-		super(e);
-	}
+import pt.minha.api.Milestone;
 
+abstract class MilestoneImpl implements Milestone {
+	MilestoneImpl() {}
+	
+	abstract void setWaited();
 }

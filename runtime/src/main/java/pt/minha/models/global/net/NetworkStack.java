@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import pt.minha.api.Calibration;
+import pt.minha.api.sim.Calibration;
 import pt.minha.kernel.simulation.Event;
 import pt.minha.kernel.simulation.SimpleResource;
 import pt.minha.kernel.simulation.Timeline;

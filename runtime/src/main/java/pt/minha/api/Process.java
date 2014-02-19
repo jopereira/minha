@@ -20,48 +20,13 @@
 package pt.minha.api;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
-import pt.minha.kernel.instrument.ClassConfig;
-import pt.minha.kernel.instrument.InstrumentationLoader;
-import pt.minha.kernel.simulation.Resource;
-import pt.minha.models.global.EntryInterface;
-import pt.minha.models.global.disk.Storage;
-import pt.minha.models.global.net.NetworkStack;
-import pt.minha.models.local.MainEntry;
 
 /**
- * A process running within a simulated host. 
+ * A process running within a host. 
  */
-public class Process implements Closeable {
-	Host host;
-	InstrumentationLoader loader;
-	EntryInterface impl;
+public interface Process extends Closeable {
 
-	Process(Host h, ClassConfig cc, NetworkStack network, Resource cpu, Storage storage, Properties sysProps) throws SimulationException {
-		this.host = h;
-		
-		// Copy properties to a Map, as java.util.Properties is "moved" and cannot
-		// be given to a different class loader.
-		Map<Object,Object> props = new HashMap<Object, Object>();
-		if (sysProps != null)
-			props.putAll(sysProps);
-		else
-			props.putAll(System.getProperties());
-
-		loader=new InstrumentationLoader(cc);
-		try {
-			Class<?> clz = loader.loadClass("pt.minha.models.local.SimulationProcess");
-			impl = (EntryInterface) clz.getDeclaredConstructor(Host.class, Resource.class, NetworkStack.class, Storage.class, Map.class).newInstance(host, cpu, network, storage, props);
-		} catch(Exception e) {
-			throw new SimulationException(e);
-		}
-	}
-	
 	/** 
 	 * Create an entry point to inject arbitrary invocations within a process.
 	 * This avoids the main method and can be used for multiple invocations.
@@ -76,9 +41,11 @@ public class Process implements Closeable {
 	 * @throws SecurityException 
 	 * @throws IllegalArgumentException 
 	 */
-	public <T> Entry<T> createEntry(Class<T> intf, String impl) throws IllegalArgumentException, SecurityException, ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-		return new Entry<T>(this, intf, impl);
-	}
+	public <T> Entry<T> createEntry(Class<T> intf, String impl)
+			throws IllegalArgumentException, SecurityException,
+			ClassNotFoundException, InstantiationException,
+			IllegalAccessException, InvocationTargetException,
+			NoSuchMethodException;
 
 	/** 
 	 * Create an entry point start a program within a process.
@@ -91,33 +58,25 @@ public class Process implements Closeable {
 	 * @throws SecurityException 
 	 * @throws IllegalArgumentException 
 	 */
-	public Entry<Main> createEntry() throws IllegalArgumentException, SecurityException, ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-		return new Entry<Main>(this, Main.class, MainEntry.class.getName());
-	}
-	
+	public Entry<Main> createEntry() throws IllegalArgumentException,
+			SecurityException, ClassNotFoundException, InstantiationException,
+			IllegalAccessException, InvocationTargetException,
+			NoSuchMethodException;
+
 	/** 
-	 * Create a proxy to receive callbacks from this simulation process. This proxy
-	 * is to be handled to simulation code as a parameter to an entry method.
+	 * Create a proxy to receive callbacks from this process. This proxy
+	 * is to be handed to target code as a parameter to an entry method.
 	 * 
 	 * @param intf the interface (global) of the class to be created
 	 * @param impl the object implementing the interface handling invocations
 	 * @return an exit proxy
 	 */
-	public <T> Exit<T> createExit(Class<T> intf, T impl) {
-		return new Exit<T>(this, intf, impl);
-	}
-	
-	/**
-	 * Gets the simulated host container.
-	 * @return the simulation world for this host
-	 */
-	public Host getHost() {
-		return host;
-	}
+	public <T> Exit<T> createExit(Class<T> intf, T impl);
 
-	@Override
-	public void close() throws IOException {
-		host.removeProcess(this);
-		impl.close();
-	}
+	/**
+	 * Gets the host container.
+	 * @return the container for this host
+	 */
+	public Host getHost();
+
 }

@@ -23,8 +23,8 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
-import pt.minha.api.Global;
-import pt.minha.api.Local;
+import pt.minha.api.sim.Global;
+import pt.minha.api.sim.Local;
 
 public class AnnotatedClassVisitor extends ClassVisitor implements Opcodes {
 

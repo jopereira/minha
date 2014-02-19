@@ -22,8 +22,6 @@ package pt.minha.models.local.io;
 import java.io.IOException;
 import java.io.InputStream;
 
-import pt.minha.models.global.Debug;
-
 public class ResourceInputStreamImpl {
 	private InputStream is;
 	

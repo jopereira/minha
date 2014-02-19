@@ -32,9 +32,10 @@ import org.testng.annotations.Test;
 
 import pt.minha.api.Entry;
 import pt.minha.api.Exit;
-import pt.minha.api.Global;
 import pt.minha.api.Process;
 import pt.minha.api.World;
+import pt.minha.api.sim.Global;
+import pt.minha.api.sim.Simulation;
 
 public class SynchronizedTest {
 	private World world;
@@ -42,7 +43,7 @@ public class SynchronizedTest {
 
 	@BeforeClass
 	public void init() throws Exception {
-		world = new World();
+		world = new Simulation();
 		proc = world.createHost().createProcess();
 	}
 	

@@ -31,9 +31,10 @@ import java.util.concurrent.TimeUnit;
 
 import pt.minha.api.Entry;
 import pt.minha.api.Host;
-import pt.minha.api.Process;
 import pt.minha.api.Main;
+import pt.minha.api.Process;
 import pt.minha.api.World;
+import pt.minha.api.sim.Simulation;
 
 public class Runner {
 	
@@ -49,7 +50,7 @@ public class Runner {
 			System.err.println("====================================================================================");
 			System.err.println("running for: " + simulationTime + " simulated seconds");
 
-			World world = new World();
+			World world = new Simulation();
 			
 			CommandLineArgumentsParser cla = new CommandLineArgumentsParser(args);
 

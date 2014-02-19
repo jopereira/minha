@@ -17,21 +17,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.api;
+package pt.minha.api.sim;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * A milestone that can be waited on. The system is run
- * until a set of milestones is achieved. Milestones are situations in
- * which system returns control to the driver code: Either the 
- * return from entry invocations or the invocation of exit objects.
+ * Marks a class as being loaded by the global system loader. This class
+ * cannot reference any local classes directly and static fields will 
+ * be shared by all host instances.
  */
-public interface Milestone {
-
-	/**
-	 * Tests if the milestone has been completed.
-	 * 
-	 * @return true if complete
-	 */
-	public boolean isComplete();
-
-}
+@Target(ElementType.TYPE)
+@Retention(value=RetentionPolicy.CLASS)
+public @interface Global {}

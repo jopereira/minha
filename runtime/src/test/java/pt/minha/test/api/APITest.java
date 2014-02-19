@@ -31,10 +31,11 @@ import org.testng.annotations.Test;
 
 import pt.minha.api.Entry;
 import pt.minha.api.Exit;
-import pt.minha.api.Global;
 import pt.minha.api.Host;
 import pt.minha.api.Process;
 import pt.minha.api.World;
+import pt.minha.api.sim.Global;
+import pt.minha.api.sim.Simulation;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class APITest {
@@ -84,7 +85,7 @@ public class APITest {
 
 	@Test
 	public void empty() throws Exception {
-		World world = new World();
+		Simulation world = new Simulation();
 		world.createHost();
 
 		world.run();
@@ -96,7 +97,7 @@ public class APITest {
 	// https://code.google.com/p/minha/issues/detail?id=7
 	@Test
 	public void entryOnly() throws Exception {
-		World world = new World();
+		World world = new Simulation();
 		Host host = world.createHost();
 		Process proc = host.createProcess();
 		
@@ -111,7 +112,7 @@ public class APITest {
 	
 	@Test
 	public void entryAndExit(@Mocked final Callback cb) throws Exception {
-		World world = new World();
+		World world = new Simulation();
 		Host host = world.createHost();
 		Process proc = host.createProcess();
 
@@ -142,7 +143,7 @@ public class APITest {
 	
 	@Test
 	public void lazyEntry(@Mocked final Callback cb) throws Exception {
-		World world = new World();
+		World world = new Simulation();
 		Host host = world.createHost();
 		Process proc = host.createProcess();
 
@@ -168,7 +169,7 @@ public class APITest {
 	
 	@Test(expectedExceptions={UndeclaredThrowableException.class})
 	public void interrupted(@Mocked final Callback cb) throws Exception {
-		World world = new World();
+		World world = new Simulation();
 		Host host = world.createHost();
 		Process proc = host.createProcess();
 	
@@ -187,7 +188,7 @@ public class APITest {
 	
 	@Test
 	public void runAll(@Mocked final Callback cb1, @Mocked final Callback cb2) throws Throwable {
-		World world = new World();
+		World world = new Simulation();
 		Host host1 = world.createHost();
 		Process proc1 = host1.createProcess();
 
@@ -224,7 +225,7 @@ public class APITest {
 	// https://code.google.com/p/minha/issues/detail?id=8
 	@Test(expectedExceptions={NullPointerException.class})
 	public void asyncException(@Mocked final Callback cb) throws Throwable {
-		World world = new World();
+		World world = new Simulation();
 		Host host = world.createHost();
 		Process proc = host.createProcess();
 

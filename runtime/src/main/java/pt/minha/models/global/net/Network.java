@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import pt.minha.api.Calibration;
+import pt.minha.api.sim.Calibration;
 
 public class Network {
 	// address generation and registry

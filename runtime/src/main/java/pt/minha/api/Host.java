@@ -20,121 +20,60 @@
 package pt.minha.api;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Properties;
 
-import pt.minha.kernel.instrument.ClassConfig;
-import pt.minha.kernel.simulation.Resource;
-import pt.minha.kernel.simulation.Timeline;
-import pt.minha.models.global.disk.Storage;
-import pt.minha.models.global.net.Network;
-import pt.minha.models.global.net.NetworkStack;
-
 /**
- * A simulated host running within the simulation container. A simulated
+ * A host running within the container. A
  * host has a shared CPU and network stacks, with an unique IP, for all
  * processes.
  */
-public class Host implements Closeable {
-	private List<Process> procs = new ArrayList<Process>();
-	World world;
-	private NetworkStack network;
-	private Resource cpu;
-	private Storage storage;
-	private ClassConfig cc;
-	private boolean closed;
-	
-	Host(World world, ClassConfig cc, Timeline timeline, String ip, Network network, Storage storage) throws SimulationException{
-		this.world = world;
-		this.cc = cc;
-		try {
-			this.network = new NetworkStack(timeline, ip, network);
-			this.cpu = new Resource(timeline, this.network.getLocalAddress().getHostAddress());
-			this.storage = storage;
-		} catch (UnknownHostException e) {
-			throw new SimulationException(e);
-		}
-	}
-	
+public interface Host extends Closeable {
+
 	/**
 	 * Create a host with automatically assigned IP address. System properties
 	 * are set from the host.
 	 * 
 	 * @return a host instance
-	 * @throws SimulationException
+	 * @throws ContainerException
 	 */
-	public Process createProcess() throws SimulationException {
-		Process proc = new Process(this, cc, network, cpu, storage, null);
-		procs.add(proc);
-		return proc;
-	}
-	
+	public Process createProcess() throws ContainerException;
+
 	/**
 	 * Create a host with automatically assigned IP address and custom
 	 * system properties.
 	 * 
-	 * @param props system properties for the simulated process
+	 * @param props system properties for the process
 	 * @return a host instance
-	 * @throws SimulationException
+	 * @throws ContainerException
 	 */
-	public Process createProcess(Properties props) throws SimulationException {
-		Process proc = new Process(this, cc, network, cpu, storage, props);
-		procs.add(proc);
-		return proc;
-	}
-	
+	public Process createProcess(Properties props) throws ContainerException;
+
 	/**
-	 * Get processes in this simulation container.
+	 * Get processes in this container.
 	 * @return host collection
 	 */
-	public Collection<Process> getProcesses() {
-		return Collections.unmodifiableCollection(procs);
-	}
-	
+	public Collection<Process> getProcesses();
+
 	/**
-	 * Get simulated host address. This is the address that the simulated
-	 * host will use in the container, when networking with other simulated
+	 * Get host address. This is the address that the
+	 * host will use in the container, when networking with other
 	 * hosts.
 	 * @return host address
 	 */
-	public InetAddress getAddress() {
-		return network.getLocalAddress();
-	}
-	
+	public InetAddress getAddress();
+
 	/**
 	 * Returns an unique name for this host.
 	 * @return a unique identifier of this host
 	 */
-	public String getName() {
-		return getAddress().getHostAddress();
-	}
-	
+	public String getName();
+
 	/**
-	 * Gets the simulated world container.
-	 * @return the simulation world for this host
+	 * Gets the world container.
+	 * @return the container for this host
 	 */
-	public World getContainer() {
-		return world;
-	}
+	public World getContainer();
 
-	@Override
-	public void close() throws IOException {
-		if (closed)
-			return;
-		closed = true;
-		ArrayList<Process> l = new ArrayList<Process>(procs);
-		for(Process p: l)
-			p.close();
-		world.removeHost(this);
-	}
-
-	void removeProcess(Process process) {
-		procs.remove(process);
-	}
 }

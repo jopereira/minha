@@ -19,89 +19,37 @@
 
 package pt.minha.api;
 
-import java.lang.reflect.Method;
-
-import pt.minha.models.global.ExitHandler;
-import pt.minha.models.global.ResultHolder;
-
 /**
- * Provides an exit out of a simulated process. This is the only
- * safe way to invoke methods outside the simulation, e.g. to
+ * Provides an exit out of a managed process. This is the only
+ * safe way to invoke methods outside the system, e.g. to
  * communicate with a global overseer. Note that the proxy 
  * is single threaded and at any given time will be in a single
  * timing and mode. 
  */
-@Global
-public class Exit<T> extends Milestone {
-	private T proxy;
-	private boolean async, waited, done;
-	private long before, after, delay;
-	
-	Exit(final Process proc, Class<T> intf, final T impl) {
-				
-		this.proxy = proc.impl.createExit(intf, new ExitHandler() {
-			
-			@Override
-			public boolean invoke(Method method, Object[] args, ResultHolder wakeup) {
-				proc.host.world.handleInvoke(impl, method, args, wakeup);
-				return !async;
-			}
-			
-			@Override
-			public long getOverheadBefore() {
-				return before;
-			}
+public interface Exit<T> extends Milestone {
 
-			@Override
-			public long getOverheadAfter() {
-				return after;
-			}
-
-			@Override
-			public long getDelay() {
-				return delay;
-			}
-
-			@Override
-			public boolean isMilestone() {
-				if (waited) {
-					done = true;
-					return true;
-				}
-				return false;
-			}
-		});
-	}
-	
 	/**
 	 * Set CPU overhead before and after invocation. This can be invoked
-	 * from outside or from inside the simulation. The value persists for
+	 * from outside or from inside the container. The value persists for
 	 * all subsequent invocations. This is used for all invocations. The 
 	 * callee can within the invocation override only the second value,
 	 * to be incurred after the invocation.
 	 * 
-	 * @param before simulated CPU overhead in nanoseconds
-	 * @param after simulated CPU overhead in nanoseconds
+	 * @param before CPU overhead in nanoseconds
+	 * @param after CPU overhead in nanoseconds
 	 * @return the object itself for chaining invocations
 	 */
-	public Exit<T> overhead(long before, long after) {
-		this.before = before;
-		this.after = after;
-		return this;
-	}
+	public Exit<T> overhead(long before, long after);
 
 	/**
-	 * Set simulated delay that is incurred by the simulation with the
+	 * Set delay that is incurred by the simulation with the
 	 * invocation. This is imposed only on synchronous invocations. The
 	 * callee can override this delay within the invocation.
 	 * 
-	 * @param delay simulated delay in nanoseconds
+	 * @param delay delay in nanoseconds
 	 * @return the object itself for chaining invocations
 	 */
-	public Exit<T> delay(long delay) {
-		this.delay = delay;
-		return this;
-	}
+	public Exit<T> delay(long delay);
 
 	/**
 	 * Set invocation mode to asynchronous and return the proxy. The returned
@@ -110,31 +58,16 @@ public class Exit<T> extends Milestone {
 	 * 
 	 * @return the proxy set for asynchronous invocations
 	 */
-	public T report() {
-		async = true;
-		return proxy;
-	}
-	
+	public T report();
+
 	/**
 	 * Set the invocation mode to synchronous and return the proxy.
-	 * The simulation will be stopped while the invocation lasts and
+	 * The system will be stopped while the invocation lasts and
 	 * the external driver code is free to schedule further asynchronous
 	 * entries. Synchronous entries are however not allowed.
 	 *  
 	 * @return the proxy set for synchronous invocations
 	 */
-	public T callback() {
-		async = false;
-		return proxy;
-	}
+	public T callback();
 
-	@Override
-	void setWaited() {
-		waited = true;
-	}
-
-	@Override
-	public boolean isComplete() {
-		return done;
-	}
 }

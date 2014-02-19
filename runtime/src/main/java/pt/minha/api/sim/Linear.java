@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.api;
+package pt.minha.api.sim;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

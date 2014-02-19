@@ -31,7 +31,7 @@ import java.util.Map;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
 
-import pt.minha.api.Global;
+import pt.minha.api.sim.Global;
 
 /**
  * Base class for calibration benchmarks.

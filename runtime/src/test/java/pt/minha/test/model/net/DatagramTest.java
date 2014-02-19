@@ -25,7 +25,6 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
@@ -39,11 +38,11 @@ import org.testng.annotations.Test;
 
 import pt.minha.api.Entry;
 import pt.minha.api.Exit;
-import pt.minha.api.Global;
 import pt.minha.api.Host;
 import pt.minha.api.Process;
-import pt.minha.api.SimulationException;
 import pt.minha.api.World;
+import pt.minha.api.sim.Global;
+import pt.minha.api.sim.Simulation;
 
 public class DatagramTest {
 	
@@ -95,7 +94,7 @@ public class DatagramTest {
 	
 	@Test
 	public void loopback(@Mocked final Callback cb) throws Exception {
-		World world = new World();
+		Simulation world = new Simulation();
 		
 		final Host host = world.createHost();
 		Process proc = host.createProcess();
@@ -138,7 +137,7 @@ public class DatagramTest {
 
 	@Test
 	public void p2p(@Mocked final Callback cb) throws Exception {
-		World world = new World();
+		Simulation world = new Simulation();
 		
 		final Entry<Target>[] en = world.createEntries(2, Target.class, Impl.class.getName());
 		final Exit<Callback>[] ex = world.createExits(en, Callback.class, cb);
@@ -195,7 +194,7 @@ public class DatagramTest {
 			}
 		};
 		
-		World world = new World();
+		Simulation world = new Simulation();
 		
 		final Entry<Target>[] en = world.createEntries(1, Target.class, Impl.class.getName());
 		final Exit<Callback>[] ex = world.createExits(en, Callback.class, cb);
@@ -226,7 +225,7 @@ public class DatagramTest {
 	
 	@Test(expectedExceptions={SocketTimeoutException.class})
 	public void timeout() throws Exception {
-		World world = new World();
+		World world = new Simulation();
 		
 		Entry<Timeout> en = world.createHost().createProcess().createEntry(Timeout.class, TimeoutImpl.class.getName());
 		en.call().run();

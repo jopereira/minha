@@ -39,10 +39,10 @@ import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pt.minha.api.Calibration;
 import pt.minha.api.Entry;
-import pt.minha.api.Linear;
-import pt.minha.api.World;
+import pt.minha.api.sim.Calibration;
+import pt.minha.api.sim.Linear;
+import pt.minha.api.sim.Simulation;
 import pt.minha.calibration.AbstractBenchmark.Result;
 
 /**
@@ -97,7 +97,7 @@ public class Calibrator implements Closeable {
 		Benchmark next = (Benchmark) Class.forName((String) p.get("bench")).newInstance();
 		next.setParameters(p);
 
-		World world = new World();
+		Simulation world = new Simulation();
 		Calibration c = world.getCalibration();
 		c.reset();
 		c.load(props);
