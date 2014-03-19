@@ -21,22 +21,25 @@ package pt.minha.models.global.disk;
 
 import pt.minha.api.sim.Calibration;
 import pt.minha.kernel.simulation.SimpleResource;
+import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.fake.java.io.File;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class Storage {
 	private SimpleResource bandwidth;
 	private Calibration config;
+	private String pathPrefix;
 
-	public Storage(Calibration config) {
+	public Storage(Timeline timeline, Calibration config, String path) {
 		this.config = config;
+		this.pathPrefix = path;
+		this.bandwidth = new SimpleResource(timeline);
 	}
 
 	public String translate(String name) {
-		String pathAux = SimulationThread.currentSimulationThread().getHost().getName();
-		java.io.File newDir = new java.io.File(pathAux);
+		java.io.File newDir = new java.io.File(pathPrefix);
 		if(!newDir.exists()) newDir.mkdir();
-		return pathAux + File.separator + name;
+		return pathPrefix + File.separator + name;
 	}
 	
 	public long scheduleRead(int size) {

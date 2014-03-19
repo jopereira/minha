@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,10 +45,13 @@ import pt.minha.api.Milestone;
 import pt.minha.api.ContainerException;
 import pt.minha.api.World;
 import pt.minha.kernel.instrument.ClassConfig;
+import pt.minha.kernel.simulation.Resource;
 import pt.minha.kernel.simulation.Scheduler;
+import pt.minha.kernel.simulation.Timeline;
 import pt.minha.models.global.ResultHolder;
 import pt.minha.models.global.disk.Storage;
 import pt.minha.models.global.net.Network;
+import pt.minha.models.global.net.NetworkStack;
 
 /**
  * The simulation container. This is the main entry point for Minha.
@@ -121,9 +125,18 @@ public class Simulation implements World {
 	 */
 	@Override
 	public Host createHost(String ip) throws ContainerException {
-		HostImpl host = new HostImpl(this, cc, sched.createTimeline(), ip, network, new Storage(nc));
-		hosts.add(host);
-		return host;
+		try {
+			Timeline timeline = sched.createTimeline();
+			NetworkStack ns = new NetworkStack(timeline, ip, network);
+			Resource cpu = new Resource(timeline, ns.getLocalAddress().getHostAddress());
+			Storage storage = new Storage(timeline, nc, ns.getLocalAddress().getHostAddress());
+			HostImpl host = new HostImpl(this, cc, timeline, cpu, ns, storage);
+			hosts.add(host);
+			return host;
+		} catch (UnknownHostException e) {
+			throw new ContainerException(e);
+		}
+
 	}
 
 	/* (non-Javadoc)

@@ -48,16 +48,12 @@ class HostImpl implements Host {
 	private ClassConfig cc;
 	private boolean closed;
 	
-	HostImpl(Simulation world, ClassConfig cc, Timeline timeline, String ip, Network network, Storage storage) throws ContainerException{
+	HostImpl(Simulation world, ClassConfig cc, Timeline timeline, Resource cpu, NetworkStack network, Storage storage) throws ContainerException{
 		this.world = world;
 		this.cc = cc;
-		try {
-			this.network = new NetworkStack(timeline, ip, network);
-			this.cpu = new Resource(timeline, this.network.getLocalAddress().getHostAddress());
-			this.storage = storage;
-		} catch (UnknownHostException e) {
-			throw new ContainerException(e);
-		}
+		this.network = network;
+		this.cpu = cpu;
+		this.storage = storage;
 	}
 	
 	@Override
