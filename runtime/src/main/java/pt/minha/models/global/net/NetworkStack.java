@@ -70,14 +70,22 @@ public class NetworkStack implements Closeable {
 	}
 	
 	private int getAvailablePort() {
-		int port;
-
+		boolean reset = false;
+		int port = -1;
+		
 		do {
+			if (INITIAL_PORT>=(1<<16)-1) {
+				if (reset)
+					break;
+				INITIAL_PORT = 10000;
+				reset = true;
+			}
+
 			port = this.INITIAL_PORT++;
 		}
 		while ( this.usedPorts.contains(port) );
 		
-		if ( port<=0 || port>Integer.MAX_VALUE )
+		if ( port <= 0 )
 			throw new IllegalArgumentException("port out of range: " + port);
 
 		return port;
@@ -139,6 +147,7 @@ public class NetworkStack implements Closeable {
 	}
 	
 	public void removeUDPSocket(InetSocketAddress isa) {
+		usedPorts.remove((Object)isa.getPort());
 		socketsUDP.remove(isa);
 	}
 	
