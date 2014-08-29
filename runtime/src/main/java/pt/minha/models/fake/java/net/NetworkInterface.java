@@ -65,6 +65,10 @@ public class NetworkInterface {
 		return "eth0";
 	}
 	
+	public String getDisplayName() {
+		return getName();
+	}
+	
 	public boolean supportsMulticast() {
 		return true;
 	}
