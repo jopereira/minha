@@ -37,6 +37,12 @@ public class File {
 	public static final String pathSeparator   = java.io.File.pathSeparator;
 	
 	public File(String path) {
+		this(null, path);
+	}
+	
+	public File(File parent, String path) {
+		if (parent != null)
+			path = parent.getPath() + File.separator + path;
 		this.hostName = SimulationThread.currentSimulationThread().getHost().getName();
 		this.createTree();
 		this.path = this.removeNonVirtPath(path);
