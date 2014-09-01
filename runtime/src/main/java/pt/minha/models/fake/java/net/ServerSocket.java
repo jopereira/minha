@@ -129,4 +129,8 @@ public class ServerSocket {
 	public InetAddress getInetAddress() {
 		return tcp.getLocalAddress().getAddress();
 	}
+	
+	public void setPerformancePreferences(int c, int l, int b) {
+		// TODO
+	}
 }
