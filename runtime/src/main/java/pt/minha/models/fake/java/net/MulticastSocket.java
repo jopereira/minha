@@ -62,4 +62,8 @@ public class MulticastSocket extends DatagramSocket {
     public InetAddress getInterface() throws IOException {
     	return udp.getNetwork().getLocalAddress();
     }
+    
+    public void setNetworkInterface(NetworkInterface intf) {
+    	// TODO
+    }
 }
