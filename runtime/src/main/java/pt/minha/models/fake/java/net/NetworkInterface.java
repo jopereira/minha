@@ -81,6 +81,16 @@ public class NetworkInterface {
 		return false;
 	}
 	
+	public static NetworkInterface getByName(String name) {
+		Enumeration<NetworkInterface> i = getNetworkInterfaces();
+		while(i.hasMoreElements()) {
+			NetworkInterface next = i.nextElement();
+			if (next.getName().equals(name))
+				return next;
+		}
+		return null;
+	}
+	
 	public String toString() {
 		return getName()+"/"+macAddr;
 	}
