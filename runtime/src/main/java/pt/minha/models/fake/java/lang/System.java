@@ -87,6 +87,10 @@ public class System {
 		return java.lang.System.getSecurityManager();
 	}
 	
+	public static int identityHashCode(Object obj) {
+		return java.lang.System.identityHashCode(obj);
+	}
+	
 	public static final PrintStream out = new PrintStream(new OutputStream() {
 		@Override
 		public void write(int b) throws IOException {
