@@ -87,7 +87,7 @@ public class System {
 		return java.lang.System.getSecurityManager();
 	}
 	
-	public static int identityHashCode(Object obj) {
+	public static int identityHashCode(java.lang.Object obj) {
 		return java.lang.System.identityHashCode(obj);
 	}
 	
