@@ -147,6 +147,10 @@ public class ReentrantLock implements Lock {
 	public boolean isHeldByCurrentThread() {
 		return holder == SimulationThread.currentSimulationThread();
 	}
+	
+	public boolean isLocked() {
+		return holder != null;
+	}
 
 	@Override
 	public Condition newCondition() {
