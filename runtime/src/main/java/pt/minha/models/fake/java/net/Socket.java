@@ -267,6 +267,10 @@ public class Socket {
 	public void setSendBufferSize(int size) throws SocketException {
 		// not implemented
 	}
+	
+	public void setSoTimeout(int timeout) {
+		// TODO
+	}
 
     public String toString() {
    		return "Socket[addr=" + this.getRemoteSocketAddress() +

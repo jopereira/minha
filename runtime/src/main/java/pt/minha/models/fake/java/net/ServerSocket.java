@@ -133,4 +133,8 @@ public class ServerSocket {
 	public void setPerformancePreferences(int c, int l, int b) {
 		// TODO
 	}
+	
+	public void setSoTimeout(int timeout) {
+		// TODO
+	}
 }
