@@ -19,8 +19,14 @@
 
 package pt.minha.models.fake.java.lang.management;
 
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.RuntimeMXBean;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.util.Collections;
+import java.util.List;
 
 import javax.management.MBeanServer;
 
@@ -202,5 +208,25 @@ public class ManagementFactory {
 	public static MBeanServer getPlatformMBeanServer() {
 		// FIXME: should wrap and prefix mbeans with instance name
 		return java.lang.management.ManagementFactory.getPlatformMBeanServer(); 
+	}
+	
+	public static RuntimeMXBean getRuntimeMXBean() {
+		// FIXME: should wrap and prefix mbeans with instance name
+		return java.lang.management.ManagementFactory.getRuntimeMXBean(); 		
+	}
+	
+	public static MemoryMXBean getMemoryMXBean() {
+		// FIXME: should wrap and prefix mbeans with instance name
+		return java.lang.management.ManagementFactory.getMemoryMXBean(); 		
+	}
+	
+	public static OperatingSystemMXBean getOperatingSystemMXBean() {
+		// FIXME: should wrap and prefix mbeans with instance name
+		return java.lang.management.ManagementFactory.getOperatingSystemMXBean(); 		
+	}
+	
+	public static List<GarbageCollectorMXBean> getGarbageCollectorMXBeans() {
+		// FIXME: should return beans
+		return Collections.emptyList();
 	}
 }

@@ -42,4 +42,8 @@ public class Runtime {
 	public long totalMemory(){
 		return 1024;
 	}
+	
+	public long maxMemory() {
+		return 1024;
+	}
 }
