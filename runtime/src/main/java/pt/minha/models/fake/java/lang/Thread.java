@@ -28,6 +28,7 @@ public class Thread extends Object implements Runnable {
 	private int priority = NORM_PRIORITY;
 	private ThreadGroup group;
 	private boolean daemon;
+	private UncaughtExceptionHandler handler;
 	
 	private static void checkSimulation(boolean sim) {
 		if (sim != (java.lang.Thread.currentThread() instanceof SimulationThread))
@@ -40,6 +41,10 @@ public class Thread extends Object implements Runnable {
 	
 	public Thread(Runnable runnable) {
 		this(null, runnable, null);
+	}
+
+	public Thread(String name) {
+		this(null, null, name);
 	}
 
 	public Thread(Runnable runnable, String name) {
@@ -193,5 +198,17 @@ public class Thread extends Object implements Runnable {
     public void simulationStart(long delay) {
     	checkSimulation(false);
     	simulationThread.simulationStart(delay);
+    }
+    
+    public void setUncaughtExceptionHandler(UncaughtExceptionHandler handler) {
+    	this.handler = handler;
+    }
+    
+    public UncaughtExceptionHandler getUncaughtExceptionHandler() {
+    	return this.handler;
+    }
+    
+    public static interface UncaughtExceptionHandler {
+    	public void uncaughtException(Thread thread, Throwable throwable);
     }
 }

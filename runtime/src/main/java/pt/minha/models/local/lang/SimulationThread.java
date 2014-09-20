@@ -150,7 +150,17 @@ public class SimulationThread extends Thread implements Closeable {
 			else
 				logger.warn("Thread died: simulation finished or deadlock?");
 		} catch (Throwable e) {
-			logger.warn("Uncaught exception", e);
+			pt.minha.models.fake.java.lang.Thread.UncaughtExceptionHandler handler = fakeThread.getUncaughtExceptionHandler();
+			try {
+				if (handler != null) {
+					handler.uncaughtException(fakeThread, e);
+					e = null;
+				}
+			} catch(Throwable t) {
+				e = t;
+			}
+			if (e != null)
+				logger.warn("Uncaught exception", e);
 		} finally {
 			if (!dead) {
 				joinLock.lock();
