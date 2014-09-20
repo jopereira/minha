@@ -118,6 +118,10 @@ public class File {
 		return this.impl.isDirectory();
 	}
 	
+	public boolean canWrite() {
+		return this.impl.canWrite();
+	}
+	
 	public boolean delete() {
 		return this.impl.delete();
 	}
@@ -151,6 +155,14 @@ public class File {
     	return files.toArray(new File[files.size()]);
     }
     
+    public String[] list(final FilenameFilter ff) {
+    	return impl.list(new java.io.FilenameFilter() {
+			public boolean accept(java.io.File dir, String name) {
+				return ff.accept(new File(dir), name);
+			}    		
+    	});
+    }
+    
     public URI toURI() {
     	try {
 			return new URI("file", this.impl.getAbsolutePath(), null);
@@ -158,5 +170,9 @@ public class File {
 			// shouldn't happen
 			return null;
 		}
+    }
+    
+    public String toString() {
+    	return getPath();
     }
 }

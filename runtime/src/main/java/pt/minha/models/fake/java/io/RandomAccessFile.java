@@ -23,18 +23,22 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import pt.minha.models.fake.java.io.FileDescriptor.SyncTarget;
+import pt.minha.models.fake.java.nio.channels.FileChannel;
 import pt.minha.models.global.disk.Storage;
 import pt.minha.models.local.lang.SimulationThread;
+import pt.minha.models.local.nio.FileChannelImpl;
 
 public class RandomAccessFile {
 	
 	private java.io.RandomAccessFile impl;
 	private Storage storage;
 	private long syncTarget;
+	private FileChannel channel;
 
 	public RandomAccessFile(File file, String mode) throws FileNotFoundException{
 		this.impl = new java.io.RandomAccessFile(file.getImpl(), mode);
 		this.storage = SimulationThread.currentSimulationThread().getProcess().getStorage();
+		this.channel = new FileChannelImpl();
 	}
 	
 	public void seek(long pos) throws IOException{
@@ -128,6 +132,10 @@ public class RandomAccessFile {
 			}
 		};
 		return new FileDescriptor(this.impl.getFD(), st);
+	}
+	
+	public FileChannel getChannel() {
+		return channel;
 	}
 	
 	public void close() throws IOException{
