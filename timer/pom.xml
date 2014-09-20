@@ -62,7 +62,13 @@
       <plugin>
         <groupId>org.fusesource.hawtjni</groupId>
         <artifactId>maven-hawtjni-plugin</artifactId>
-        <version>1.8</version>
+        <version>1.10</version>
+
+        <configuration>
+          <configureArgs>
+            <arg>LDFLAGS=-lrt</arg>
+          </configureArgs>
+        </configuration>
 
         <dependencies>
           <dependency>
