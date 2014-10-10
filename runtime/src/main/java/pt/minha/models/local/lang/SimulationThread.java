@@ -43,7 +43,8 @@ public class SimulationThread extends Thread implements Closeable {
 	private long id;
 	private SimulationProcess process;
 	private Calibration nc;
-	private long time = -1;
+	private long time;
+	private boolean realTime = false;
 	private boolean blocked, rt, dead, started, interruptible, interrupted;
 	private boolean parked, permit;
 	
@@ -288,12 +289,13 @@ public class SimulationThread extends Thread implements Closeable {
 	}
 	
 	private void doStartTime(long overhead) {
-		if (time>=0)
+		if (realTime)
 			throw new RuntimeException("restarting time");
 
 		process.getCPU().acquire(getWakeup());
 		resync();
 		
+		realTime = true;
 		time = timer.getTime() - overhead;
 	}
 	
@@ -312,10 +314,10 @@ public class SimulationThread extends Thread implements Closeable {
 		if (delta<0)
 			delta = 1;
 		
-		if (time<0)
+		if (!realTime)
 			throw new RuntimeException("restopping time");
 		
-		time = -1;
+		realTime = false;
 		
 		totalCPU += delta;
 		process.getCPU().release(delta, getWakeup());
@@ -325,7 +327,7 @@ public class SimulationThread extends Thread implements Closeable {
 	}
 	
 	public boolean idle(long delta, boolean interruptible, boolean clear) {
-		if (time>=0)
+		if (realTime)
 			throw new RuntimeException("time not stopped");
 		
 		getWakeup().schedule(delta);
