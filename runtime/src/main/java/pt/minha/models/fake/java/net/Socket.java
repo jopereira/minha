@@ -272,6 +272,10 @@ public class Socket {
 		// TODO
 	}
 
+	public void setTcpNoDelay(boolean noDelay) {
+		// TODO
+	}
+
     public String toString() {
    		return "Socket[addr=" + this.getRemoteSocketAddress() +
     			",localaddr=" + this.getLocalSocketAddress()+"]";
