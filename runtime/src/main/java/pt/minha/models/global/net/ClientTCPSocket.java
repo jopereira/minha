@@ -230,7 +230,8 @@ public class ClientTCPSocket extends AbstractSocket {
 			return;
 
 		// Send the packet and record sequence numbers
-		sendPacket(new TCPPacket(this, peer, seqOut, seqIn, data, flags));
+		if (peer != null)
+			sendPacket(new TCPPacket(this, peer, seqOut, seqIn, data, flags));
 
 		seqOut += op;
 		ackedIn = seqIn;
