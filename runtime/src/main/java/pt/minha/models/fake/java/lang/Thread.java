@@ -98,6 +98,11 @@ public class Thread extends Object implements Runnable {
 			SimulationThread.startTime(0);
 		}
     }
+	
+	public static void yield() {
+		SimulationThread.stopTime(0);
+		SimulationThread.startTime(0);
+	}
     
     protected Object clone() throws CloneNotSupportedException {
     	throw new CloneNotSupportedException();
