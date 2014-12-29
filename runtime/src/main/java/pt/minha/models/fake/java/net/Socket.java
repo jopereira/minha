@@ -227,6 +227,10 @@ public class Socket {
 	public boolean isClosed() {
 		return closed;
 	}
+	
+	public boolean isConnected() {
+		return tcp.connectors.isReady();
+	}
     
     public SocketAddress getRemoteSocketAddress() {
     	return tcp.getRemoteAddress();
