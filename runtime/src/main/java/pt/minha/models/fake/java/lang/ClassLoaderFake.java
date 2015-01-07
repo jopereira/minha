@@ -30,4 +30,12 @@ public class ClassLoaderFake {
 			return null;
 		}
 	}
+
+	public static java.io.InputStream _fake_getSystemResourceAsStream(String name) {
+		try {
+			return new ResourceInputStream(new ResourceInputStreamImpl(ClassLoader.getSystemClassLoader(), name));
+		} catch(NullPointerException e) {
+			return null;
+		}
+	}
 }
