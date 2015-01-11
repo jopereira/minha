@@ -71,6 +71,10 @@ public class System {
 	public static String setProperty(String prop, String value) {
 		return (String) sysProps.setProperty(prop, value);
 	}
+
+	public static void setProperties(Properties props) {
+		sysProps = props;
+	}
 					
 	public static void arraycopy(java.lang.Object a, int b, java.lang.Object c, int d, int e) {
 		java.lang.System.arraycopy(a, b, c, d, e);
