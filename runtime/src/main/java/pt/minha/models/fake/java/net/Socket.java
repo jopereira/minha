@@ -103,7 +103,7 @@ public class Socket {
 				if (res<0)
 					return res;
 				else
-					return buf[0];
+					return ((int)buf[0])&0xff;
 			}
 
 			public void close() throws IOException {
