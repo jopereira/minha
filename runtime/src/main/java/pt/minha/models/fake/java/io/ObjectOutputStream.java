@@ -55,4 +55,8 @@ public class ObjectOutputStream extends DataOutputStream implements ObjectOutput
 	public void defaultWriteObject() throws IOException {
 		osi.implDefaultWriteObject();
 	}
+	
+	public void reset() throws IOException {
+		osi.implReset();
+	}
 }

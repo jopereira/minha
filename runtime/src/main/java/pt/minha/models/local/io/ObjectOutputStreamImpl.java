@@ -48,4 +48,8 @@ public class ObjectOutputStreamImpl extends OutputStream {
 	public void implDefaultWriteObject() throws IOException {
 		oos.defaultWriteObject();
 	}
+
+	public void implReset() throws IOException {
+		oos.reset();
+	}
 }
