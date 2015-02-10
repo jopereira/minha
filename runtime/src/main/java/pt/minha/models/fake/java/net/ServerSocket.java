@@ -41,7 +41,7 @@ public class ServerSocket {
 	}
 	
 	public ServerSocket(int port) throws IOException {
-		this(port, 5, null);
+		this(port, ListeningTCPSocket.DEFAULT_BACKLOG, null);
     }
 
 	public ServerSocket(int port, int backlog, InetAddress address) throws IOException {
@@ -65,7 +65,7 @@ public class ServerSocket {
 	}
 
 	public void bind(SocketAddress address) throws IOException {
-		bind(address, 5);
+		bind(address, ListeningTCPSocket.DEFAULT_BACKLOG);
 	}
 
 	public void bind(SocketAddress address, int backlog) throws IOException {

@@ -27,6 +27,8 @@ import pt.minha.models.global.io.BlockingHelper;
 
 public class ListeningTCPSocket extends AbstractSocket {
 	
+	public static final int DEFAULT_BACKLOG = 128;
+	
 	private int backlog;
 	private final List<TCPPacket> incomingAccept = new LinkedList<TCPPacket>();
 	public BlockingHelper acceptors;
@@ -42,7 +44,7 @@ public class ListeningTCPSocket extends AbstractSocket {
 	
 	public void listen(int backlog) throws SocketException {
 		if (backlog<=0) backlog = 1;
-		if (backlog>5) backlog = 5;
+		if (backlog>DEFAULT_BACKLOG) backlog = DEFAULT_BACKLOG;
 		this.backlog = backlog;
 		stack.addTCPSocket(getLocalAddress(), this);		
 	}
@@ -54,8 +56,11 @@ public class ListeningTCPSocket extends AbstractSocket {
 	}
 	
 	public boolean queueConnect(TCPPacket syn) {
-		if (incomingAccept.size()>=backlog)
+		if (incomingAccept.size()>=backlog) {
+			System.err.println("socket accept queue overflow");
+			System.exit(1);
 			return false;
+		}
 		
 		incomingAccept.add(syn);
 		acceptors.wakeup();
