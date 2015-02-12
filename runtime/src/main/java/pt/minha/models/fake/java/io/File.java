@@ -147,9 +147,13 @@ public class File {
     }
     
     public File[] listFiles(){
+    	java.io.File[] impls = this.impl.listFiles();
+    	if (impls == null)
+    		return null;
+    	
     	ArrayList<File> files = new ArrayList<File>();
     	
-    	for(java.io.File f : this.impl.listFiles())
+    	for(java.io.File f : impls)
     		files.add(new File(f));
     	
     	return files.toArray(new File[files.size()]);
