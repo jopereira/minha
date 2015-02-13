@@ -26,6 +26,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -215,7 +216,8 @@ public class NetworkStack implements Closeable {
 
 	@Override
 	public void close() {
-		for(ClientTCPSocket tcp: connTCP) {
+		ArrayList<ClientTCPSocket> l = new ArrayList<ClientTCPSocket>(connTCP);
+		for(ClientTCPSocket tcp: l) {
 			tcp.shutdownInput();
 			tcp.shutdownOutput();
 		}
