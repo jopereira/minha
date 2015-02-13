@@ -20,4 +20,8 @@
 package pt.minha.models.global;
 
 public class SimulationThreadDeath extends Error {
+	public SimulationThreadDeath() {
+		super("Please do NOT catch SimulationThreadDeath. "
+			+ "It is used internally by the simulator to cleanup dead threads.");
+	}
 }

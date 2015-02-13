@@ -149,7 +149,7 @@ public class SimulationThread extends Thread implements Closeable {
 			if (fake_isDaemon())
 				logger.info("Daemon thread killed");
 			else
-				logger.warn("Thread died: simulation finished or deadlock?");
+				logger.warn("Non-daemon thread killed.");
 		} catch (Throwable e) {
 			pt.minha.models.fake.java.lang.Thread.UncaughtExceptionHandler handler = fakeThread.getUncaughtExceptionHandler();
 			try {
