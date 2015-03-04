@@ -115,22 +115,21 @@ public class DatagramTest {
 
 		new FullVerifications() {
 			{
-				cb.receive(withAny(packet), withAny(addr));
-				forEachInvocation = new Object() {
-					void validate(DatagramPacket p, InetSocketAddress a) {
-						// Receiver address
-						assertNotNull(a);
-						assertEquals(a.getAddress(), host.getAddress());
-						assertEquals(a.getPort(), addr.getPort());
-						// Sender address
-						assertNotNull(p);
-						assertEquals(p.getAddress(), host.getAddress());
-						assertEquals(p.getPort(), addr.getPort());
-						// Data
-						assertNotNull(p.getData());
-						assertTrue(checkData(p, data));			
-					}
-				};
+				DatagramPacket p;
+				InetSocketAddress a;				
+				cb.receive(p = withCapture(), a = withCapture());
+				
+				// Receiver address
+				assertNotNull(a);
+				assertEquals(a.getAddress(), host.getAddress());
+				assertEquals(a.getPort(), addr.getPort());
+				// Sender address
+				assertNotNull(p);
+				assertEquals(p.getAddress(), host.getAddress());
+				assertEquals(p.getPort(), addr.getPort());
+				// Data
+				assertNotNull(p.getData());
+				assertTrue(checkData(p, data));			
 			}
 		};		
 	} 
@@ -156,24 +155,23 @@ public class DatagramTest {
 
 		new FullVerifications() {
 			{
-				cb.receive(withAny(packet), withAny(addr));
-				forEachInvocation = new Object() {
-					void validate(DatagramPacket p, InetSocketAddress a) {
-						// Receiver address
-						assertNotNull(a);
-						assertEquals(a.getAddress(), en[1].getProcess().getHost().getAddress());
-						assertEquals(a.getPort(), addr.getPort());
-						// Sender address
-						assertNotNull(p);
-						assertEquals(p.getAddress(), en[0].getProcess().getHost().getAddress());
-						assertEquals(p.getPort(), addr.getPort());
-						// Data
-						assertNotNull(p.getData());
-						assertTrue(checkData(p, data));			
-					}
-				};
+				DatagramPacket p;
+				InetSocketAddress a;
+				cb.receive(p = withCapture(), a = withCapture());
+
+				// Receiver address
+				assertNotNull(a);
+				assertEquals(a.getAddress(), en[1].getProcess().getHost().getAddress());
+				assertEquals(a.getPort(), addr.getPort());
+				// Sender address
+				assertNotNull(p);
+				assertEquals(p.getAddress(), en[0].getProcess().getHost().getAddress());
+				assertEquals(p.getPort(), addr.getPort());
+				// Data
+				assertNotNull(p.getData());
+				assertTrue(checkData(p, data));			
 			}
-		};		
+		};
 	}
 
 	public static boolean checkData(DatagramPacket packet, byte[] data) {

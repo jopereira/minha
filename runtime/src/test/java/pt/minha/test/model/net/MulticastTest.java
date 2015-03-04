@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
+import java.util.ArrayList;
+import java.util.List;
 
 import mockit.FullVerifications;
 import mockit.Mocked;
@@ -106,25 +108,27 @@ public class MulticastTest {
 		
 		world.close();
 
-		new FullVerifications() {
-			{
-				cb.receive(withAny(packet), withAny(addr)); times = N;
-				forEachInvocation = new Object() {
-					void validate(DatagramPacket p, InetSocketAddress a) {
-						// Receiver address
-						assertNotNull(a);
-						assertEquals(a.getPort(), addr.getPort());
-						// Sender address
-						assertNotNull(p);
-						assertEquals(p.getAddress(), en[0].getProcess().getHost().getAddress());
-						assertEquals(p.getPort(), addr.getPort());
-						// Data
-						assertNotNull(p.getData());
-						assertTrue(DatagramTest.checkData(p, data));			
-					}
-				};
-			}
-		};		
+		List<DatagramPacket> lp = new ArrayList<>();
+		List<InetSocketAddress> la = new ArrayList<>();
+		new FullVerifications() {{
+			cb.receive(withCapture(lp), withCapture(la)); times = N;
+		}};
+		
+		for(int i=0; i<N; i++) {
+			DatagramPacket p = lp.get(i);
+			InetSocketAddress a = la.get(i);
+			
+			// Receiver address
+			assertNotNull(a);
+			assertEquals(a.getPort(), addr.getPort());
+			// Sender address
+			assertNotNull(p);
+			assertEquals(p.getAddress(), en[0].getProcess().getHost().getAddress());
+			assertEquals(p.getPort(), addr.getPort());
+			// Data
+			assertNotNull(p.getData());
+			assertTrue(DatagramTest.checkData(p, data));			
+		}
 	}
 
 	@Test

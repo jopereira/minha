@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 import pt.minha.models.local.lang.SimulationThread;
 
@@ -200,6 +201,11 @@ public class ManagementFactory {
 			public ThreadInfo[] dumpAllThreads(boolean lockedMonitors,
 					boolean lockedSynchronizers) {
 				// TODO Auto-generated method stub
+				return null;
+			}
+			
+			@Override
+			public ObjectName getObjectName() {
 				return null;
 			}
 		};
