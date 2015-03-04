@@ -28,6 +28,11 @@ public class ClassFake {
 		return ((InstrumentationLoader)SimulationThread.currentSimulationThread().getContextClassLoader()).forName(name);
 	}
 	
+	// FIXME: This is a workaround. A propert fix needs classloader wrapping.
+	public static java.lang.Class<?> forName(String name, boolean init, ClassLoader cl) throws ClassNotFoundException {
+		return forName(name);
+	}
+	
 	public static java.io.InputStream _fake_getResourceAsStream(java.lang.Class<?> clz, String name) {
 		try {
 			return new ResourceInputStream(new ResourceInputStreamImpl(clz, name));
