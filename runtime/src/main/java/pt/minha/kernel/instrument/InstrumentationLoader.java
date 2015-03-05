@@ -19,11 +19,14 @@
 
 package pt.minha.kernel.instrument;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.RemappingClassAdapter;
 
 public class InstrumentationLoader extends ClassLoader {
@@ -33,12 +36,8 @@ public class InstrumentationLoader extends ClassLoader {
 	public InstrumentationLoader(ClassConfig cc) {
 		this.cc = cc;
 	}
-
-	public Class<?> loadClass(String name) throws ClassNotFoundException {
-		
-		String effname = name.replace('.', '/');
-		ClassConfig.Action act = cc.get(effname);
-
+	
+	private Class<?> findLoadedOrGlobal(ClassConfig.Action act, String name) throws ClassNotFoundException {
 		if (act.equals(ClassConfig.Action.invalid))
 			throw new ClassCastException("class marked as invalid");
 
@@ -56,59 +55,76 @@ public class InstrumentationLoader extends ClassLoader {
 		if (claz!=null)
 			return claz;
 		
+		return null;
+	}
+	
+	public void transform(Translation trans, ClassVisitor cw) throws IOException {
+		
+		ClassVisitor ca = cw;
+
+		// ------ This is the bytecode re-writting pipeline: -------
+		// (order is: last in, first used)
+		
+		// Handle readObject/writeObject in Serializable classes
+		ca = new SerializableClassVisitor(ca, trans);
+
+		// Rewrite some special methods
+		ca = new MethodRemapperClassVisitor(ca, trans);
+			
+		// Rewrite MONITORENTER/MONITORLEAVE to methods in fake.j.l.Object 
+		ca = new FakeMonitorClassVisitor(ca, trans);
+			
+		// Rewrite synchronized methods to synchronized blocks
+		ca = new SyncToMonitorClassVisitor(ca, trans);
+
+		// Redirect references to fake.* and moved.* classes
+		ca = new RemappingClassAdapter(ca, new ClassRemapper(cc, trans));
+		
+		// Prepare for changes done by other stages
+		ca = new JSRInlinerClassVisitor(ca);
+				
+		// Update translation config from annotations (this is the first
+		// stage in the pipeline!)
+		ca = new AnnotatedClassVisitor(ca, trans); 
+		// ---------------------------------------------------------------------------------------
+		
+		InputStream is = getResourceAsStream(trans.getFileName());
+		ClassReader cr = new ClassReader(is);
+		cr.accept(ca, ClassReader.SKIP_FRAMES);
+	}
+
+	
+	public Class<?> loadClass(String name) throws ClassNotFoundException {
+		String effname = name.replace('.', '/');
+		ClassConfig.Action act = cc.get(effname);
+
+		Class<?> claz = findLoadedOrGlobal(act, name);
+		if (claz != null)
+			return claz;
+				
 		/*
 		 * Set up translation configuration defaults. This depends on
 		 * the class name prefix (i.e. fake or moved), properties file,
 		 * and class file annotations.
 		 */
 		Translation trans = new Translation(effname, act);
-		
+
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES) {
+			protected String getCommonSuperClass(String type1, String type2) {
+				return InstrumentationLoader.this.getCommonSuperClass(type1, type2);
+			}
+		};
+
 		try {
-			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES) {
-				// This is most likely wrong, but the orginal method is also wrong, as
-				// it relies on loading classes (which escape the sandbox).
-				protected String getCommonSuperClass(String type1, String type2) {
-					return "java/lang/Object";
-				}
-			};
-
-			ClassVisitor ca = cw;
-
-			// ------ This is the bytecode re-writting pipeline: -------
-			// (order is: last in, first used)
-			
-			// Handle readObject/writeObject in Serializable classes
-			ca = new SerializableClassVisitor(ca, trans);
-
-			// Rewrite some special methods
-			ca = new MethodRemapperClassVisitor(ca, trans);
-				
-			// Rewrite MONITORENTER/MONITORLEAVE to methods in fake.j.l.Object 
-			ca = new FakeMonitorClassVisitor(ca, trans);
-				
-			// Rewrite synchronized methods to synchronized blocks
-			ca = new SyncToMonitorClassVisitor(ca, trans);
-
-			// Redirect references to fake.* and moved.* classes
-			ca = new RemappingClassAdapter(ca, new ClassRemapper(cc, trans));
-					
-			// Prepare for changes done by other stages
-			ca = new JSRInlinerClassVisitor(ca);
-					
-			// Update translation config from annotations (this is the first
-			// stage in the pipeline!)
-			ca = new AnnotatedClassVisitor(ca, trans); 
-			// ---------------------------------------------------------------------------------------
-			
-			InputStream is = getResourceAsStream(trans.getFileName());
-			ClassReader cr = new ClassReader(is);
-			cr.accept(ca, ClassReader.SKIP_FRAMES);
+			transform(trans, cw);
+		
 			byte[] b2 = cw.toByteArray();
 			
 			// Enable this to get debugging output:
-			//checkAndDumpClass(b2);
+			// checkAndDumpClass(b2);
 			
 			if (trans.isGlobal())
+				// If we discovered this from an annotation...
 				return super.loadClass(name);
 			else
 				return defineClass(name, b2, 0, b2.length);
@@ -133,4 +149,164 @@ public class InstrumentationLoader extends ClassLoader {
 		}
 		
 	}*/
+	
+	/*
+	 * Rest of this file is based on code in ASM Tests by Eugene Kuleshov (v3.3)
+	 * Copyright (c) 2002-2005 France Telecom.
+	 * Modified and redistributed according to: http://asm.ow2.org/license.html.
+	 * 
+	 * Used as suggested in ASM mailing list thread: 
+	 * http://mail-archive.ow2.org/asm/2011-08/msg00056.html
+	 */
+	protected String getCommonSuperClass(String type1, String type2) {
+		ClassInfo ci1 = new ClassInfo(type1);
+		ClassInfo ci2 = new ClassInfo(type2);
+
+		if (ci1.isAssignableFrom(ci2))
+			return type1;
+		if (ci2.isAssignableFrom(ci1))
+			return type2;
+		
+		if (ci1.isInterface() || ci2.isInterface())
+			return "java/lang/Object";
+	
+		do {
+			// Should never be null, because if ci1 were the Object class
+			// or an interface, it would have been caught above.
+			ci1 = ci1.getSuperclass();
+		} while (!ci1.isAssignableFrom(ci2));
+
+		return ci1.getType().getInternalName();
+	}
+
+	class ClassInfo {
+		private Type type;
+		private boolean isInterface;
+		private String superClass;
+		private String[] interfaces;
+
+		public ClassInfo(String effname) {
+			Class cls = null;
+			
+			String name = effname.replace('/', '.');
+			ClassConfig.Action act = cc.get(effname);
+			try {
+				cls = findLoadedOrGlobal(act, name);
+			} catch (ClassNotFoundException e) {
+				// failover...
+			}
+
+			if (cls != null) {
+				this.type = Type.getType(cls);
+				this.isInterface = cls.isInterface();
+				if (!isInterface && cls != Object.class)
+					this.superClass = cls.getSuperclass().getName()
+							.replace('.', '/');
+				Class[] ifs = cls.getInterfaces();
+				this.interfaces = new String[ifs.length];
+				for (int i = 0; i < ifs.length; i++) {
+					this.interfaces[i] = ifs[i].getName().replace('.', '/');
+				}
+				return;
+			}
+
+			// The class isn't loaded. Try to get the class file, and
+			// extract the information from that.
+			this.type = Type.getObjectType(effname);
+			Translation trans = new Translation(effname, act);
+			ClassVisitor ca = new ClassInfoVisitor();
+			try {
+				transform(trans, ca);
+			} catch(Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		Type getType() {
+			return type;
+		}
+
+		ClassInfo getSuperclass() {
+			if (superClass == null) {
+				return null;
+			}
+			return new ClassInfo(superClass);
+		}
+
+		/**
+		 * Same as {@link Class#getInterfaces()}
+		 */
+		ClassInfo[] getInterfaces() {
+			if (interfaces == null) {
+				return new ClassInfo[0];
+			}
+			ClassInfo[] result = new ClassInfo[interfaces.length];
+			for (int i = 0; i < result.length; ++i) {
+				result[i] = new ClassInfo(interfaces[i]);
+			}
+			return result;
+		}
+
+		/**
+		 * Same as {@link Class#isInterface}
+		 */
+		boolean isInterface() {
+			return isInterface;
+		}
+
+		private boolean implementsInterface(ClassInfo that) {
+			for (ClassInfo c = this; c != null; c = c.getSuperclass()) {
+				ClassInfo[] interfaces = c.getInterfaces();
+				for (int i = 0; i < interfaces.length; i++) {
+					ClassInfo iface = interfaces[i];
+					if (iface.type.equals(that.type)
+							|| iface.implementsInterface(that)) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		private boolean isSubclassOf(ClassInfo that) {
+			for (ClassInfo ci = this; ci != null; ci = ci.getSuperclass()) {
+				if (ci.getSuperclass() != null
+						&& ci.getSuperclass().type.equals(that.type)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/**
+		 * Same as {@link Class#isAssignableFrom(Class)}
+		 */
+		boolean isAssignableFrom(ClassInfo that) {
+			if (this == that
+					|| that.isSubclassOf(this)
+					|| that.implementsInterface(this)
+					|| (that.isInterface() && getType().getDescriptor().equals("Ljava/lang/Object;"))) {
+				return true;
+			}
+
+			return false;
+		}
+
+		private class ClassInfoVisitor extends ClassVisitor {
+
+			public ClassInfoVisitor() {
+				super(Opcodes.ASM4, new ClassWriter(0));
+			}
+
+			@Override
+			public void visit(int version, int access, String name, String signature, String supername, String[] interfaces) {
+				super.visit(version, access, name, signature, supername, interfaces);
+				if (name.equals("java/lang/Object"))
+					return;
+				ClassInfo.this.interfaces = interfaces;
+				ClassInfo.this.superClass = supername;
+				ClassInfo.this.isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
+			}
+		}
+	}
 }
