@@ -137,4 +137,8 @@ public class ServerSocket {
 	public void setSoTimeout(int timeout) {
 		// TODO
 	}
+	
+	public boolean isBound() {
+		return tcp.getLocalAddress() != null;
+	}
 }

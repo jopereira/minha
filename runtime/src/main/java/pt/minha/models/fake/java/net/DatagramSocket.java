@@ -168,6 +168,14 @@ public class DatagramSocket {
 		soTimeout = millis;
 	}
 	
+	public void setBroadcast(boolean bcast) {
+		// not implemented
+	}
+	
+	public boolean isBound() {
+		return udp.getLocalAddress() != null;
+	}
+	
 	public int getSoTimeout() {
 		return soTimeout;
 	}

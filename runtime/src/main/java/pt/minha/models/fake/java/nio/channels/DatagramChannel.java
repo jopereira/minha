@@ -20,6 +20,7 @@
 package pt.minha.models.fake.java.nio.channels;
 
 import java.io.IOException;
+import java.net.ProtocolFamily;
 import java.net.SocketAddress;
 import java.nio.channels.ByteChannel;
 
@@ -35,6 +36,8 @@ public abstract class DatagramChannel extends AbstractSelectableChannel implemen
 	
 	public static DatagramChannel open() throws IOException { return SelectorProvider.provider().openDatagramChannel(); }
 
+	public static DatagramChannel open(ProtocolFamily pf) throws IOException { return SelectorProvider.provider().openDatagramChannel(); }
+	
 	public abstract DatagramSocket socket();
 	
 	public abstract DatagramChannel connect(SocketAddress address);

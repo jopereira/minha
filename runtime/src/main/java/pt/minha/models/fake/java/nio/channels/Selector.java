@@ -25,6 +25,10 @@ import java.util.Set;
 import pt.minha.models.fake.java.nio.channels.spi.SelectorProvider;
 
 public abstract class Selector {
+	
+	public static Selector open() throws IOException {
+		return SelectorProvider.provider().openSelector();
+	}
 
 	public abstract Set<SelectionKey> keys();
 
@@ -39,4 +43,6 @@ public abstract class Selector {
 	public abstract Selector wakeup();
 
 	public abstract SelectorProvider provider();
+	
+	public abstract void close() throws IOException;
 }

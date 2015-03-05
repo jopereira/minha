@@ -279,4 +279,9 @@ public class SelectorImpl extends AbstractSelector {
 			return "SK("+interest+", "+ready+", "+channel+")";
 		}
 	}
+
+	@Override
+	public void close() throws IOException {
+		
+	}
 }
