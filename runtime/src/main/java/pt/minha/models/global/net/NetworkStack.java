@@ -44,7 +44,8 @@ public class NetworkStack implements Closeable {
 	private Timeline timeline;
 	
 	private InetAddress localAddress;
-	private final List<Integer> usedPorts = new LinkedList<Integer>();
+	private final List<Integer> usedTCPPorts = new LinkedList<Integer>();
+	private final List<Integer> usedUDPPorts = new LinkedList<Integer>();
 	private int INITIAL_PORT = 10000;
 	
 	private String macAddress;
@@ -70,7 +71,7 @@ public class NetworkStack implements Closeable {
 		return this.macAddress;
 	}
 	
-	private int getAvailablePort() {
+	private int getAvailablePort(List<Integer> usedPorts) {
 		boolean reset = false;
 		int port = -1;
 		
@@ -84,7 +85,7 @@ public class NetworkStack implements Closeable {
 
 			port = this.INITIAL_PORT++;
 		}
-		while ( this.usedPorts.contains(port) );
+		while ( usedPorts.contains(port) );
 		
 		if ( port <= 0 )
 			throw new IllegalArgumentException("port out of range: " + port);
@@ -92,17 +93,34 @@ public class NetworkStack implements Closeable {
 		return port;
 	}
 	
-	public InetSocketAddress getBindAddress(int port) {
+	public InetSocketAddress getUDPBindAddress(int port) {
+		
 		if ( port < 0 || port> 0xFFFF )
 			throw new IllegalArgumentException("bind: " + port);
 
 		if ( 0 == port )
-			port = this.getAvailablePort();
+			port = this.getAvailablePort(usedUDPPorts);
 		
-		if ( this.usedPorts.contains(port) )
+		if ( this.usedUDPPorts.contains(port) )
 			throw new IllegalArgumentException("Port already used: " + port);
 		
-		this.usedPorts.add(port);
+		this.usedUDPPorts.add(port);
+		
+		return new InetSocketAddress(this.localAddress, port);		
+	}
+
+	public InetSocketAddress getTCPBindAddress(int port) {
+		
+		if ( port < 0 || port> 0xFFFF )
+			throw new IllegalArgumentException("bind: " + port);
+
+		if ( 0 == port )
+			port = this.getAvailablePort(usedTCPPorts);
+		
+		if ( this.usedTCPPorts.contains(port) )
+			throw new IllegalArgumentException("Port already used: " + port);
+		
+		this.usedTCPPorts.add(port);
 		
 		return new InetSocketAddress(this.localAddress, port);		
 	}
@@ -140,6 +158,7 @@ public class NetworkStack implements Closeable {
 	}
 
 	public void removeTCPSocket(InetSocketAddress isa) {
+		usedTCPPorts.remove((Object)isa.getPort());
 		socketsTCP.remove(isa);
 	}
 
@@ -148,7 +167,7 @@ public class NetworkStack implements Closeable {
 	}
 	
 	public void removeUDPSocket(InetSocketAddress isa) {
-		usedPorts.remove((Object)isa.getPort());
+		usedUDPPorts.remove((Object)isa.getPort());
 		socketsUDP.remove(isa);
 	}
 	

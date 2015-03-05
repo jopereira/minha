@@ -64,6 +64,14 @@ public class ClientTCPSocket extends AbstractSocket {
 		
 		stack.addTCPConnection(this);
 	}
+	
+	public void bind(InetSocketAddress addr) throws SocketException {
+		// FIXME: Bind address is ignored
+		if (addr != null && addr.getPort()!=0)
+			super.bind(stack.getTCPBindAddress(addr.getPort()));
+		else
+			super.bind(stack.getTCPBindAddress(0));
+	}
 		
 	/**
 	 * Initiate a connection.

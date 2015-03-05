@@ -39,11 +39,7 @@ public abstract class AbstractSocket {
 		if (local!=null)
 			throw new SocketException("already bound");
 		
-		// FIXME: Bind address is ignored
-		if (addr != null && addr.getPort()!=0)
-			local = stack.getBindAddress(addr.getPort());
-		else
-			local = stack.getBindAddress(0);
+		local = addr;
 	}
 	
 	public InetSocketAddress getLocalAddress() {

@@ -58,7 +58,11 @@ public class UDPSocket extends AbstractSocket {
 
 	@Override
 	public void bind(InetSocketAddress addr) throws SocketException {
-		super.bind(addr);
+		// FIXME: Bind address is ignored
+		if (addr != null && addr.getPort()!=0)
+			super.bind(stack.getUDPBindAddress(addr.getPort()));
+		else
+			super.bind(stack.getUDPBindAddress(0));
 		stack.addUDPSocket(getLocalAddress(), this);
 	}
 
