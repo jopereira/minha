@@ -156,6 +156,10 @@ public class Thread extends Object implements Runnable {
     public java.lang.Thread.State getState() {
     	return SimulationThread.currentThread().getState();
     }
+
+    public StackTraceElement[] getStackTrace() {
+    	return simulationThread.fake_getStackTrace();
+    }
     
     public final void setName(String name) {
     	this.name = name;

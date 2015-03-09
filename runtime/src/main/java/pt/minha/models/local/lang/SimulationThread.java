@@ -360,6 +360,10 @@ public class SimulationThread extends Thread implements Closeable {
 		return fakeThread.isDaemon();
 	}
 	
+	public StackTraceElement[] fake_getStackTrace() {
+		return this.getStackTrace();
+	}
+	
 	public void park(long nanos) {
 		if (permit)
 			permit = false;
