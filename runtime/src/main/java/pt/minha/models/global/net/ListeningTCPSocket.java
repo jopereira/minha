@@ -56,11 +56,8 @@ public class ListeningTCPSocket extends AbstractSocket {
 	}
 	
 	public boolean queueConnect(TCPPacket syn) {
-		if (incomingAccept.size()>=backlog) {
-			System.err.println("socket accept queue overflow");
-			System.exit(1);
+		if (incomingAccept.size()>=backlog)
 			return false;
-		}
 		
 		incomingAccept.add(syn);
 		acceptors.wakeup();
