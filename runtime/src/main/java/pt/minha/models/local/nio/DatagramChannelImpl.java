@@ -53,6 +53,18 @@ public class DatagramChannelImpl extends DatagramChannel {
 		if (!isConnected())
 			throw new NotYetConnectedException();
 
+		int res = dst.remaining();
+		
+		receive(dst);
+		
+		return res-dst.remaining();
+	}
+	
+	@Override
+	public SocketAddress receive(ByteBuffer dst) throws IOException {
+		if (socket.isClosed())
+			throw new SocketException("socket closed");
+		
 		long cost = 0;
 		
 		try {
@@ -74,21 +86,22 @@ public class DatagramChannelImpl extends DatagramChannel {
 			DatagramPacket p = udp.receive();
 			
 			if (p==null)
-				return 0;
+				return null;
 			
 			int res = dst.remaining();
 			
-			if (p.getLength()>res)
+			if (p.getLength()<res)
 				res = p.getLength();
-			
+
 			dst.put(p.getData(), p.getOffset(), res);
 			
 			cost = udp.getNetwork().getConfig().getUDPOverhead(p.getLength());
-			
-			return res;
+
+			return p.getSocketAddress();
 		} finally {
 			SimulationThread.startTime(cost);					
-		}	}
+		}
+	}
 
 	@Override
 	public int write(ByteBuffer src) throws IOException {
@@ -98,6 +111,14 @@ public class DatagramChannelImpl extends DatagramChannel {
 		if (!isConnected())
 			throw new NotYetConnectedException();
 		
+		return send(src, udp.getRemoteAddress());
+	}
+		
+	@Override
+	public int send(ByteBuffer src, SocketAddress target) throws IOException {
+		if (socket.isClosed())
+			throw new SocketException("socket closed");
+				
 		long cost = 0;
 		
 		try {
@@ -115,7 +136,9 @@ public class DatagramChannelImpl extends DatagramChannel {
 
 			byte[] data = new byte[src.remaining()];
 			
-			udp.send(new DatagramPacket(data, data.length, udp.getRemoteAddress()));
+			src.get(data);
+			
+			udp.send(new DatagramPacket(data, data.length, target));
 						
 			cost = udp.getNetwork().getConfig().getUDPOverhead(data.length);
 			

@@ -22,6 +22,7 @@ package pt.minha.models.fake.java.nio.channels;
 import java.io.IOException;
 import java.net.ProtocolFamily;
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 
 import pt.minha.models.fake.java.net.DatagramSocket;
@@ -44,6 +45,10 @@ public abstract class DatagramChannel extends AbstractSelectableChannel implemen
 
 	public abstract DatagramChannel disconnect();
 	
+	public abstract int send(ByteBuffer src, SocketAddress target) throws IOException;
+
+	public abstract SocketAddress receive(ByteBuffer dst) throws IOException;
+
 	public abstract boolean isConnected();
 
 	@Override
