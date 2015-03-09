@@ -25,9 +25,11 @@ import pt.minha.models.global.net.NetworkStack;
 
 public class InterfaceAddress {
 	private InetAddress address;
+	private InetAddress broadcast;
 
 	InterfaceAddress(NetworkStack stack) {
 		this.address = stack.getLocalAddress();
+		this.broadcast = stack.getBroadcastAddress();
 	}
 	
 	public InetAddress getAddress() {
@@ -35,7 +37,7 @@ public class InterfaceAddress {
 	}
 	
 	public InetAddress getBroadcast() {
-		return null;
+		return broadcast;
 	}
 	
 	public int getNetworkPrefixLength() {

@@ -22,6 +22,8 @@ package pt.minha.models.global.net;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +64,11 @@ public class Network {
 		}
 		
 		return ip1+"."+ip2+"."+ip3+"."+ip4;
+	}
+	
+	public InetAddress getBroadcastAddress() throws UnknownHostException {
+		return InetAddress.getByName("10.255.255.255");
+		
 	}
 	
 	public synchronized InetAddress addHost(String host, NetworkStack stack) throws UnknownHostException {
@@ -106,7 +113,15 @@ public class Network {
     		throw new IOException("Multicast group '"+mcastaddr+"' do not exists");
 	}
 	
-	public synchronized List<NetworkStack> getMulticastHosts(InetAddress address) {
-		return multicastSockets.get(address);
+	public synchronized Collection<NetworkStack> getMulticastHosts(InetAddress address) {
+		List<NetworkStack> stacks = multicastSockets.get(address);
+		if (stacks == null)
+			return null;
+		
+		return new ArrayList<NetworkStack>(multicastSockets.get(address));
+	}
+	
+	public synchronized Collection<NetworkStack> getBroadcastHosts() {
+		return new ArrayList<NetworkStack>(hosts.values());
 	}
 }

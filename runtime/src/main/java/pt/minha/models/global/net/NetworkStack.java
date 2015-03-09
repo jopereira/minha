@@ -27,6 +27,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -43,7 +44,7 @@ public class NetworkStack implements Closeable {
 	private Network network;
 	private Timeline timeline;
 	
-	private InetAddress localAddress;
+	private InetAddress localAddress, broadcastAddress;
 	private final List<Integer> usedTCPPorts = new LinkedList<Integer>();
 	private final List<Integer> usedUDPPorts = new LinkedList<Integer>();
 	private int INITIAL_PORT = 10000;
@@ -56,6 +57,7 @@ public class NetworkStack implements Closeable {
 		this.network = network;
 		
 		this.localAddress = network.addHost(host, this);
+		this.broadcastAddress = network.getBroadcastAddress();
 		this.macAddress = "02:00";
 		for(int i=0;i<localAddress.getAddress().length;i++)
 			macAddress+=":"+Integer.toHexString(localAddress.getAddress()[i]);
@@ -70,7 +72,11 @@ public class NetworkStack implements Closeable {
 	public String getMACAddress() {
 		return this.macAddress;
 	}
-	
+
+	public InetAddress getBroadcastAddress() {
+		return this.broadcastAddress;
+	}
+
 	private int getAvailablePort(List<Integer> usedPorts) {
 		boolean reset = false;
 		int port = -1;
@@ -175,6 +181,10 @@ public class NetworkStack implements Closeable {
 		return new Event(timeline) {
 			public void run() {
 				UDPSocket sgds = socketsUDP.get(destination);
+				if (sgds==null && destination.getAddress().equals(broadcastAddress)) {
+					InetSocketAddress dest =new InetSocketAddress(localAddress, destination.getPort()); 
+					sgds=socketsUDP.get(dest);
+				}
 				if (sgds!=null)
 					sgds.queue(packet);
 			}			
@@ -217,11 +227,14 @@ public class NetworkStack implements Closeable {
 		long qdelay = time + getConfig().getLineLatency(p.getLength()) - getTimeline().getTime();
 		
 		if (destination.getAddress().isMulticastAddress()) {
-			List<NetworkStack> stacks = network.getMulticastHosts(destination.getAddress());
+			Collection<NetworkStack> stacks = network.getMulticastHosts(destination.getAddress());
 			if (stacks != null)
 				for (NetworkStack stack: stacks)
 					stack.handleDatagram(destination, p).scheduleFrom(timeline, qdelay);
-		
+		} else if (destination.getAddress().equals(broadcastAddress)) {
+			Collection<NetworkStack> stacks = network.getBroadcastHosts();
+			for (NetworkStack stack: stacks)
+				stack.handleDatagram(destination, p).scheduleFrom(timeline, qdelay);
 		} else {
 			NetworkStack stack = network.getHost(destination.getAddress());
 			if (stack!=null)
