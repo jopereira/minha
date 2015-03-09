@@ -280,6 +280,10 @@ public class Socket {
 		// TODO
 	}
 
+	public void setKeepAlive(boolean keepAlive) {
+		// TODO
+	}
+
     public String toString() {
    		return "Socket[addr=" + this.getRemoteSocketAddress() +
     			",localaddr=" + this.getLocalSocketAddress()+"]";
