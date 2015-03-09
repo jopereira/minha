@@ -36,6 +36,8 @@ public abstract class SelectableChannel extends AbstractInterruptibleChannel {
 	
 	public abstract SelectionKey register(Selector selector, int operation, Object attachment) throws IOException;
 	
+	public abstract SelectionKey keyFor(Selector selector);
+	
 	public SelectionKey register(Selector selector, int operation) throws IOException {
 		return register(selector, operation, null);
 	}

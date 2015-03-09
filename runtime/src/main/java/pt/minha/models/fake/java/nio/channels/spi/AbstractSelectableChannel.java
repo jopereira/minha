@@ -22,8 +22,9 @@ package pt.minha.models.fake.java.nio.channels.spi;
 import java.io.IOException;
 import java.nio.channels.IllegalBlockingModeException;
 import java.nio.channels.IllegalSelectorException;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
 
 import pt.minha.models.fake.java.nio.channels.SelectableChannel;
 import pt.minha.models.fake.java.nio.channels.SelectionKey;
@@ -35,11 +36,11 @@ public abstract class AbstractSelectableChannel extends SelectableChannel {
 
 	private SelectorProvider provider;
 	private boolean blocking;
-	private Set<SelectionKey> keys;
+	private Map<Selector,SelectionKey> keys;
 
 	public AbstractSelectableChannel(SelectorProvider provider) {
 		this.provider = provider;
-		keys = new HashSet<SelectionKey>();
+		keys = new HashMap<Selector,SelectionKey>();
 	}
 
 	@Override
@@ -65,13 +66,18 @@ public abstract class AbstractSelectableChannel extends SelectableChannel {
 		if (provider() != selector.provider())
 			throw new IllegalSelectorException();
 		SelectionKey key = ((SelectorImpl)selector).register(this, operation, attachment);
-		keys.add(key);
+		keys.put(selector,key);
 		return key;
 	}
 	
 	@Override
+	public SelectionKey keyFor(Selector selector) {
+		return keys.get(selector);
+	}
+	
+	@Override
 	protected void implCloseChannel() throws IOException {
-		for(SelectionKey key: keys)
+		for(SelectionKey key: keys.values())
 			key.cancel();
 	}
 	
