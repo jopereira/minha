@@ -284,6 +284,14 @@ public class Socket {
 		// TODO
 	}
 
+	public void setSoLinger(boolean linger, int timeout) {
+		// TODO
+	}
+
+	public void setReuseAddress(boolean reuseAddress) {
+		// TODO
+	}
+
     public String toString() {
    		return "Socket[addr=" + this.getRemoteSocketAddress() +
     			",localaddr=" + this.getLocalSocketAddress()+"]";
