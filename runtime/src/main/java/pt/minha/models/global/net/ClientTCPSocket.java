@@ -311,6 +311,23 @@ public class ClientTCPSocket extends AbstractSocket {
 		
 		return op;
 	}
+
+	/**
+	 * Receive data.
+	 * 
+	 * @param b data array
+	 * @param off offset into array
+	 * @param len maximum amout to read
+	 * @return number of bytes read, -1 for EOF
+	 */
+	public int read(ByteBuffer b) {
+
+		int op = in.pop(b);
+		
+		handlePacket();
+		
+		return op;
+	}
 	
 	/**
 	 * Close outgoing stream.

@@ -132,9 +132,7 @@ public class SocketChannelImpl extends SocketChannel {
 				throw new ClosedByInterruptException();
 			}
 			
-			int res = tcp.read(b.array(), b.position(), b.remaining());
-			
-			b.position(b.position()+res);
+			int res = tcp.read(b);
 
 			cost = tcp.getNetwork().getConfig().getTCPOverhead(res);
 			

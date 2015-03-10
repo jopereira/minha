@@ -51,6 +51,27 @@ public class Buffer {
 		
 		return done;
 	}
+
+	public int pop(ByteBuffer b) {
+		if (closed && n==0)
+			return -1;
+		
+		int done = 0;
+
+		while(b.remaining()>0 && n>0) {
+			int op = b.remaining();
+			if (op > n)
+				op = n;
+			if (op > bufferSize-t)
+				op = bufferSize-t;
+			b.put(buffer, t, op);
+			done += op;
+			n -= op;
+			t = (t + op) % bufferSize;
+		}
+		
+		return done;
+	}
 	
 	public int pop(byte[] data, int offset, int len) {
 		if (closed && n==0)
