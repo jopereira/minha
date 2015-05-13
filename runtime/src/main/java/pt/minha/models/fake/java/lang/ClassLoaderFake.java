@@ -38,4 +38,14 @@ public class ClassLoaderFake {
 			return null;
 		}
 	}
+	
+	public static java.net.URL _fake_getResource(ClassLoader cl, String name) {
+		// TODO: need to wrap URL
+		return null;
+	}
+
+	public static java.net.URL _fake_getSystemResource(String name) {
+		// TODO: need to wrap URL
+		return null;
+	}
 }
