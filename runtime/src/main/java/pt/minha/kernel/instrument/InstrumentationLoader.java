@@ -30,6 +30,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.RemappingClassAdapter;
 
+import pt.minha.kernel.instrument.ClassConfig.Action;
+
 public class InstrumentationLoader extends ClassLoader {
 	
 	private ClassConfig cc;
@@ -94,16 +96,26 @@ public class InstrumentationLoader extends ClassLoader {
 		cr.accept(ca, ClassReader.SKIP_FRAMES);
 	}
 
-	public byte[] load(Translation trans) throws IOException {
-		InputStream is = getResourceAsStream(trans.getFileName());
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		byte[] buf = new byte[1024];
-		int n = is.read(buf);
-		while(n>0) {
-			baos.write(buf, 0, n);
-			n = is.read(buf);
+	public byte[] load(Translation trans, Action act) throws IOException {
+		if (act.equals(ClassConfig.Action.load)) {		
+			InputStream is = getResourceAsStream(trans.getFileName());
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			byte[] buf = new byte[1024];
+			int n = is.read(buf);
+			while(n>0) {
+				baos.write(buf, 0, n);
+				n = is.read(buf);
+			}
+			return baos.toByteArray();
+		} else {
+			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES) {
+				protected String getCommonSuperClass(String type1, String type2) {
+					return InstrumentationLoader.this.getCommonSuperClass(type1, type2);
+				}
+			};
+			transform(trans, cw);
+			return cw.toByteArray();
 		}
-		return baos.toByteArray();
 	}
 	
 	public Class<?> loadClass(String name) throws ClassNotFoundException {
@@ -120,21 +132,8 @@ public class InstrumentationLoader extends ClassLoader {
 		 * and class file annotations.
 		 */
 		Translation trans = new Translation(effname, act);
-
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES) {
-			protected String getCommonSuperClass(String type1, String type2) {
-				return InstrumentationLoader.this.getCommonSuperClass(type1, type2);
-			}
-		};
-
 		try {
-			byte[] b2;
-			if (act.equals(ClassConfig.Action.load)) {
-				b2 = load(trans);
-			} else {
-				transform(trans, cw);
-				b2 = cw.toByteArray();
-			}
+			byte[] clsData = load(trans, act);
 			
 			// Enable this to get debugging output:
 			// checkAndDumpClass(b2);
@@ -143,7 +142,7 @@ public class InstrumentationLoader extends ClassLoader {
 				// If we discovered this from an annotation...
 				return super.loadClass(name);
 			else
-				return defineClass(name, b2, 0, b2.length);
+				return defineClass(name, clsData, 0, clsData.length);
 			
 		} catch (Exception e) {
 			throw new ClassNotFoundException(name, e);
