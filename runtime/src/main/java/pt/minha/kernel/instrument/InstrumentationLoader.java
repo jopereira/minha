@@ -19,6 +19,7 @@
 
 package pt.minha.kernel.instrument;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -93,6 +94,17 @@ public class InstrumentationLoader extends ClassLoader {
 		cr.accept(ca, ClassReader.SKIP_FRAMES);
 	}
 
+	public byte[] load(Translation trans) throws IOException {
+		InputStream is = getResourceAsStream(trans.getFileName());
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		byte[] buf = new byte[1024];
+		int n = is.read(buf);
+		while(n>0) {
+			baos.write(buf, 0, n);
+			n = is.read(buf);
+		}
+		return baos.toByteArray();
+	}
 	
 	public Class<?> loadClass(String name) throws ClassNotFoundException {
 		String effname = name.replace('.', '/');
@@ -116,9 +128,13 @@ public class InstrumentationLoader extends ClassLoader {
 		};
 
 		try {
-			transform(trans, cw);
-		
-			byte[] b2 = cw.toByteArray();
+			byte[] b2;
+			if (act.equals(ClassConfig.Action.load)) {
+				b2 = load(trans);
+			} else {
+				transform(trans, cw);
+				b2 = cw.toByteArray();
+			}
 			
 			// Enable this to get debugging output:
 			// checkAndDumpClass(b2);
