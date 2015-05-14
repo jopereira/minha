@@ -21,6 +21,7 @@ package pt.minha.models.local.io;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 
 public class ResourceInputStreamImpl {
 	private InputStream is;
@@ -35,6 +36,10 @@ public class ResourceInputStreamImpl {
 		is = cl.getResourceAsStream(name);
 		if (is==null)
 			throw new NullPointerException();
+	}
+	
+	public ResourceInputStreamImpl(URL url) throws IOException {
+		is = url.openStream();
 	}
 	
 	public int read() throws IOException {

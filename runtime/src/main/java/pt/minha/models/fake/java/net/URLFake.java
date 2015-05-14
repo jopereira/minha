@@ -1,6 +1,6 @@
 /*
  * Minha.pt: middleware testing platform.
- * Copyright (c) 2011-2014, Universidade do Minho.
+ * Copyright (c) 2011-2015, Universidade do Minho.
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,23 +17,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package pt.minha.models.fake.java.lang;
+package pt.minha.models.fake.java.net;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+
+import pt.minha.models.fake.java.lang.ResourceInputStream;
 import pt.minha.models.local.io.ResourceInputStreamImpl;
 
-public class ClassLoaderFake {
-	
-	public static java.io.InputStream _fake_getResourceAsStream(ClassLoader cl, String name) {
+public class URLFake {
+	public static InputStream _fake_openStream(URL url) throws IOException {
 		try {
-			return new ResourceInputStream(new ResourceInputStreamImpl(cl, name));
-		} catch(NullPointerException e) {
-			return null;
-		}
-	}
-
-	public static java.io.InputStream _fake_getSystemResourceAsStream(String name) {
-		try {
-			return new ResourceInputStream(new ResourceInputStreamImpl(ClassLoader.getSystemClassLoader(), name));
+			return new ResourceInputStream(new ResourceInputStreamImpl(url));
 		} catch(NullPointerException e) {
 			return null;
 		}
