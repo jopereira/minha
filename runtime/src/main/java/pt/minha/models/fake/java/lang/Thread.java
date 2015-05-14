@@ -30,6 +30,8 @@ public class Thread extends Object implements Runnable {
 	private boolean daemon;
 	private UncaughtExceptionHandler handler;
 	
+	public volatile java.lang.Object parkBlocker;
+	
 	private static void checkSimulation(boolean sim) {
 		if (sim != (java.lang.Thread.currentThread() instanceof SimulationThread))
 			throw new RuntimeException("Trying to "+(sim?"leave":"enter")+"sandbox.");

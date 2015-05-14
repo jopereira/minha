@@ -31,7 +31,7 @@ public class LockSupport {
 	}
 
 	public static void parkNanos(Object blocker, long timeout) {
-		SimulationThread.currentSimulationThread().park(timeout);
+		SimulationThread.currentSimulationThread().park(blocker, timeout);
 	}
 	
 	public static void unpark(pt.minha.models.fake.java.lang.Thread thread) {

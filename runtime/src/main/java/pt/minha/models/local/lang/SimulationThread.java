@@ -364,10 +364,11 @@ public class SimulationThread extends Thread implements Closeable {
 		return this.getStackTrace();
 	}
 	
-	public void park(long nanos) {
+	public void park(Object blocker, long nanos) {
 		if (permit)
 			permit = false;
 		else {
+			fakeThread.parkBlocker = blocker;
 			stopTime(0);
 			if (nanos>0)
 				getWakeup().schedule(nanos);
