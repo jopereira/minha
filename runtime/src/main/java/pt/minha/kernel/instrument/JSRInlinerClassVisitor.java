@@ -26,7 +26,7 @@ import org.objectweb.asm.commons.JSRInlinerAdapter;
 
 public class JSRInlinerClassVisitor extends ClassVisitor {
 	public JSRInlinerClassVisitor(ClassVisitor visitor) {
-		super(Opcodes.ASM4, visitor);
+		super(Opcodes.ASM5, visitor);
 	}
 	
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {

@@ -33,7 +33,7 @@ public class SerializableClassVisitor extends ClassVisitor implements Opcodes {
 	private Translation trans; 
 	
 	public SerializableClassVisitor(ClassVisitor visitor, Translation trans) {
-		super(Opcodes.ASM4, visitor);
+		super(Opcodes.ASM5, visitor);
 		this.trans = trans;
 	}
 	

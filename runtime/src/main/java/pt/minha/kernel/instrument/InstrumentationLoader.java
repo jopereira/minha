@@ -136,7 +136,7 @@ public class InstrumentationLoader extends ClassLoader {
 			byte[] clsData = load(trans, act);
 			
 			// Enable this to get debugging output:
-			// checkAndDumpClass(b2);
+			// checkAndDumpClass(clsData);
 			
 			if (trans.isGlobal())
 				// If we discovered this from an annotation...
@@ -317,7 +317,7 @@ public class InstrumentationLoader extends ClassLoader {
 		private class ClassInfoVisitor extends ClassVisitor {
 
 			public ClassInfoVisitor() {
-				super(Opcodes.ASM4, new ClassWriter(0));
+				super(Opcodes.ASM5, new ClassWriter(0));
 			}
 
 			@Override

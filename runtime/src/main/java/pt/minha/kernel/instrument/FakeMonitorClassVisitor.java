@@ -28,7 +28,7 @@ public class FakeMonitorClassVisitor extends ClassVisitor {
 	private Translation trans;
 
 	public FakeMonitorClassVisitor(ClassVisitor arg0, Translation trans) {
-		super(Opcodes.ASM4, arg0);
+		super(Opcodes.ASM5, arg0);
 		this.trans = trans;
 	}
 	
@@ -49,7 +49,7 @@ public class FakeMonitorClassVisitor extends ClassVisitor {
 
 	private class LocalMethodVisitor extends MethodVisitor {
 		public LocalMethodVisitor(MethodVisitor arg0) {
-			super(Opcodes.ASM4, arg0);
+			super(Opcodes.ASM5, arg0);
 		}
 
 		public void visitInsn(int opcode) {
@@ -66,12 +66,12 @@ public class FakeMonitorClassVisitor extends ClassVisitor {
 				s = ClassConfig.fake_prefix+s;
 			mv.visitTypeInsn(opcode, s);
 		}
-		
-		public void visitMethodInsn (int opcode, String owner, String name, String desc) {
+
+		public void visitMethodInsn (int opcode, String owner, String name, String desc, boolean itf) {
 			if (opcode==Opcodes.INVOKESPECIAL && owner.equals("java/lang/Object") && name.equals("<init>"))
-				mv.visitMethodInsn(opcode, ClassConfig.fake_prefix+owner, name, desc);
+				mv.visitMethodInsn(opcode, ClassConfig.fake_prefix+owner, name, desc, itf);
 			else
-				mv.visitMethodInsn(opcode, owner, name, desc);
+				mv.visitMethodInsn(opcode, owner, name, desc, itf);
 		}
 	}
 }

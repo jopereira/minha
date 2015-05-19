@@ -34,7 +34,7 @@ public class SyncToMonitorClassVisitor extends ClassVisitor {
 	private Translation trans;
 
 	public SyncToMonitorClassVisitor(ClassVisitor visitor, Translation trans) {
-		super(Opcodes.ASM4, visitor);
+		super(Opcodes.ASM5, visitor);
 		this.trans = trans;
 	}
 	
@@ -84,7 +84,7 @@ public class SyncToMonitorClassVisitor extends ClassVisitor {
 	
 	private class ClinitVisitor extends MethodVisitor {
 		public ClinitVisitor(MethodVisitor arg0) {
-			super(Opcodes.ASM4, arg0);
+			super(Opcodes.ASM5, arg0);
 		}
 
 		public void visitCode() {
@@ -93,7 +93,7 @@ public class SyncToMonitorClassVisitor extends ClassVisitor {
 				return;
 			mv.visitTypeInsn(Opcodes.NEW, ClassConfig.fake_prefix+"java/lang/Object");
 			mv.visitInsn(Opcodes.DUP);
-			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, ClassConfig.fake_prefix+"java/lang/Object", "<init>", "()V");
+			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, ClassConfig.fake_prefix+"java/lang/Object", "<init>", "()V", false);
 			mv.visitFieldInsn(Opcodes.PUTSTATIC, clz, "_fake_class", "L"+ClassConfig.fake_prefix+"java/lang/Object;");
 		}		
 	}

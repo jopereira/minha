@@ -27,7 +27,7 @@ public class MethodRemapperClassVisitor extends ClassVisitor {
 	private Translation trans;
 	
 	public MethodRemapperClassVisitor(ClassVisitor arg0, Translation trans) {
-		super(Opcodes.ASM4, arg0);
+		super(Opcodes.ASM5, arg0);
 		this.trans = trans;
 	}
 	
@@ -37,7 +37,7 @@ public class MethodRemapperClassVisitor extends ClassVisitor {
 
 	private class RemapMethodVisitor extends MethodVisitor {
 		public RemapMethodVisitor(MethodVisitor arg0) {
-			super(Opcodes.ASM4, arg0);
+			super(Opcodes.ASM5, arg0);
 		}
 
 		/**
@@ -45,28 +45,28 @@ public class MethodRemapperClassVisitor extends ClassVisitor {
 		 * class (e.g. nanoTime), because we can't override a final method (e.g. wait/notify) or
 		 * cannot wrap the entire class (i.e. throwables).
 		 */
-		public void visitMethodInsn (int opcode, String owner, String name, String desc) {
+		public void visitMethodInsn (int opcode, String owner, String name, String desc, boolean itf) {
 			if (owner.equals("java/lang/Class") && name.equals("forName") && trans.isUsingFakes())
-				mv.visitMethodInsn(opcode, ClassConfig.fake_prefix+owner+"Fake", name, desc);
+				mv.visitMethodInsn(opcode, ClassConfig.fake_prefix+owner+"Fake", name, desc, itf);
 			else if (owner.equals("java/lang/Class") && name.equals("getResourceAsStream") && trans.isUsingMoved())				
-				mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner+"Fake", "_fake_"+name, "(Ljava/lang/Class;"+desc.substring(1));
+				mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner+"Fake", "_fake_"+name, "(Ljava/lang/Class;"+desc.substring(1), itf);
 			else if (owner.equals("java/lang/ClassLoader") && trans.isUsingMoved()) {
 				if (name.equals("getResourceAsStream"))
 					// Convert to invocation of static wrapper method
-					mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner+"Fake", "_fake_"+name, "(Ljava/lang/ClassLoader;"+desc.substring(1));
+					mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner+"Fake", "_fake_"+name, "(Ljava/lang/ClassLoader;"+desc.substring(1), itf);
 				else if (name.equals("getSystemResourceAsStream"))
 					// Invoke wrapper method, that is already static
-					mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner+"Fake", "_fake_"+name, desc);
+					mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner+"Fake", "_fake_"+name, desc, itf);
 				else
-					mv.visitMethodInsn(opcode, owner, name, desc);					
+					mv.visitMethodInsn(opcode, owner, name, desc, itf);
 			} else if (name.equals("openStream") && owner.equals("java/net/URL") && trans.isUsingMoved()) {
-				mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner+"Fake", "_fake_"+name, "(Ljava/net/URL;"+desc.substring(1));
+				mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner+"Fake", "_fake_"+name, "(Ljava/net/URL;"+desc.substring(1), itf);
 			} else if (name.equals("printStackTrace") && trans.isUsingMoved() && (desc.equals("(L"+ClassConfig.moved_prefix+"java/io/PrintStream;)V") || desc.contains("(L"+ClassConfig.moved_prefix+"java/io/PrintWriter;)V")))
-				mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+"java/lang/ThrowableFake", "_fake_"+name, "(Ljava/lang/Object;"+desc.substring(1));
+				mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+"java/lang/ThrowableFake", "_fake_"+name, "(Ljava/lang/Object;"+desc.substring(1), itf);
 			else if (owner.equals("java/lang/Object") && trans.isSynchronized() && (name.equals("wait") || name.equals("notify") || name.equals("notifyAll")))
-				mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner, "_fake_"+name, "(Ljava/lang/Object;"+desc.substring(1));
+				mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner, "_fake_"+name, "(Ljava/lang/Object;"+desc.substring(1), itf);
 			else
-				mv.visitMethodInsn(opcode, owner, name, desc);
+				mv.visitMethodInsn(opcode, owner, name, desc, itf);
 		}
 	}
 }

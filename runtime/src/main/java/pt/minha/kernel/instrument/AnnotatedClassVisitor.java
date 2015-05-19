@@ -34,14 +34,14 @@ public class AnnotatedClassVisitor extends ClassVisitor implements Opcodes {
 	private Translation action;
 
 	public AnnotatedClassVisitor(ClassVisitor visitor, Translation action) {
-		super(Opcodes.ASM4, visitor);
+		super(Opcodes.ASM5, visitor);
 		this.action = action;
 	}	
 
 	@Override
 	public AnnotationVisitor visitAnnotation(String name, boolean runtime) {
 		if (name.equals(localName))
-			return new AnnotationVisitor(Opcodes.ASM4) {
+			return new AnnotationVisitor(Opcodes.ASM5) {
 				@Override
 				public void visit(String name, Object value) {
 					if (name.equals("synch"))
