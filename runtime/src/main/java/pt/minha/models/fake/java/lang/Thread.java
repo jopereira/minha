@@ -57,6 +57,10 @@ public class Thread extends Object implements Runnable {
 		this(group, runnable, name);
 	}
 
+	public Thread(ThreadGroup group, Runnable runnable) {
+		this(group, runnable, null);
+	}
+
 	public Thread(ThreadGroup group, Runnable runnable, String name) {
 		checkSimulation(true);
 		
