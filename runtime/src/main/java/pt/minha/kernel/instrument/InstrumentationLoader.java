@@ -141,9 +141,16 @@ public class InstrumentationLoader extends ClassLoader {
 			if (trans.isGlobal())
 				// If we discovered this from an annotation...
 				return super.loadClass(name);
-			else
+			else {
+				try {
+					String pname = name.substring(0,name.lastIndexOf('.'));
+					if(getPackage(pname)==null)
+						definePackage(pname, null, null, null, null, null, null, null);
+				} catch (IndexOutOfBoundsException|IllegalArgumentException e) {
+					//Ignore exceptions
+				}
 				return defineClass(name, clsData, 0, clsData.length);
-			
+			}
 		} catch (Exception e) {
 			throw new ClassNotFoundException(name, e);
 		}
