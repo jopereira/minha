@@ -28,7 +28,7 @@ import pt.minha.models.fake.java.util.concurrent.locks.ReentrantLock;
 public class CountDownLatch {
 	private Lock lock;
 	private Condition cond;
-	private int count;
+	private volatile int count;
 
 	public CountDownLatch(int count) {
 		this.lock = new ReentrantLock();
@@ -56,5 +56,9 @@ public class CountDownLatch {
 		} finally {
 			lock.unlock();
 		}
+	}
+
+	public long getCount() {
+		return count;
 	}
 }
