@@ -46,15 +46,43 @@ public class Unsafe {
         }
 	}
 	
-	public long objectFieldOffset(Field f) {
+    public void putObject(Object o, long offset, Object x){
+    	theUnsafeUnsafe.putObject(o, offset, x);
+    }
+
+    public long objectFieldOffset(Field f) {
 		return theUnsafeUnsafe.objectFieldOffset(f);
 	}
 	
-	public boolean compareAndSwapInt(Object o, long f, int a, int b) {
+	public int arrayBaseOffset(Class arrayClass){
+		return theUnsafeUnsafe.arrayBaseOffset(arrayClass);
+	}
+
+	public int arrayIndexScale(Class arrayClass){
+		return theUnsafeUnsafe.arrayIndexScale(arrayClass);
+	}
+
+    public boolean compareAndSwapInt(Object o, long f, int a, int b) {
 		return theUnsafeUnsafe.compareAndSwapInt(o, f, a, b);
 	}
 
-	public boolean compareAndSwapObject(Object o, long f, Object a, Object b) {
+    public boolean compareAndSwapLong(Object o, long offset, long expected, long x){
+    	return theUnsafeUnsafe.compareAndSwapLong(o, offset, expected, x);
+    }
+
+    public boolean compareAndSwapObject(Object o, long f, Object a, Object b) {
 		return theUnsafeUnsafe.compareAndSwapObject(o, f, a, b);
 	}
+
+	public Object getObjectVolatile(Object o, long offset){
+    	return theUnsafeUnsafe.getObjectVolatile(o, offset);
+	}
+
+	public void putObjectVolatile(Object o, long offset, Object x){
+		theUnsafeUnsafe.putObjectVolatile(o, offset, x);
+	}
+
+    public void putOrderedObject(Object o, long offset, Object x){
+    	theUnsafeUnsafe.putOrderedObject(o, offset, x);
+    }
 }
