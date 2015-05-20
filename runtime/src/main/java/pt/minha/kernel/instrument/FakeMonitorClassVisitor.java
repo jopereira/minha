@@ -54,9 +54,9 @@ public class FakeMonitorClassVisitor extends ClassVisitor {
 
 		public void visitInsn(int opcode) {
 			if (opcode == Opcodes.MONITORENTER)
-				super.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+"java/lang/Object", "_fake_enter", "(Ljava/lang/Object;)V");
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+"java/lang/Object", "_fake_enter", "(Ljava/lang/Object;)V", false);
 			else if (opcode == Opcodes.MONITOREXIT)
-				super.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+"java/lang/Object", "_fake_leave", "(Ljava/lang/Object;)V");
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+"java/lang/Object", "_fake_leave", "(Ljava/lang/Object;)V", false);
 			else
 				super.visitInsn(opcode);
 		}

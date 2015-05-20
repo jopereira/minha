@@ -71,7 +71,7 @@ public class SerializableClassVisitor extends ClassVisitor implements Opcodes {
 		mv.visitTypeInsn(CHECKCAST, wclz);
 		mv.visitFieldInsn(GETFIELD, wclz, "wrapper", "Ljava/lang/Object;");
 		mv.visitTypeInsn(CHECKCAST, ClassConfig.fake_prefix+"java/io/ObjectOutputStream");
-		mv.visitMethodInsn(INVOKESPECIAL, name, "writeObject", "(L"+ClassConfig.fake_prefix+"java/io/ObjectOutputStream;)V");
+		mv.visitMethodInsn(INVOKESPECIAL, name, "writeObject", "(L"+ClassConfig.fake_prefix+"java/io/ObjectOutputStream;)V", false);
 		Label l1 = new Label();
 		mv.visitLabel(l1);
 		mv.visitInsn(RETURN);
@@ -95,7 +95,7 @@ public class SerializableClassVisitor extends ClassVisitor implements Opcodes {
 		mv.visitTypeInsn(CHECKCAST, wclz);
 		mv.visitFieldInsn(GETFIELD, wclz, "wrapper", "Ljava/lang/Object;");
 		mv.visitTypeInsn(CHECKCAST, ClassConfig.fake_prefix+"java/io/ObjectInputStream");
-		mv.visitMethodInsn(INVOKESPECIAL, name, "readObject", "(L"+ClassConfig.fake_prefix+"java/io/ObjectInputStream;)V");
+		mv.visitMethodInsn(INVOKESPECIAL, name, "readObject", "(L"+ClassConfig.fake_prefix+"java/io/ObjectInputStream;)V", false);
 		Label l1 = new Label();
 		mv.visitLabel(l1);
 		mv.visitInsn(RETURN);

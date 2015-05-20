@@ -149,11 +149,12 @@ public class SyncToMonitorClassVisitor extends ClassVisitor {
 				mv.visitVarInsn(t.getOpcode(Opcodes.ILOAD), i);
 			i += t.getSize();
 		}
-				
+
+		boolean itf = (access&Opcodes.ACC_INTERFACE)!=0;
 		if ((access&Opcodes.ACC_STATIC)==0)
-			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, clz, "_"+name, desc);
+			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, clz, "_"+name, desc, itf);
 		else
-			mv.visitMethodInsn(Opcodes.INVOKESTATIC, clz, "_"+name, desc);
+			mv.visitMethodInsn(Opcodes.INVOKESTATIC, clz, "_"+name, desc, itf);
 
 		mv.visitVarInsn(Opcodes.ALOAD, offset + length);
 		mv.visitInsn(Opcodes.MONITOREXIT);
