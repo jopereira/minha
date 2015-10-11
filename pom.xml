@@ -12,7 +12,6 @@
 
   <modules>
 	<module>runtime</module>
-	<module>timer</module>
 	<module>tools</module>
 	<module>examples</module>
   </modules>
