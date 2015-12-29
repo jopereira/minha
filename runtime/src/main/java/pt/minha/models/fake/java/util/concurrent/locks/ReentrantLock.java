@@ -137,33 +137,45 @@ public class ReentrantLock implements Lock {
 	}
 
 	@Override
-	public boolean tryLock(long time, TimeUnit unit)
-			throws InterruptedException {
+	public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
 		if (busy!=0) {
-			SimulationThread current = SimulationThread.currentSimulationThread();
+			SimulationThread current = SimulationThread.currentSimulationThread(); 
 
 			if (holder == current) {
 				busy++;
 				return true;
 			}
-
+			
 			try {
 				SimulationThread.stopTime(0);
-				long inst1 = SimulationThread.currentSimulationThread().getTimeline().getTime();
-				waitingOnLock.add(current.getWakeup());
-				boolean interrupted = current.idle(unit.toNanos(time), true, false);
-				long inst2 = SimulationThread.currentSimulationThread().getTimeline().getTime();
+				
+				long nanosTimeout = unit.toNanos(time);
+				long before = current.getTimeline().getTime();
+			
+				boolean interrupted = current.getInterruptedStatus(true);
+				while(!interrupted && holder!=null && nanosTimeout>0) {
+					waitingOnLock.add(current.getWakeup());
+					current.getWakeup().schedule(nanosTimeout);
+					interrupted = current.pause(true,true);
+					
+					long after = current.getTimeline().getTime();
+					nanosTimeout = nanosTimeout - (after - before);
+					if (nanosTimeout < 0) nanosTimeout = 0;
+					before = after;
+				}
 				if (interrupted) {
 					waitingOnLock.remove(current.getWakeup());
 					throw new InterruptedException();
 				}
-				if(inst2-inst1>=unit.toNanos(time)){
+				if (holder!=null) {
 					waitingOnLock.remove(current.getWakeup());
 					return false;
 				}
+				
 				holder=current;
 				busy++;
 				return true;
+	
 			} finally {
 				SimulationThread.startTime(0);
 			}
