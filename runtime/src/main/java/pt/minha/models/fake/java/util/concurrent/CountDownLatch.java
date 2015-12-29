@@ -47,23 +47,13 @@ public class CountDownLatch {
 		}
 	}
 
-	public boolean await(long timeout, TimeUnit unit)
-			throws InterruptedException {
+	public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
 		try {
-			long time1 = System.nanoTime();
-			unit.toNanos(timeout);
-			boolean result = lock.tryLock(timeout, unit);
-			long time2 = System.nanoTime();
-			long nanos = time2 - time1;
-			if(!result)
-				return false;
-			while (nanos > 0L) {
-				if (count == 0)
-					return true;
+			lock.lock();
+			long nanos = unit.toNanos(timeout);
+			while(count>0 && nanos > 0)
 				nanos = cond.awaitNanos(nanos);
-			}
-			return false;
-			// return //sync.tryAcquireSharedNanos(1, unit.toNanos(timeout));
+			return count == 0;
 		} finally {
 			lock.unlock();
 		}
