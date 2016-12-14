@@ -21,6 +21,8 @@ package pt.minha.models.local.lang;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -59,9 +61,7 @@ public class SimulationThread extends Thread implements Closeable {
 	private Logger logger;
 	
 	// fake_join
-	private pt.minha.models.fake.java.util.concurrent.locks.ReentrantLock joinLock = new pt.minha.models.fake.java.util.concurrent.locks.ReentrantLock();
-	private Condition joinCond = joinLock.newCondition();
-	private boolean joinDead = false;
+	private List<Event> waitingOnJoin = new ArrayList<Event>();
 		
 	public SimulationThread(boolean rt, SimulationProcess host, Runnable runnable, pt.minha.models.fake.java.lang.Thread fakeThread) {
 
@@ -163,15 +163,7 @@ public class SimulationThread extends Thread implements Closeable {
 			if (e != null)
 				logger.warn("Uncaught exception", e);
 		} finally {
-			if (!dead) {
-				joinLock.lock();
-				joinDead = true;
-				joinCond.signal();
-				joinLock.unlock();
-	
-				if (rt) stopTime(0);
-			}
-			
+
 			lock.lock();
 			blocked = true;
 			wakeupCond.signal();
@@ -179,16 +171,54 @@ public class SimulationThread extends Thread implements Closeable {
 			lock.unlock();
 		
 			process.removeThread(this);
+
+			for(Event e: waitingOnJoin) {
+				e.schedule(0);
+			}
+			waitingOnJoin.clear();
 		}
 	}
 	
 	public void fake_join(long timeout) throws InterruptedException {
+		fake_join(timeout, 0);
+	}
+
+	public void fake_join(long millis, long nanos) throws InterruptedException {
+
 		try {
-			joinLock.lock();
-			while(!joinDead)
-				joinCond.awaitNanos(timeout);
+			long now = SimulationThread.stopTime(0);
+
+			if (dead)
+				return;
+
+			SimulationThread current = SimulationThread.currentSimulationThread();
+
+			long timeout = millis*1000000+nanos;
+			long target = 0;
+			if (timeout > 0) {
+				target = now + timeout;
+			}
+
+			waitingOnJoin.add(current.getWakeup());
+			while(!dead) {
+				if (timeout > 0) {
+					long delta = target - getTimeline().getTime();
+					if (delta <= 0)
+						break;
+					current.getWakeup().schedule(target);
+				}
+				if (current.pause(true, false))
+					break;
+			}
+
+			if (!dead)
+				waitingOnJoin.remove(current.getWakeup());
+
+			if (current.getInterruptedStatus(true))
+				throw new InterruptedException();
+
 		} finally {
-			joinLock.unlock();
+			SimulationThread.startTime(0);
 		}
 	}
 	
