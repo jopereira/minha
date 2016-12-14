@@ -98,6 +98,11 @@ class ExitImpl<T> extends MilestoneImpl implements Exit<T> {
 	}
 
 	@Override
+	public boolean isPending() {
+		return async && !done;
+	}
+
+	@Override
 	public boolean isComplete() {
 		return done;
 	}

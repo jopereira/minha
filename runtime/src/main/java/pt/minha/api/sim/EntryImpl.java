@@ -142,4 +142,9 @@ class EntryImpl<T> extends MilestoneImpl implements Entry<T> {
 	public boolean isComplete() {
 		return last.isComplete();
 	}
+
+	@Override
+	public boolean isPending() {
+		return last != null;
+	}
 }

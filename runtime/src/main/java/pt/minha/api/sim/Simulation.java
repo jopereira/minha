@@ -224,19 +224,24 @@ public class Simulation implements World {
 	 * @see pt.minha.api.WorldI#runAll(pt.minha.api.Milestone)
 	 */
 	@Override
-	public long runAll(Milestone... milestones) {
-		acquire(true);
-		for(Milestone m: milestones) {
-			MilestoneImpl mi = (MilestoneImpl) m;
-			mi.setWaited();
+	public long runAll(Milestone... milestones) throws IllegalArgumentException {
+		try {
+			acquire(true);
+			for (Milestone m : milestones) {
+				MilestoneImpl mi = (MilestoneImpl) m;
+				if (!mi.isPending())
+					throw new IllegalArgumentException();
+				mi.setWaited();
+			}
+			for (Milestone m : milestones) {
+				while (!m.isComplete() && runSimulation(0))
+					;
+			}
+			long time = sched.getTime();
+			return time;
+		} finally {
+			release(true);
 		}
-		for(Milestone m: milestones) { 
-			while(!m.isComplete() && runSimulation(0))
-				;
-		}
-		long time = sched.getTime();
-		release(true);
-		return time;
 	}
 	
 	/**

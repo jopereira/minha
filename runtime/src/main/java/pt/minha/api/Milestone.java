@@ -28,6 +28,14 @@ package pt.minha.api;
 public interface Milestone {
 
 	/**
+	 * Tests if the milestone has been initiated and is pending.
+	 * If true, it will eventually be completed.
+	 *
+	 * @return true if pending
+	 */
+	public boolean isPending();
+
+	/**
 	 * Tests if the milestone has been completed.
 	 * 
 	 * @return true if complete
