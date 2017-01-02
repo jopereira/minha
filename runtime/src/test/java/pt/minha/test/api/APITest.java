@@ -36,6 +36,7 @@ import pt.minha.api.Process;
 import pt.minha.api.World;
 import pt.minha.api.sim.Global;
 import pt.minha.api.sim.Simulation;
+import pt.minha.api.sim.SimulationDeadlockException;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class APITest {
@@ -167,7 +168,7 @@ public class APITest {
 		world.close();
 	}
 	
-	@Test(expectedExceptions={UndeclaredThrowableException.class})
+	@Test(expectedExceptions={SimulationDeadlockException.class})
 	public void interrupted(@Mocked final Callback cb) throws Exception {
 		World world = new Simulation();
 		Host host = world.createHost();
