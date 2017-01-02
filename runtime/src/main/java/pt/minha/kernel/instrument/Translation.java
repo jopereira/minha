@@ -19,15 +19,20 @@
 
 package pt.minha.kernel.instrument;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Translation {
 	private boolean global;
 	private boolean usingFakes;
 	private boolean usingMoved;
 	private boolean synch;
 	private String name;
+	private Logger logger;
 
 	public Translation(String name, ClassConfig.Action action) {
 		this.name = name;
+
 		/**
 		 * We recognize moved and faked classes from the prefix that has 
 		 * been placed there by the remapper.
@@ -44,6 +49,8 @@ public class Translation {
 			usingFakes = true;
 			synch = true;
 		}
+
+		this.logger = LoggerFactory.getLogger("MINHA."+name.replace('/','.'));
 	}
 	
 	public boolean isGlobal() {
@@ -81,6 +88,8 @@ public class Translation {
 	public String getFileName() {
 		return name+".class";
 	}
+
+	public Logger getLogger() { return logger; }
 	
 	public String toString() {
 		if (global)

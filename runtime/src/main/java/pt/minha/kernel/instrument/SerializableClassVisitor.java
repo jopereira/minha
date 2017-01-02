@@ -45,6 +45,7 @@ public class SerializableClassVisitor extends ClassVisitor implements Opcodes {
 				break;
 			}
 		}
+		trans.getLogger().debug("found Serializable super-interface");
 		super.visit(version, access, name, signature, superName, interfaces);	
 	}
 	
@@ -61,6 +62,8 @@ public class SerializableClassVisitor extends ClassVisitor implements Opcodes {
 		
 	private void makeWriteStub() {
 		String wclz = WrappedObjectOutputStream.class.getCanonicalName().replace('.', '/');
+
+		trans.getLogger().debug("adding writeObject(...) bridge method");
 
 		MethodVisitor mv = super.visitMethod(ACC_PRIVATE, "writeObject", "(Ljava/io/ObjectOutputStream;)V", null, new String[] { "java/io/IOException" });
 		mv.visitCode();
@@ -85,7 +88,9 @@ public class SerializableClassVisitor extends ClassVisitor implements Opcodes {
 	
 	private void makeReadStub() {
 		String wclz = WrappedObjectInputStream.class.getCanonicalName().replace('.', '/');
-		
+
+		trans.getLogger().debug("adding readObject(...) bridge method");
+
 		MethodVisitor mv = super.visitMethod(ACC_PRIVATE, "readObject", "(Ljava/io/ObjectInputStream;)V", null, new String[] { "java/io/IOException", "java/lang/ClassNotFoundException" });
 		mv.visitCode();
 		Label l0 = new Label();

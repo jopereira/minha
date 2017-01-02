@@ -34,11 +34,13 @@ public class ClassRemapper extends Remapper {
 	public String map(String type) {
 		ClassConfig.Action act = cc.get(type);
 		
-		if (act.equals(ClassConfig.Action.fake) && trans.isUsingFakes())
-			return ClassConfig.fake_prefix+type;
-		else if (act.equals(ClassConfig.Action.moved) && trans.isUsingMoved())
-			return ClassConfig.moved_prefix+type;
-		else
+		if (act.equals(ClassConfig.Action.fake) && trans.isUsingFakes()) {
+			trans.getLogger().debug("redirecting {} to fake", type);
+			return ClassConfig.fake_prefix + type;
+		} else if (act.equals(ClassConfig.Action.moved) && trans.isUsingMoved()) {
+			trans.getLogger().debug("redirecting {} to moved", type);
+			return ClassConfig.moved_prefix + type;
+		} else
 			return type;
 	}
 }

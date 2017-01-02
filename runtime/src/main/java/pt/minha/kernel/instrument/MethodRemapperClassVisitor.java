@@ -32,12 +32,17 @@ public class MethodRemapperClassVisitor extends ClassVisitor {
 	}
 	
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-		return new RemapMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions));
+		return new RemapMethodVisitor(name, desc, super.visitMethod(access, name, desc, signature, exceptions));
 	}
 
 	private class RemapMethodVisitor extends MethodVisitor {
-		public RemapMethodVisitor(MethodVisitor arg0) {
+		private final String name;
+		private final String desc;
+
+		public RemapMethodVisitor(String name, String desc, MethodVisitor arg0) {
 			super(Opcodes.ASM5, arg0);
+			this.name = name;
+			this.desc = desc;
 		}
 
 		/**
@@ -48,7 +53,7 @@ public class MethodRemapperClassVisitor extends ClassVisitor {
 		public void visitMethodInsn (int opcode, String owner, String name, String desc, boolean itf) {
 			if (owner.equals("java/lang/Class") && name.equals("forName") && trans.isUsingFakes())
 				mv.visitMethodInsn(opcode, ClassConfig.fake_prefix+owner+"Fake", name, desc, itf);
-			else if (owner.equals("java/lang/Class") && name.equals("getResourceAsStream") && trans.isUsingMoved())				
+			else if (owner.equals("java/lang/Class") && name.equals("getResourceAsStream") && trans.isUsingMoved())
 				mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner+"Fake", "_fake_"+name, "(Ljava/lang/Class;"+desc.substring(1), itf);
 			else if (owner.equals("java/lang/ClassLoader") && trans.isUsingMoved()) {
 				if (name.equals("getResourceAsStream"))
@@ -57,16 +62,23 @@ public class MethodRemapperClassVisitor extends ClassVisitor {
 				else if (name.equals("getSystemResourceAsStream"))
 					// Invoke wrapper method, that is already static
 					mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner+"Fake", "_fake_"+name, desc, itf);
-				else
+				else {
 					mv.visitMethodInsn(opcode, owner, name, desc, itf);
+					return;
+				}
 			} else if (name.equals("openStream") && owner.equals("java/net/URL") && trans.isUsingMoved()) {
 				mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner+"Fake", "_fake_"+name, "(Ljava/net/URL;"+desc.substring(1), itf);
 			} else if (name.equals("printStackTrace") && trans.isUsingMoved() && (desc.equals("(L"+ClassConfig.moved_prefix+"java/io/PrintStream;)V") || desc.contains("(L"+ClassConfig.moved_prefix+"java/io/PrintWriter;)V")))
 				mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+"java/lang/ThrowableFake", "_fake_"+name, "(Ljava/lang/Object;"+desc.substring(1), itf);
 			else if (owner.equals("java/lang/Object") && trans.isSynchronized() && (name.equals("wait") || name.equals("notify") || name.equals("notifyAll")))
 				mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassConfig.fake_prefix+owner, "_fake_"+name, "(Ljava/lang/Object;"+desc.substring(1), itf);
-			else
+			else {
 				mv.visitMethodInsn(opcode, owner, name, desc, itf);
+				return;
+			}
+
+			if (trans.getLogger().isDebugEnabled())
+				trans.getLogger().debug("in {}{}: remapped call to {}.{}{}", this,name, this.desc, owner, name, desc);
 		}
 	}
 }

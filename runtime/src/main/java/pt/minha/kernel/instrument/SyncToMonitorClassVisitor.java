@@ -28,6 +28,8 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 
 public class SyncToMonitorClassVisitor extends ClassVisitor {
+	public static final String PREFIX = "$sync_";
+
 	private String clz;
 	private boolean hasClinit;
 	private int access;
@@ -43,6 +45,7 @@ public class SyncToMonitorClassVisitor extends ClassVisitor {
 			clz = name;
 			this.access = access;
 			if ((access&Opcodes.ACC_INTERFACE)==0) {
+				trans.getLogger().debug("adding explicit class monitor object");
 				FieldVisitor fv = visitField(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, "_fake_class", "L"+ClassConfig.fake_prefix+"java/lang/Object;", null, null);
 				fv.visitEnd();
 			}
@@ -53,14 +56,16 @@ public class SyncToMonitorClassVisitor extends ClassVisitor {
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 		if (trans.isSynchronized()) {
 			if (name.equals("<clinit>")) {
+				trans.getLogger().debug("redirecting existing static initializer");
 				hasClinit = true;
 				return new ClinitVisitor(super.visitMethod(access, name, desc, signature, exceptions));
 			}
 			
-			if ((access & Opcodes.ACC_SYNCHRONIZED) != 0) {		
+			if ((access & Opcodes.ACC_SYNCHRONIZED) != 0) {
+				trans.getLogger().debug("wrapping {}{} with {}{}", name, desc, PREFIX, name);
 				makeStub(access & ~Opcodes.ACC_SYNCHRONIZED, name, desc, signature, exceptions);
 			
-				return super.visitMethod((access & ~(Opcodes.ACC_SYNCHRONIZED | Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED) | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE), "_"+name, desc, signature, exceptions);
+				return super.visitMethod((access & ~(Opcodes.ACC_SYNCHRONIZED | Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED) | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE), PREFIX+name, desc, signature, exceptions);
 			}
 		}
 		return super.visitMethod(access, name, desc, signature, exceptions);
@@ -68,8 +73,10 @@ public class SyncToMonitorClassVisitor extends ClassVisitor {
 
 	public void visitEnd() {
 		if (trans.isSynchronized()) {
-			if (!hasClinit && (access&Opcodes.ACC_INTERFACE)==0)
+			if (!hasClinit && (access&Opcodes.ACC_INTERFACE)==0) {
 				mkClinit();
+				trans.getLogger().debug("adding fake static initializer");
+			}
 		}
 		super.visitEnd();
 	}
@@ -152,9 +159,9 @@ public class SyncToMonitorClassVisitor extends ClassVisitor {
 
 		boolean itf = (access&Opcodes.ACC_INTERFACE)!=0;
 		if ((access&Opcodes.ACC_STATIC)==0)
-			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, clz, "_"+name, desc, itf);
+			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, clz, PREFIX+name, desc, itf);
 		else
-			mv.visitMethodInsn(Opcodes.INVOKESTATIC, clz, "_"+name, desc, itf);
+			mv.visitMethodInsn(Opcodes.INVOKESTATIC, clz, PREFIX+name, desc, itf);
 
 		mv.visitVarInsn(Opcodes.ALOAD, offset + length);
 		mv.visitInsn(Opcodes.MONITOREXIT);

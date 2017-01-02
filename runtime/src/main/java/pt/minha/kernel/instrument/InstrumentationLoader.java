@@ -19,9 +19,13 @@
 
 package pt.minha.kernel.instrument;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.Writer;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -30,6 +34,10 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.RemappingClassAdapter;
 
+import org.objectweb.asm.util.CheckClassAdapter;
+import org.objectweb.asm.util.TraceClassVisitor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pt.minha.kernel.instrument.ClassConfig.Action;
 
 public class InstrumentationLoader extends ClassLoader {
@@ -62,8 +70,12 @@ public class InstrumentationLoader extends ClassLoader {
 	}
 	
 	public void transform(Translation trans, ClassVisitor cw) throws IOException {
-		
+
 		ClassVisitor ca = cw;
+
+		if (trans.getLogger().isInfoEnabled()) {
+			trans.getLogger().info("transforming {}", trans);
+		}
 
 		// ------ This is the bytecode re-writting pipeline: -------
 		// (order is: last in, first used)
@@ -114,7 +126,22 @@ public class InstrumentationLoader extends ClassLoader {
 				}
 			};
 			transform(trans, cw);
-			return cw.toByteArray();
+			byte[] buf = cw.toByteArray();
+
+			Logger logger =  trans.getLogger();
+			if (logger.isDebugEnabled()) {
+				try {
+					Writer out = new CharArrayWriter();
+					out.write('\n');
+					ClassReader cr = new ClassReader(new ByteArrayInputStream(buf));
+					cr.accept(new CheckClassAdapter(new TraceClassVisitor(new PrintWriter(out))), ClassReader.EXPAND_FRAMES);
+					logger.trace("transformed bytecode: {}", out);
+				} catch (Exception e) {
+					logger.error("class validation error", e);
+				}
+			}
+
+			return buf;
 		}
 	}
 	
@@ -134,10 +161,7 @@ public class InstrumentationLoader extends ClassLoader {
 		Translation trans = new Translation(effname, act);
 		try {
 			byte[] clsData = load(trans, act);
-			
-			// Enable this to get debugging output:
-			// checkAndDumpClass(clsData);
-			
+
 			if (trans.isGlobal())
 				// If we discovered this from an annotation...
 				return super.loadClass(name);
