@@ -71,7 +71,7 @@ class EntryImpl<T> extends MilestoneImpl implements Entry<T> {
 					return result.getResult();
 				else {
 					result.getFakeResult();
-					throw new InterruptedException();
+					throw new SimulationDeadlockException();
 				}
 			}
 
