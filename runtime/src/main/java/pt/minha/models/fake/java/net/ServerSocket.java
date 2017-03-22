@@ -138,6 +138,10 @@ public class ServerSocket {
 		// TODO
 	}
 	
+	public void setReuseAddress(boolean on) {
+		// TODO
+	}
+	
 	public boolean isBound() {
 		return tcp.getLocalAddress() != null;
 	}

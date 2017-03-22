@@ -46,6 +46,8 @@ public abstract class SocketChannel extends AbstractSelectableChannel implements
 	
 	public abstract boolean finishConnect() throws IOException;
 
+	public abstract SocketAddress getLocalAddress() throws IOException;
+
 	@Override
 	public int validOps() {
 		return SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE;

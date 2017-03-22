@@ -111,6 +111,11 @@ public class SocketChannelImpl extends SocketChannel {
 	}
 
 	@Override
+	public SocketAddress getLocalAddress() throws IOException {
+		return socket.getLocalSocketAddress();
+	}
+
+	@Override
 	public int read(ByteBuffer b) throws IOException {
 		if (socket.isClosed())
 			throw new SocketException("socket closed");

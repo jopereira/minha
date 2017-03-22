@@ -163,6 +163,25 @@ public class Socket {
 		tcp.bind((InetSocketAddress)address);
 	}
 
+
+	public void connect(SocketAddress endpoint, int timeout) throws IOException {
+		if (endpoint == null)
+			throw new IllegalArgumentException("connect: The address can't be null");
+
+		if (timeout < 0)
+			throw new IllegalArgumentException("connect: timeout can't be negative");
+
+		if (closed)
+			throw new SocketException("Socket is closed");
+
+		if (!(endpoint instanceof InetSocketAddress))
+			throw new IllegalArgumentException("Unsupported address type");
+
+		//TODO: implement timeout logic
+		connect(endpoint);
+
+	}
+
     public void connect(SocketAddress endpoint) throws IOException {
 		if (closed)
 			throw new SocketException("socket closed");
