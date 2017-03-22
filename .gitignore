@@ -6,3 +6,5 @@ target
 test-output
 10.0.0.*
 *.iml
+.DS_Store
+out
