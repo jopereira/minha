@@ -11,4 +11,7 @@ import java.nio.channels.spi.AbstractInterruptibleChannel;
 
 public abstract class FileChannel extends AbstractInterruptibleChannel implements ByteChannel, GatheringByteChannel, ReadableByteChannel, ScatteringByteChannel, WritableByteChannel {
 	public abstract FileLock tryLock(long offet, long len, boolean shared); 
+	public abstract long position() throws IOException;
+	public abstract int write(ByteBuffer src, long position) throws IOException;
+	public abstract void force(boolean metaData) throws IOException;
 }

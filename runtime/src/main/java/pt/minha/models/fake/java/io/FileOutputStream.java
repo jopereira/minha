@@ -24,8 +24,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import pt.minha.models.fake.java.io.FileDescriptor.SyncTarget;
+import pt.minha.models.fake.java.nio.channels.FileChannel;
 import pt.minha.models.global.disk.Storage;
 import pt.minha.models.local.lang.SimulationThread;
+import pt.minha.models.local.nio.FileChannelImpl;
 
 public class FileOutputStream extends OutputStream {
 	private java.io.FileOutputStream impl;
@@ -85,5 +87,9 @@ public class FileOutputStream extends OutputStream {
 
 		if (qdelay > 0)
 			current.idle(qdelay, false, false);			
+	}
+
+	public FileChannel getChannel(){
+		return new FileChannelImpl(this.impl.getChannel());
 	}
 }

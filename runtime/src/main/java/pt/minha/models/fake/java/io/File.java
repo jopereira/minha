@@ -37,12 +37,20 @@ public class File {
 	public static final String pathSeparator   = java.io.File.pathSeparator;
 	
 	public File(String path) {
-		this(null, path);
+		this((File)null, path);
 	}
 	
 	public File(File parent, String path) {
 		if (parent != null)
 			path = parent.getPath() + File.separator + path;
+		this.hostName = SimulationThread.currentSimulationThread().getHost().getName();
+		this.createTree();
+		this.path = this.removeNonVirtPath(path);
+		this.impl = new java.io.File(this.hostName + File.separator + this.path);
+	}
+	
+	public File(String parent, String path){
+		path = parent + File.separator + path;
 		this.hostName = SimulationThread.currentSimulationThread().getHost().getName();
 		this.createTree();
 		this.path = this.removeNonVirtPath(path);
@@ -69,6 +77,27 @@ public class File {
 		return this.impl.createNewFile();
 	}
 	
+	public File createTempFile(String prefix, String suffix) throws IOException{
+		java.io.File f = this.impl.createTempFile(prefix,suffix);
+
+		return new File(f);
+	}
+
+	public static File createTempFile(String prefix, String suffix, File directory) throws IOException{
+
+		File tmpf = new File(directory.getImpl());
+		java.io.File f = java.io.File.createTempFile(prefix,suffix, tmpf.getImpl());
+
+		return new File(f);
+	}
+
+	public File createTempFile(String prefix, String suffix, java.io.File directory) throws IOException{
+		java.io.File f = this.impl.createTempFile(prefix,suffix, directory);
+
+		return new File(f);
+	}
+
+
 	public void deleteOnExit(){
 		this.impl.deleteOnExit();
 	}
@@ -85,6 +114,11 @@ public class File {
 		java.io.File newDir = new java.io.File(this.hostName);
 		if(!newDir.exists()) newDir.mkdir();
 	}
+
+	public String getName(){
+		return this.impl.getName();
+	}
+
 
 	//TODO: Review
 	public String getAbsolutePath() {
