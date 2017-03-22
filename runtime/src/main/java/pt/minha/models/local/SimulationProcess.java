@@ -31,6 +31,7 @@ import java.util.Set;
 import pt.minha.api.Host;
 import pt.minha.kernel.simulation.Resource;
 import pt.minha.kernel.simulation.Timeline;
+import pt.minha.models.fake.java.lang.Thread;
 import pt.minha.models.global.EntryHandler;
 import pt.minha.models.global.EntryInterface;
 import pt.minha.models.global.ExitHandler;
@@ -47,6 +48,8 @@ public class SimulationProcess implements EntryInterface {
 	private Storage storage;
 	private Host host;
 	private Map<Object,Object> sysProps;
+		
+	private Thread.UncaughtExceptionHandler defaultHandler;
 		
 	public SimulationProcess(Host host, Resource cpu, NetworkStack network, Storage storage, Map<Object,Object> props) {
 		this.host = host;
@@ -82,6 +85,14 @@ public class SimulationProcess implements EntryInterface {
 	
 	public Map<Object, Object> getSystemProperties() {
 		return sysProps;
+	}
+	
+	public Thread.UncaughtExceptionHandler getDefaultHandler() {
+		return defaultHandler;
+	}
+
+	public void setDefaultHandler(Thread.UncaughtExceptionHandler defaultHandler) {
+		this.defaultHandler = defaultHandler;
 	}
 	
 	/* The following methods are supposed to be called outside simulation events,

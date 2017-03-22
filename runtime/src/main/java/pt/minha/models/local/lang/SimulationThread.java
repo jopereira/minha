@@ -157,6 +157,12 @@ public class SimulationThread extends Thread implements Closeable {
 					handler.uncaughtException(fakeThread, e);
 					e = null;
 				}
+				else{
+					if(this.process.getDefaultHandler()!=null) {
+						this.process.getDefaultHandler().uncaughtException(fakeThread, e);
+						e = null;
+					}
+				}
 			} catch(Throwable t) {
 				e = t;
 			}

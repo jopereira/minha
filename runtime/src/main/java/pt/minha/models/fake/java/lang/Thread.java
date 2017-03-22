@@ -160,7 +160,7 @@ public class Thread extends Object implements Runnable {
     }
     
     public java.lang.Thread.State getState() {
-    	return SimulationThread.currentThread().getState();
+		return this.simulationThread.getState();
     }
 
     public StackTraceElement[] getStackTrace() {
@@ -219,6 +219,10 @@ public class Thread extends Object implements Runnable {
     	this.handler = handler;
     }
     
+	public static void setDefaultUncaughtExceptionHandler(UncaughtExceptionHandler handler) {
+		SimulationThread.currentSimulationThread().getProcess().setDefaultHandler(handler);
+	}
+
     public UncaughtExceptionHandler getUncaughtExceptionHandler() {
     	return this.handler;
     }
