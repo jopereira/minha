@@ -144,8 +144,8 @@ public class RandomAccessFile {
 	
 	private void readDelay(int size) {
 		SimulationThread current = SimulationThread.currentSimulationThread();
-		
-		long qdelay = storage.scheduleRead(size);
+
+		long qdelay = storage.scheduleRead(size) - current.getTimeline().getTime();
 		
 		current.idle(qdelay, false, false);		
 	}
@@ -153,11 +153,9 @@ public class RandomAccessFile {
 	private void writeDelay(int size) {
 		SimulationThread current = SimulationThread.currentSimulationThread();
 		
-		long qdelay = storage.scheduleWrite(size);
+		syncTarget = storage.scheduleWrite(size);
 		
-		syncTarget = qdelay + current.getTimeline().getTime();
-
-		qdelay = storage.scheduleCache(qdelay, size);
+		long qdelay = storage.scheduleCache(syncTarget - current.getTimeline().getTime(), size);
 
 		if (qdelay > 0)
 			current.idle(qdelay, false, false);			

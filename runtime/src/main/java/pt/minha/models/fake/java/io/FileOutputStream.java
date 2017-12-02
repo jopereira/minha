@@ -25,6 +25,7 @@ import java.io.OutputStream;
 
 import pt.minha.models.fake.java.io.FileDescriptor.SyncTarget;
 import pt.minha.models.fake.java.nio.channels.FileChannel;
+import pt.minha.models.global.Debug;
 import pt.minha.models.global.disk.Storage;
 import pt.minha.models.local.lang.SimulationThread;
 import pt.minha.models.local.nio.FileChannelImpl;
@@ -78,15 +79,15 @@ public class FileOutputStream extends OutputStream {
 	
 	private void writeDelay(int size) {
 		SimulationThread current = SimulationThread.currentSimulationThread();
-		
-		long qdelay = storage.scheduleWrite(size);
-		
-		syncTarget = qdelay + current.getTimeline().getTime();
 
-		qdelay = storage.scheduleCache(qdelay, size);
+		syncTarget = storage.scheduleWrite(size);
+
+		long qdelay = storage.scheduleCache(syncTarget - current.getTimeline().getTime(), size);
+
+		Debug.println("************************************************* d1="+qdelay);
 
 		if (qdelay > 0)
-			current.idle(qdelay, false, false);			
+			current.idle(qdelay, false, false);
 	}
 
 	public FileChannel getChannel(){

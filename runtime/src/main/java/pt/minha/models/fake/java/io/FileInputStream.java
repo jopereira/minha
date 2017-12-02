@@ -78,7 +78,7 @@ public class FileInputStream extends InputStream {
 	private void readDelay(int size) {
 		SimulationThread current = SimulationThread.currentSimulationThread();
 		
-		long qdelay = storage.scheduleRead(size);
+		long qdelay = storage.scheduleRead(size) - current.getTimeline().getTime();
 		
 		current.idle(qdelay, false, false);		
 	}
