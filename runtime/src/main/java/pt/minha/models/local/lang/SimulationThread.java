@@ -169,6 +169,7 @@ public class SimulationThread extends Thread implements Closeable {
 			if (e != null)
 				logger.warn("Uncaught exception", e);
 		} finally {
+			if (realTime) stopTime(0);
 
 			lock.lock();
 			blocked = true;
