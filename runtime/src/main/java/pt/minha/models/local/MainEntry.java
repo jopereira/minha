@@ -21,6 +21,7 @@ package pt.minha.models.local;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 import pt.minha.api.Main;
 import pt.minha.models.local.lang.SimulationThread;
@@ -31,9 +32,13 @@ public class MainEntry implements Main {
 		// Run main
 		Class<?> claz=Class.forName(impl);
 		Method m = claz.getMethod("main", new String[0].getClass());
-		
+
+		if (m == null || !Modifier.isStatic(m.getModifiers()) || !Modifier.isPublic(m.getModifiers())) {
+			throw new NoSuchMethodException("public static void main(String[] args) in class "+claz.getName());
+		}
+
 		try {
-			m.invoke(claz, (Object)args);
+			m.invoke(null, (Object)args);
 		} catch(InvocationTargetException ite) {
 			throw ite.getTargetException();
 		} finally {
