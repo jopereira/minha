@@ -26,6 +26,7 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.NoConnectionPendingException;
+import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.SelectionKey;
 
 import pt.minha.models.fake.java.net.Socket;
@@ -252,7 +253,29 @@ public class SocketChannelImpl extends SocketChannel {
 			SimulationThread.startTime(cost);					
 		}
 	}
-	
+
+	@Override
+	public long read(ByteBuffer[] buffers, int offset, int len) throws IOException {
+		int result = 0;
+		for(int i=offset; i<offset+len; i++) {
+			int bytes = read(buffers[i]);
+			if (bytes <= 0) {
+				if (result == 0)
+					result = bytes;
+				break;
+			}
+			result += bytes;
+			if (buffers[i].hasRemaining())
+				break;
+		}
+		return result;
+	}
+
+	@Override
+	public long read(ByteBuffer[] buffers) throws IOException {
+		return read(buffers, 0, buffers.length);
+	}
+
 	@Override
 	protected void implCloseChannel() throws IOException {
 		super.implCloseChannel();
@@ -269,5 +292,5 @@ public class SocketChannelImpl extends SocketChannel {
 		if (op == SelectionKey.OP_CONNECT)
 			return tcp.connectors;
 		return null;
-	}	
+	}
 }

@@ -20,6 +20,7 @@
 package pt.minha.models.local.nio;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.SelectionKey;
@@ -46,6 +47,12 @@ class ServerSocketChannelImpl extends ServerSocketChannel {
 	@Override
 	public ServerSocket socket() {
 		return socket;
+	}
+
+	@Override
+	public ServerSocketChannel bind(SocketAddress addr, int backlog) throws IOException {
+		socket.bind(addr, backlog);
+		return this;
 	}
 
 	@Override

@@ -31,9 +31,9 @@ import pt.minha.models.local.lang.SimulationThread;
 public class NetworkInterface {
 
 	private InetAddress ipAddr;
-	private String macAddr;
+	private byte[] macAddr;
 
-	public NetworkInterface(String macAddr, InetAddress ipAddr) {
+	public NetworkInterface(byte[] macAddr, InetAddress ipAddr) {
 		this.macAddr = macAddr;
 		this.ipAddr = ipAddr;
 	}
@@ -80,6 +80,12 @@ public class NetworkInterface {
 	public boolean isLoopback() {
 		return false;
 	}
+
+	public boolean isVirtual() { return false; }
+
+	public byte[] getHardwareAddress() {
+		return macAddr;
+	}
 	
 	public static NetworkInterface getByName(String name) {
 		Enumeration<NetworkInterface> i = getNetworkInterfaces();
@@ -92,6 +98,9 @@ public class NetworkInterface {
 	}
 	
 	public String toString() {
-		return getName()+"/"+macAddr;
+		String addr = getName()+"/"+macAddr[0];
+		for(int i=1;i<macAddr.length;i++)
+			addr+=":"+Integer.toHexString(macAddr[i]);
+		return addr;
 	}
 }

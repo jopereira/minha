@@ -240,6 +240,8 @@ public class SelectorImpl extends AbstractSelector {
 
 		@Override
 		public void cancel() {
+			if (cancelled)
+				return;
 			interestOps(0);
 			cancelled = true;
 			canceled(SelectionKeyImpl.this);

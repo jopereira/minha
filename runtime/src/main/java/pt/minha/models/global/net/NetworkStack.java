@@ -49,7 +49,7 @@ public class NetworkStack implements Closeable {
 	private final List<Integer> usedUDPPorts = new LinkedList<Integer>();
 	private int INITIAL_PORT = 10000;
 	
-	private String macAddress;
+	private byte[] macAddress;
 	private SimpleResource bandwidth;
 	
 	public NetworkStack(Timeline timeline, String host, Network network) throws UnknownHostException {
@@ -58,10 +58,12 @@ public class NetworkStack implements Closeable {
 		
 		this.localAddress = network.addHost(host, this);
 		this.broadcastAddress = network.getBroadcastAddress();
-		this.macAddress = "02:00";
+		this.macAddress = new byte[6];
+		macAddress[0] = 2;
+
 		for(int i=0;i<localAddress.getAddress().length;i++)
-			macAddress+=":"+Integer.toHexString(localAddress.getAddress()[i]);
-		
+			macAddress[i+1] = localAddress.getAddress()[i];
+
 		this.bandwidth = new SimpleResource(timeline);
 	}
 
@@ -69,7 +71,7 @@ public class NetworkStack implements Closeable {
 		return this.localAddress;
 	}
 
-	public String getMACAddress() {
+	public byte[] getMACAddress() {
 		return this.macAddress;
 	}
 

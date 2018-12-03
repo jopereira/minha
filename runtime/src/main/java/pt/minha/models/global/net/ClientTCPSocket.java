@@ -344,6 +344,10 @@ public class ClientTCPSocket extends AbstractSocket {
 			stack.removeTCPConn(this);
 	}
 
+	public boolean isOutputShutdown() {
+		return out.isClosing();
+	}
+
 	/**
 	 * Close incoming stream.
 	 */
@@ -356,7 +360,11 @@ public class ClientTCPSocket extends AbstractSocket {
 		if (out.isClosing())
 			stack.removeTCPConn(this);
 	}	
-	
+
+	public boolean isInputShutdown() {
+		return in.isClosing();
+	}
+
 	public boolean isConnecting() {
 		return synSent;
 	}

@@ -311,7 +311,15 @@ public class Socket {
 		// TODO
 	}
 
-    public String toString() {
+	public boolean isInputShutdown() {
+		return tcp.isInputShutdown();
+	}
+
+	public boolean isOutputShutdown() {
+		return tcp.isOutputShutdown();
+	}
+
+	public String toString() {
    		return "Socket[addr=" + this.getRemoteSocketAddress() +
     			",localaddr=" + this.getLocalSocketAddress()+"]";
     }
