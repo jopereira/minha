@@ -44,4 +44,13 @@ public class Debug {
 		System.err.println("########################################################");
 		System.err.println();
 	}
+
+    public static void reportDeadThread(Throwable throwable) {
+		if (throwable instanceof NoSuchMethodError ||
+			throwable instanceof LinkageError) {
+			System.err.println("### This is likely to be a bug in configuration / models!!! ###");
+			throwable.printStackTrace();
+			System.err.println("###############################################################");
+		}
+	}
 }

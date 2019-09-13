@@ -24,6 +24,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 import pt.minha.api.Main;
+import pt.minha.models.global.Debug;
 import pt.minha.models.local.lang.SimulationThread;
 
 public class MainEntry implements Main {
@@ -40,6 +41,7 @@ public class MainEntry implements Main {
 		try {
 			m.invoke(null, (Object)args);
 		} catch(InvocationTargetException ite) {
+			Debug.reportDeadThread(ite.getTargetException());
 			throw ite.getTargetException();
 		} finally {
 			// For for all remaining non-daemon threads to stop
