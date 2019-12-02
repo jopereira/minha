@@ -84,8 +84,6 @@ public class FileOutputStream extends OutputStream {
 
 		long qdelay = storage.scheduleCache(syncTarget - current.getTimeline().getTime(), size);
 
-		Debug.println("************************************************* d1="+qdelay);
-
 		if (qdelay > 0)
 			current.idle(qdelay, false, false);
 	}

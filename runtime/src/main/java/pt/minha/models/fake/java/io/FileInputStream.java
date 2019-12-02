@@ -23,6 +23,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import pt.minha.models.global.Debug;
 import pt.minha.models.global.disk.Storage;
 import pt.minha.models.local.lang.SimulationThread;
 
