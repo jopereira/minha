@@ -1,8 +1,4 @@
-# pt.minha: Middleware Testing Platform
-
-(formerly hosted at www.minha.pt)
-
-## Overview
+(formerly hosted at *www.minha.pt*)
 
 The correctness and performance of large scale distributed systems depends on middleware components performing various communication and coordination functions. It is, however, very difficult to experimentally assess such middleware components as interesting behavior often arises exclusively in large scale settings, with costly and time consuming distributed deployments with realistic workloads.
 
