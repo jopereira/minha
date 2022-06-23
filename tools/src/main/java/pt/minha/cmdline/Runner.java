@@ -42,7 +42,7 @@ public class Runner {
 		try {						
 			long simulationTime = Long.parseLong(System.getProperty("simulationTime", "0"));
 
-			System.err.println("==== Minha -- middleware testing platform <http://www.minha.pt/>");
+			System.err.println("==== Minha -- middleware testing platform <https://jopereira.github.io/minha/>");
 			System.err.println("==== Copyright (c) 2011-2014, Universidade do Minho.");
 			System.err.println("==== License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>");
 			System.err.println("==== This is free software: you are free to change and redistribute it.");
