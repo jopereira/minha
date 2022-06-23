@@ -51,10 +51,6 @@ Some results obtained with Minha (current and past versions):
 
 * [CSS+05] A. Correia Jr., A. Sousa, L. Soares, J. Pereira, F. Moura, and R. Oliveira. [Group-based replication of on-line transaction processing servers](http://scholar.google.com/citations?view_op=view_citation&hl=en&user=0No68O8AAAAJ&citation_for_view=0No68O8AAAAJ:XiSMed-E-HIC). In C. Maziero, J. Silva, A. Santos Andrade, and F. Silva, editors, Proc. of Latin-American Symp. Dependable Computing, volume 3747 of Lecture Notes in Computer Science, pages 245–260. Springer Verlag, 2005.
 
-## Source code
-
-Source code is available at https://github.com/jopereira/minha. See the wiki for installation, usage and development instructions.
-
 ## Team and funding
 
 Minha is developed by [José Pereira](https://github.com/jopereira) with contributions from N. Carvalho, J. Bordalo, F. Campos, [J.M. Gomes](https://github.com/pedro132), [P. Guimarães](https://github.com/pedro132), and [N. Machado](https://github.com/nunomachado).
