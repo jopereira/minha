@@ -41,9 +41,11 @@ Research leading to Minha is described here:
 
 * [JMM+15] T. Jorge, F. Maia, M. Matos, J. Pereira, and R. Oliveira. [Practical evaluation of large scale applications](https://www.google.com/url?q=https%3A%2F%2Flink.springer.com%2Fcontent%2Fpdf%2F10.1007%2F978-3-319-19129-4_10.pdf&sa=D&sntz=1&usg=AOvVaw2gU1GOOnjuEP_J9D7Slc6B). In Distributed Applications and Interoperable Systems (DAIS, with DisCoTec), Lecture Notes in Computer Science (LNCS). Springer, 2015.
 
-* [CBCP11] N. A. Carvalho, J. Bordalo, F. Campos, and J. Pereira. [Experimental evaluation of distributed middleware with a virtualized java environment](http://scholar.google.com/citations?view_op=view_citation&hl=en&user=0No68O8AAAAJ&cstart=60&citation_for_view=0No68O8AAAAJ:UHK10RUVsp4C). In MW4SOC '11: Proceedings of the 6th workshop on Middleware for service oriented computing, 2011.
+* [CBCP11] N. A. Carvalho, J. Bordalo, F. Campos, and J. Pereira. [Experimental evaluation of distributed middleware with a virtualized Java environment](http://scholar.google.com/citations?view_op=view_citation&hl=en&user=0No68O8AAAAJ&cstart=60&citation_for_view=0No68O8AAAAJ:UHK10RUVsp4C). In MW4SOC '11: Proceedings of the 6th workshop on Middleware for service oriented computing, 2011.
 
 Some results obtained with Minha (current and past versions):
+
+* [PMP20] João Pereira, Nuno Machado, Jorge Sousa Pinto. [Testing for Race Conditions in Distributed Systems via SMT Solving](https://link.springer.com/chapter/10.1007/978-3-030-50995-8_7). In TAP 2020. Lecture Notes in Computer Science, vol 12165. Springer, 2020.
 
 * [MMV+14] Francisco Maia, Miguel Matos, Ricardo Vilaça, José Pereira, Rui Oliveira, and Etienne Rivière. [Dataflasks: Epidemic store for massive scale systems](https://www.google.com/url?q=https%3A%2F%2Fieeexplore.ieee.org%2Fdocument%2F6983382&sa=D&sntz=1&usg=AOvVaw2vDRw6cka7CQ44WGUZlgzw). In SRDS ’14. IEEE Computer Society, 2014.
 
